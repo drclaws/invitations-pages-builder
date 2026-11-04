@@ -83,7 +83,7 @@ class NativeControlsTests(unittest.TestCase):
     def test_there_is_no_vendor_directory(self):
         self.assertFalse((ROOT / "assets" / "vendor").exists())
 
-    def test_no_trace_of_the_former_library(self):
+    def test_no_player_library_is_referenced(self):
         for name in SOURCES:
             with self.subTest(name=name):
                 text = (ROOT / name).read_text(encoding="utf-8")

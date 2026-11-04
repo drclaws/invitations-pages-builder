@@ -346,16 +346,16 @@ class MediaOverrideTests(SiteImagesTestCase):
 
 
 class SiteAddressTests(SiteImagesTestCase):
-    """The build never knows the address of the site: every URL of the
-    output is a path from the site root."""
+    """The build never knows the site address: every URL in the output is a
+    path from the site root."""
 
-    def test_the_option_is_gone(self):
+    def test_there_is_no_base_url_option(self):
         result = self.build_in_process("--base-url", BASE_URL)
         self.assertEqual(result.returncode, 2)
         self.assertIn("unrecognized arguments: --base-url", result.stderr)
         self.assertFalse(self.out.exists())
 
-    def test_the_old_variable_is_not_read(self):
+    def test_a_site_base_url_variable_changes_nothing(self):
         result = self.build(env={"SITE_BASE_URL": BASE_URL})
         self.assertTrue(self.page().meta["og:image"].startswith(f"/assets/{support.MEDIA_DIR}/"))
         self.assertNotIn("invite.example", result.stdout + result.stderr)

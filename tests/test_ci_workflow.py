@@ -191,7 +191,7 @@ class CiWorkflowTest(unittest.TestCase):
 
     def test_the_main_set_is_built_with_the_allowed_path(self):
         """The examples link to a directory of their fictional site: the builds of
-        the main set allow it, the set without places is built as before."""
+        the main set allow it, the set without places is built without it."""
         builds = re.findall(r"(?m)^\s*python build\.py build\b.*$", "\n".join(self.runs))
         self.assertEqual(len(builds), 4)
         main = [line.strip() for line in builds if "examples/data-venue-pending" not in line]

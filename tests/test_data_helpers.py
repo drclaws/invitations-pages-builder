@@ -763,7 +763,7 @@ class ReadJsonTests(TempDirTestCase):
         report = build.Report()
         return build.read_json(path, report), report.errors, build.display_path(path)
 
-    def test_a_document_without_repeats_is_read_as_before(self):
+    def test_a_document_without_repeats_reads_like_json_loads(self):
         text = json.dumps(site_data(), ensure_ascii=False, indent=2)
         value, errors, _shown = self.read(text)
         self.assertEqual(errors, [])
@@ -784,7 +784,7 @@ class ReadJsonTests(TempDirTestCase):
         )
         self.assertTrue(shown.endswith("site.json"))
 
-    def test_other_problems_are_reported_as_before(self):
+    def test_other_problems_are_reported_as_invalid_json(self):
         value, errors, shown = self.read('{"a": 1, "a": ')
         self.assertIs(value, build.MISSING)
         self.assertEqual(len(errors), 1)
