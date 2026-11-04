@@ -147,12 +147,12 @@ SITE = {
             # hidden by default: switched on for two invitations, the others
             # see the text in its place
             "links": {
-                "menu": {
-                    "text": "Меню ужина",
-                    "href": "/menu/{token}/",
+                "photos": {
+                    "text": "Фотографии с ужина",
+                    "href": "/photos/{token}/",
                     "pending": {
-                        "ty": "Меню ужина появится здесь ближе к празднику — мы тебе напишем",
-                        "vy": "Меню ужина появится здесь ближе к празднику — мы вам напишем",
+                        "ty": "Фотографии с ужина появятся здесь после праздника — мы тебе напишем",
+                        "vy": "Фотографии с ужина появятся здесь после праздника — мы вам напишем",
                     },
                 }
             },
@@ -264,8 +264,8 @@ INVITATIONS = [
         "form": "ty",
         "events": {
             "dinner": {
-                "note": "Напиши нам, пожалуйста, про аллергию — подберём блюда из меню.",
-                "links": {"menu": {"visible": True}},
+                "note": "Напиши нам, пожалуйста, про аллергию — учтём это при выборе блюд.",
+                "links": {"photos": {"visible": True}},
             }
         },
     },
@@ -330,7 +330,7 @@ INVITATIONS = [
         "token": "04e2efb6-33cd-423f-acff-3c14562a3113",
         "greeting": "Уважаемая Хайди Андреевна!",
         "form": "vy",
-        "events": {"dinner": {"links": {"menu": {"visible": True}}}},
+        "events": {"dinner": {"links": {"photos": {"visible": True}}}},
         "sections": {
             "invite": {"widgets": {"plus-one": {"visible": True}}},
             "travel": {

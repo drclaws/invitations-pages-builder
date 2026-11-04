@@ -240,7 +240,7 @@ class BuiltPageTests(TempDirTestCase):
         out = self.tmp / f"dist-{data_name}"
         # the main example links to a page of its fictional site that is not built
         build.build_site(
-            data, media, out, code_dir=ROOT, log=lambda _message: None, allow_paths=("/menu",)
+            data, media, out, code_dir=ROOT, log=lambda _message: None, allow_paths=("/photos",)
         )
         return out
 

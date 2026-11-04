@@ -155,7 +155,7 @@ class CiWorkflowTest(unittest.TestCase):
         """The layout a real site uses: the invitations in a directory of it."""
         builds = [block for block in self.runs if "--base-path" in block]
         self.assertEqual(len(builds), 1)
-        self.assertIn('python build.py build --base-path /invite --allow-path /menu '
+        self.assertIn('python build.py build --base-path /invite --allow-path /photos '
                       '--out "$RUNNER_TEMP/site/invite"', builds[0])
         checks = [block for block in self.runs if "check_out()" in block]
         self.assertEqual(len(checks), 1)
@@ -197,10 +197,10 @@ class CiWorkflowTest(unittest.TestCase):
         main = [line.strip() for line in builds if "examples/data-venue-pending" not in line]
         self.assertEqual(
             main,
-            ['python build.py build --allow-path /menu --out "$RUNNER_TEMP/dist"',
-             'python build.py build --base-path /invite --allow-path /menu --out '
+            ['python build.py build --allow-path /photos --out "$RUNNER_TEMP/dist"',
+             'python build.py build --base-path /invite --allow-path /photos --out '
              '"$RUNNER_TEMP/site/invite"',
-             'python build.py build --allow-path /menu --out "$RUNNER_TEMP/dist2"'],
+             'python build.py build --allow-path /photos --out "$RUNNER_TEMP/dist2"'],
         )  # fmt: skip
         pending = [line for line in builds if "examples/data-venue-pending" in line]
         self.assertEqual(len(pending), 1)
