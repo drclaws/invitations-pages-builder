@@ -1,4 +1,4 @@
-<!-- Плитка фото; ожидает в `.` медиа: src, thumbSrc, alt, width, height (пустые, если размер неизвестен). Без скрипта — ссылка на файл. Перед ссылкой — невидимый размерник .gallery__sizer: пропорцию одиночной плитки (gallery--single) он задаёт без атрибута style, в сетке и ленте он не показывается. -->
+<!-- Photo tile; expects in `.` a media item: src, thumbSrc, alt, width, height (empty when the size is unknown). Without the script it is a link to the file. Before the link sits the invisible sizer .gallery__sizer: it sets the ratio of a single tile (gallery--single) without a style attribute and is not shown in the grid or the ribbon. -->
 <!-- if:.width -->
 <li class="gallery__item"><svg class="gallery__sizer" width="{{.width}}" height="{{.height}}" viewBox="0 0 {{.width}} {{.height}}" aria-hidden="true" focusable="false"></svg><a class="gallery__link media-tile" href="{{.src}}" data-lightbox><img src="{{.thumbSrc}}" alt="{{.alt}}" width="{{.width}}" height="{{.height}}" loading="lazy" decoding="async"></a></li>
 <!-- endif -->

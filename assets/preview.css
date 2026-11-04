@@ -1,9 +1,10 @@
 /* =============================================================================
-   Страница-превью (preview.html): по ней сборка рисует картинку превью ссылки.
-   Не публикуется. Только раскладка кадра поверх app.css: обложка занимает
-   окно ровно целиком, текст — в центральном квадрате кадра (маленькие превью
-   обрезают картинку по центру до квадрата: 630 из 1200 по ширине = 52.5vw),
-   верхняя панель скрыта, полос прокрутки нет. Вид самой обложки — app.css.
+   The preview page (preview.html): the build renders the link-preview image
+   from it. Not published. Only the frame layout on top of app.css: the cover
+   fills the viewport exactly, the text sits in the central square of the
+   frame (small previews crop the image to a centred square: 630 of 1200 in
+   width = 52.5vw), the top bar is hidden, there are no scrollbars. The look
+   of the cover itself comes from app.css.
    ========================================================================== */
 
 html.link-preview {

@@ -26,21 +26,27 @@
 </head>
 <body>
 
-<!-- Каркас страницы. Секции по порядку из site.json выводит partials/sections:
-     каждая — фрагментом своего типа (sections/cover, sections/custom), виджеты —
-     фрагментами widgets/<тип>, плитки — media/<тип>. Разметка секций и виджетов
-     живёт в fragments/, здесь только <head> и <main>.
-     theme-color — цвет свёрнутой панели: значение подставляет сборка из токена
-     --color-cover-veil (app.css); класс invitation у <html> красит в тот же цвет
-     холст страницы (app.css, секция 3). Своих цветов в шаблоне нет.
-     Заголовок и превью ссылки одинаковы у всех гостей: «Приглашение · имена
-     пары» — в <title>, og:title и og:image:alt; описание (linkDescription) —
-     linkPreview.description из site.json в общей форме, без данных гостя;
-     og:site_name — только если сборке задано имя сайта (SITE_NAME). Все ссылки
-     — пути от корня сайта под --base-path: стили, скрипт, иконка и картинка
-     превью лежат в assetsPath (<base-path>/assets); адреса сайта сборка не
-     знает, og:url нет.
-     Условия стоят в строках разметки: без поля не остаётся пустой строки. -->
+<!-- The page frame. partials/sections renders the sections in their site.json
+     order: each with the fragment of its type (sections/cover,
+     sections/custom), widgets with widgets/<type>, tiles with media/<type>.
+     The section and widget markup lives in fragments/; here are only <head>
+     and <main>.
+     theme-color is the colour of the collapsed bar: the build fills it in
+     from the --color-cover-veil token (app.css); the invitation class on
+     <html> paints the page canvas in the same colour (app.css, section 3).
+     The template has no colours of its own.
+     The title and the link preview are the same for every guest: the
+     title "Invitation · <the couple's names>" (in the page language) goes
+     into <title>, og:title and og:image:alt; the description
+     (linkDescription) is
+     linkPreview.description from site.json in its general form, with no
+     guest data; og:site_name only when the build has a site name
+     (SITE_NAME). Every link is a path from the site root under --base-path:
+     the styles, the script, the icon and the preview image live in
+     assetsPath (<base-path>/assets); the build does not know the site
+     address, so there is no og:url.
+     The conditions sit inside the markup lines: a missing field leaves no
+     empty line. -->
 <main class="page">
 <!-- include:partials/sections -->
 </main>

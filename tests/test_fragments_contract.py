@@ -741,7 +741,7 @@ class FragmentFilesTests(unittest.TestCase):
                 source = path.read_text(encoding="utf-8")
                 first = source[: source.index("-->")]
                 self.assertTrue(source.startswith("<!-- "), "no contract comment")
-                self.assertIn("ожидает в ", first)
+                self.assertIn("expects in ", first)
 
     def test_class_modifiers_come_only_from_checked_enumerations(self):
         for path in sorted(FRAGMENTS_DIR.rglob("*.html")):

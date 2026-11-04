@@ -1,4 +1,4 @@
-<!-- Секция из виджетов; ожидает в `.` секцию: domId, titleId, title, titleHidden, align (start | center), width (narrow | wide), note, widgets[]. Единственное место страницы с меткой появления: одна на секцию, на контейнере «заголовок + тело». -->
+<!-- Widget section; expects in `.` a section: domId, titleId, title, titleHidden, align (start | center), width (narrow | wide), note, widgets[]. The only place on the page with a reveal mark: one per section, on the "heading + body" container. -->
 <section class="section section--{{.align}}" id="{{.domId}}" aria-labelledby="{{.titleId}}">
   <div class="container container--{{.width}}" data-reveal>
     <!-- include:partials/section-head -->
