@@ -192,15 +192,29 @@ class LinkPreviewBuildTests(CliTestCase):
 
     def test_the_real_template_has_the_tags_once(self):
         for text in (
-            "<title>Приглашение · {{coupleNames}}</title>",
-            '<meta property="og:title" content="Приглашение · {{coupleNames}}">',
-            '<meta property="og:image:alt" content="Приглашение · {{coupleNames}}">',
+            '<html lang="{{lang}}" class="invitation">',
+            "<title>{{ui.invitationTitle}} · {{coupleNames}}</title>",
+            '<meta property="og:title" content="{{ui.invitationTitle}} · {{coupleNames}}">',
+            '<meta property="og:image:alt" content="{{ui.invitationTitle}} · {{coupleNames}}">',
             '<meta name="twitter:card" content="summary_large_image">',
-            '<meta property="og:locale" content="ru_RU">',
+            '<meta property="og:locale" content="{{ogLocale}}">',
             '<meta property="og:site_name" content="{{siteName}}">',
         ):
             self.assertEqual(REAL_TEMPLATE.count(text), 1, text)
         self.assertNotIn('property="og:url"', REAL_TEMPLATE)
+        # the template has no words of its own
+        self.assertNotRegex(REAL_TEMPLATE, f"[{chr(0x400)}-{chr(0x4FF)}]")
+
+    def test_the_tags_follow_the_language(self):
+        support.write_data(self.data, site=site_with_preview(lang="en"))
+        self.build()
+        for page in self.heads():
+            meta = dict(page.meta)
+            title = f"Invitation · {support.COUPLE_NAMES}"
+            self.assertEqual((page.title, meta["og:title"], meta["og:image:alt"]), (title,) * 3)
+            self.assertEqual(meta["og:locale"], "en_GB")
+            # the description takes the date in the English pattern
+            self.assertIn(" 1 June 2030 ", meta["og:description"])
 
 
 class LinkDescriptionTreeTests(support.unittest.TestCase):

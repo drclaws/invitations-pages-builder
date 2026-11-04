@@ -107,6 +107,8 @@ class ValidateCommandTests(CliTestCase):
     def test_valid_data(self):
         result = self.run_validate()
         self.assertEqual(result.returncode, 0, result.stderr)
+        # the language, then the summary
+        self.assertTrue(result.stdout.startswith("validate: language: ru\nvalidate: OK - "))
         self.assertIn(
             f"validate: OK - 3 invitation(s), 2 event(s), 8 section(s), "
             f"{len(support.MEDIA_FILES)} media file(s)",

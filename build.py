@@ -13,7 +13,9 @@ Only the Python 3 standard library is used (Python >= 3.10).
 The data is in the format 2 (`site.json` with `"schemaVersion": 2` and
 `invitations.json`); it is checked by `tools/_schema.py`, and the page of every
 invitation is rendered from its page tree (`tools/_page.py`) with the page
-template and its fragments.
+template and its fragments.  The words, dates and labels of the pages are in
+the language of `site.json` `"lang"` (English by default): a built-in pack of
+`tools/locales/` with `"strings"` over it (`tools/_locale.py`).
 
 `build` writes the invitations and nothing else, straight into `--out`: the
 pages (`<token>/index.html`) and `assets/` (including `assets/<mediaDir>/` with
@@ -82,6 +84,7 @@ if str(Path(__file__).resolve().parent) not in sys.path:  # pragma: no cover
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from tools import _data as data_tools  # noqa: E402
+from tools import _locale as locale_tools  # noqa: E402
 from tools import _media as media_tools  # noqa: E402
 from tools import _page as page_tools  # noqa: E402
 from tools import _png as png_tools  # noqa: E402
@@ -3917,6 +3920,7 @@ def build_site(
         )
     )
     log(f"build: {og.log}")
+    log(f"build: language: {locale_tools.describe_lang(data.site)}")
     log(
         f"build: OK -> {out_shown} ({written} page(s), {media} media file(s), "
         f"{stats.files} file(s) in total, {format_size(stats.size)})"
@@ -4050,6 +4054,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
     media_dir = _media_dir(args, code_dir)
     report = _command_report(args)
     data = load_data(data_dir, media_dir, report, assets_dir=code_dir / ASSETS_DIRNAME)
+    _stdout(f"validate: language: {locale_tools.describe_lang(data.site)}")
     _stdout(
         report.redact(
             f"validate: OK - {len(data.invitations)} invitation(s), "

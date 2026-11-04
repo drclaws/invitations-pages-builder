@@ -1,14 +1,14 @@
-<!-- Map buttons; expects in `.` a venue: hasMapLinks, mapLinks (google, yandex, apple — a ready link or an empty string). Buttons without a link are left out. -->
+<!-- Map buttons; expects in `.` a venue: hasMapLinks, mapLinks (google, yandex, apple — a ready link or an empty string); from the root: ui.openOnMap (the name of the list), ui.mapGoogle, ui.mapYandex, ui.mapApple. Buttons without a link are left out. -->
 <!-- if:.hasMapLinks -->
-<ul class="venue__maps" role="list" aria-label="Открыть на карте">
+<ul class="venue__maps" role="list" aria-label="{{ui.openOnMap}}">
   <!-- if:.mapLinks.google -->
-  <li class="venue__map"><a class="btn btn--secondary" href="{{.mapLinks.google}}" target="_blank" rel="noopener noreferrer">Google Карты</a></li>
+  <li class="venue__map"><a class="btn btn--secondary" href="{{.mapLinks.google}}" target="_blank" rel="noopener noreferrer">{{ui.mapGoogle}}</a></li>
   <!-- endif -->
   <!-- if:.mapLinks.yandex -->
-  <li class="venue__map"><a class="btn btn--secondary" href="{{.mapLinks.yandex}}" target="_blank" rel="noopener noreferrer">Яндекс Карты</a></li>
+  <li class="venue__map"><a class="btn btn--secondary" href="{{.mapLinks.yandex}}" target="_blank" rel="noopener noreferrer">{{ui.mapYandex}}</a></li>
   <!-- endif -->
   <!-- if:.mapLinks.apple -->
-  <li class="venue__map"><a class="btn btn--secondary" href="{{.mapLinks.apple}}" target="_blank" rel="noopener noreferrer">Apple Карты</a></li>
+  <li class="venue__map"><a class="btn btn--secondary" href="{{.mapLinks.apple}}" target="_blank" rel="noopener noreferrer">{{ui.mapApple}}</a></li>
   <!-- endif -->
 </ul>
 <!-- endif -->

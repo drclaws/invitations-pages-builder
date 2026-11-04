@@ -89,6 +89,7 @@ PRIVATE_STRINGS = (
 
 SITE: dict = {
     "schemaVersion": 2,
+    "lang": "ru",
     "coupleNames": COUPLE_NAMES,
     "rsvpDeadline": RSVP_DEADLINE,
     "mediaDir": MEDIA_DIR,
@@ -370,10 +371,14 @@ def make_code_dir(parent: Path, template: str = TEMPLATE, assets: bool = True) -
     code_dir = Path(parent) / "code"
     code_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(ROOT / "build.py", code_dir / "build.py")
-    # the generators that the build imports (code only, no caches)
+    # the generators that the build imports (code only, no caches) and the
+    # built-in language packs
     (code_dir / "tools").mkdir(exist_ok=True)
     for source in sorted((ROOT / "tools").glob("*.py")):
         shutil.copy2(source, code_dir / "tools" / source.name)
+    (code_dir / "tools" / "locales").mkdir(exist_ok=True)
+    for source in sorted((ROOT / "tools" / "locales").glob("*.json")):
+        shutil.copy2(source, code_dir / "tools" / "locales" / source.name)
     fragments = ROOT / build.FRAGMENTS_DIRNAME
     if fragments.is_dir():
         shutil.copytree(

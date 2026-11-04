@@ -1,5 +1,5 @@
-"""Tests for the Russian date strings and the end times of events
-(`tools/_dates.py`)."""
+"""Tests for the date strings in Russian, through the built-in `ru` pack,
+and the end times of events (`tools/_dates.py`)."""
 
 from __future__ import annotations
 
@@ -11,8 +11,11 @@ from datetime import datetime, timedelta, timezone
 from tests.support import build
 
 from tools import _dates as dates
+from tools import _locale
 
 SIX_HOURS = timedelta(hours=6)
+#: The strings of a site with `"lang": "ru"` and no `strings` of its own.
+RU = _locale.site_strings({"lang": "ru"})
 
 
 def at(text: str) -> datetime:
@@ -39,8 +42,8 @@ class DateStringTests(unittest.TestCase):
         for number, name in enumerate(months, start=1):
             with self.subTest(month=number):
                 moment = at(f"2030-{number:02d}-15T12:00+03:00")
-                self.assertEqual(dates.format_day_month(moment), f"15 {name}")
-                self.assertEqual(dates.format_date(moment), f"15 {name} 2030")
+                self.assertEqual(dates.format_day_month(RU, moment), f"15 {name}")
+                self.assertEqual(dates.format_date(RU, moment), f"15 {name} 2030")
 
     def test_every_day_of_the_week(self):
         # 10 June 2030 is a Monday
@@ -57,7 +60,7 @@ class DateStringTests(unittest.TestCase):
             with self.subTest(weekday=name):
                 moment = at(f"2030-06-{10 + offset:02d}T16:00+03:00")
                 self.assertEqual(
-                    dates.format_when(moment), f"{name}, {10 + offset} июня 2030, 16:00"
+                    dates.format_when(RU, moment), f"{name}, {10 + offset} июня 2030, 16:00"
                 )
 
     def test_time_has_no_leading_zero_in_the_hour(self):
@@ -70,21 +73,21 @@ class DateStringTests(unittest.TestCase):
             ("2030-06-15T23:59+03:00", "23:59"),
         ):
             with self.subTest(text=text):
-                self.assertEqual(dates.format_time(at(text)), expected)
+                self.assertEqual(dates.format_time(RU, at(text)), expected)
 
     def test_single_digit_days(self):
-        self.assertEqual(dates.format_date(at("2031-01-01T00:30+03:00")), "1 января 2031")
+        self.assertEqual(dates.format_date(RU, at("2031-01-01T00:30+03:00")), "1 января 2031")
 
     def test_the_date_is_that_of_the_offset_of_the_event(self):
         # 01:00 in Moscow is still 14 June in UTC
         moment = at("2030-06-15T01:00+03:00")
         self.assertEqual(moment.astimezone(timezone.utc).day, 14)
-        self.assertEqual(dates.format_date(moment), "15 июня 2030")
-        self.assertEqual(dates.format_time(moment), "1:00")
-        self.assertEqual(dates.format_when(moment), "Суббота, 15 июня 2030, 1:00")
+        self.assertEqual(dates.format_date(RU, moment), "15 июня 2030")
+        self.assertEqual(dates.format_time(RU, moment), "1:00")
+        self.assertEqual(dates.format_when(RU, moment), "Суббота, 15 июня 2030, 1:00")
         # 22:00 west of Greenwich is already 16 June in UTC
         moment = at("2030-06-15T22:00-05:00")
-        self.assertEqual(dates.format_when(moment), "Суббота, 15 июня 2030, 22:00")
+        self.assertEqual(dates.format_when(RU, moment), "Суббота, 15 июня 2030, 22:00")
 
     @unittest.skipUnless(hasattr(time, "tzset"), "time.tzset is not available")
     def test_the_time_zone_of_the_machine_does_not_matter(self):
@@ -97,8 +100,8 @@ class DateStringTests(unittest.TestCase):
                 with self.subTest(zone=zone):
                     os.environ["TZ"] = zone
                     time.tzset()
-                    self.assertEqual(dates.format_when(start, end), expected)
-                    self.assertEqual(dates.format_tab(start, False), "15 июня, 22:00")
+                    self.assertEqual(dates.format_when(RU, start, end), expected)
+                    self.assertEqual(dates.format_tab(RU, start, False), "15 июня, 22:00")
         finally:
             if saved is None:
                 os.environ.pop("TZ", None)
@@ -111,11 +114,11 @@ class DateStringTests(unittest.TestCase):
         for function in (dates.format_time, dates.format_day_month, dates.format_date):
             with self.subTest(function=function.__name__):
                 with self.assertRaises(ValueError):
-                    function(naive)
+                    function(RU, naive)
         with self.assertRaises(ValueError):
-            dates.format_when(naive)
+            dates.format_when(RU, naive)
         with self.assertRaises(ValueError):
-            dates.format_when(at("2030-06-15T16:00+03:00"), naive)
+            dates.format_when(RU, at("2030-06-15T16:00+03:00"), naive)
         with self.assertRaises(ValueError):
             dates.same_local_day([naive])
 
@@ -124,44 +127,44 @@ class WhenTests(unittest.TestCase):
     start = at("2030-06-15T16:00+03:00")
 
     def test_without_an_end(self):
-        self.assertEqual(dates.format_when(self.start), "Суббота, 15 июня 2030, 16:00")
+        self.assertEqual(dates.format_when(RU, self.start), "Суббота, 15 июня 2030, 16:00")
 
     def test_an_end_on_the_same_day(self):
         self.assertEqual(
-            dates.format_when(self.start, at("2030-06-15T23:30+03:00")),
+            dates.format_when(RU, self.start, at("2030-06-15T23:30+03:00")),
             "Суббота, 15 июня 2030, 16:00–23:30",
         )
 
     def test_an_end_after_midnight(self):
         self.assertEqual(
-            dates.format_when(at("2030-06-15T22:00+03:00"), at("2030-06-16T02:00+03:00")),
+            dates.format_when(RU, at("2030-06-15T22:00+03:00"), at("2030-06-16T02:00+03:00")),
             "Суббота, 15 июня 2030, 22:00 — 16 июня, 2:00",
         )
         self.assertEqual(
-            dates.format_when(at("2030-06-15T22:00+03:00"), at("2030-06-16T00:00+03:00")),
+            dates.format_when(RU, at("2030-06-15T22:00+03:00"), at("2030-06-16T00:00+03:00")),
             "Суббота, 15 июня 2030, 22:00 — 16 июня, 0:00",
         )
 
     def test_an_end_in_the_next_year(self):
         self.assertEqual(
-            dates.format_when(at("2030-12-31T22:00+03:00"), at("2031-01-01T02:00+03:00")),
+            dates.format_when(RU, at("2030-12-31T22:00+03:00"), at("2031-01-01T02:00+03:00")),
             "Вторник, 31 декабря 2030, 22:00 — 1 января 2031, 2:00",
         )
 
     def test_the_end_is_shown_on_the_clock_of_the_start(self):
         # 20:30 UTC is 23:30 at +03:00: the same local day
         self.assertEqual(
-            dates.format_when(self.start, at("2030-06-15T20:30Z")),
+            dates.format_when(RU, self.start, at("2030-06-15T20:30Z")),
             "Суббота, 15 июня 2030, 16:00–23:30",
         )
         # 16 June 01:00 at +05:00 is still 15 June 23:00 at +03:00
         self.assertEqual(
-            dates.format_when(self.start, at("2030-06-16T01:00+05:00")),
+            dates.format_when(RU, self.start, at("2030-06-16T01:00+05:00")),
             "Суббота, 15 июня 2030, 16:00–23:00",
         )
         # 15 June 23:00 at -05:00 is already 16 June 07:00 at +03:00
         self.assertEqual(
-            dates.format_when(self.start, at("2030-06-15T23:00-05:00")),
+            dates.format_when(RU, self.start, at("2030-06-15T23:00-05:00")),
             "Суббота, 15 июня 2030, 16:00 — 16 июня, 7:00",
         )
 
@@ -169,20 +172,20 @@ class WhenTests(unittest.TestCase):
         for end in ("2030-06-15T16:00+03:00", "2030-06-15T15:00+03:00", "2030-06-15T13:00Z"):
             with self.subTest(end=end):
                 with self.assertRaises(ValueError):
-                    dates.format_when(self.start, at(end))
+                    dates.format_when(RU, self.start, at(end))
 
 
 class TabLabelTests(unittest.TestCase):
     def test_one_day(self):
         starts = [at("2030-06-15T11:00+03:00"), at("2030-06-15T16:00+03:00")]
         self.assertTrue(dates.same_local_day(starts))
-        self.assertEqual(dates.format_tab(starts[0], True), "11:00")
+        self.assertEqual(dates.format_tab(RU, starts[0], True), "11:00")
 
     def test_several_days(self):
         starts = [at("2030-06-15T11:00+03:00"), at("2030-06-16T09:00+03:00")]
         self.assertFalse(dates.same_local_day(starts))
-        self.assertEqual(dates.format_tab(starts[0], False), "15 июня, 11:00")
-        self.assertEqual(dates.format_tab(starts[1], False), "16 июня, 9:00")
+        self.assertEqual(dates.format_tab(RU, starts[0], False), "15 июня, 11:00")
+        self.assertEqual(dates.format_tab(RU, starts[1], False), "16 июня, 9:00")
 
     def test_each_moment_on_its_own_clock(self):
         # 14 and 15 June in UTC, but both on 15 June where they happen

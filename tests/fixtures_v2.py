@@ -26,6 +26,7 @@ MEDIA_DIR = "kR1sKvBGXluXnZd73eOXRw"
 
 SITE = {
     "schemaVersion": 2,
+    "lang": "ru",
     "coupleNames": "Алиса и Боб",
     "rsvpDeadline": "1 мая 2030",
     "mediaDir": MEDIA_DIR,
@@ -347,6 +348,7 @@ INVITATIONS = [
 
 PENDING_SITE = {
     "schemaVersion": 2,
+    "lang": "ru",
     "coupleNames": "Алиса и Боб",
     "rsvpDeadline": "1 июля 2030",
     "mediaDir": "MR7IwBP4RVsVlBUFCeyEqQ",

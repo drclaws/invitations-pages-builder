@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ru" class="invitation link-preview">
+<html lang="{{lang}}" class="invitation link-preview">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="only light">
-  <title>Превью ссылки</title>
+  <title>Link preview</title>
   <link rel="stylesheet" href="{{assetsPath}}/app.css">
   <link rel="stylesheet" href="{{assetsPath}}/preview.css">
 </head>
@@ -14,8 +14,9 @@
      card) from it. Not published. The cover is the same sections/cover
      fragment as on the guests' pages, but with a site-level tree: the date
      of the main event, the eyebrow only if it does not depend on the guest,
-     no guest data. Expects at the root: coupleNames, assetsPath
-     (<base-path>/assets, as for the pages) and cover (the cover section).
+     no guest data. Expects at the root: lang (the language tag of the
+     site), coupleNames, assetsPath (<base-path>/assets, as for the pages)
+     and cover (the cover section).
      No scripts; preview.css fits the cover exactly into the frame and hides
      the bar. -->
 <main class="page">

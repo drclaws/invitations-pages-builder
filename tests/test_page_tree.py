@@ -17,6 +17,7 @@ from tools import _page, _schema
 from tools._media import MediaInfo
 
 ROOT_FIELDS = {
+    "lang", "ogLocale", "ui",
     "greeting", "form", "informal", "formal", "coupleNames", "rsvpDeadline", "assetsPath", "mediaPath",
     "faviconPath", "faviconType", "ogImage", "ogImageType", "ogImageWidth",
     "ogImageHeight", "themeColor", "siteName", "linkDescription", "primaryEvent", "sections",
@@ -35,8 +36,13 @@ WIDGET_FIELDS = {
 }
 EVENT_FIELDS = {
     "id", "domId", "title", "description", "note", "isMain", "isPrimary", "kind",
-    "startISO", "endISO", "dateText", "timeText", "whenText", "tabText", "icsPath",
-    "location", "program", "links",
+    "startISO", "endISO", "dateText", "timeText", "dateTimeText", "whenText", "tabText",
+    "icsPath", "location", "program", "links",
+}  # fmt: skip
+UI_FIELDS = {
+    "invitationTitle", "addToCalendar", "programme", "directions", "placePending", "openOnMap",
+    "mapGoogle", "mapYandex", "mapApple", "past", "eventPast", "now", "countdownLabel",
+    "countdownDays", "countdownHours", "countdownMinutes", "countdownSeconds", "photo", "video",
 }  # fmt: skip
 LINK_FIELDS = {"id", "href", "text", "pending"}
 PROGRAM_FIELDS = {"domId", "items", "nested"}
@@ -128,6 +134,7 @@ class ContractTests(unittest.TestCase):
     def test_root_and_sections(self):
         for tree in self.trees():
             self.assertEqual(set(tree), ROOT_FIELDS)
+            self.assertEqual(set(tree["ui"]), UI_FIELDS)
             for item in tree["sections"]:
                 self.assertEqual(set(item), SECTION_FIELDS)
                 self.assertIn(item["type"], _schema.SECTION_TYPES)
@@ -182,7 +189,7 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(page["mediaPath"], f"/invite/assets/{F.MEDIA_DIR}")
         cover = _page.site_cover(F.site(), F.settings(assets_path="/invite/assets"))
         self.assertEqual(cover["assetsPath"], "/invite/assets")
-        self.assertEqual(set(cover), {"coupleNames", "assetsPath", "cover"})
+        self.assertEqual(set(cover), {"lang", "coupleNames", "assetsPath", "cover"})
         self.assertFalse(hasattr(F.settings(), "pages_path"))
 
     def test_rsvp_deadline_is_an_empty_string_when_not_set(self):

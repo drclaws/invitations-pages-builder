@@ -141,15 +141,23 @@ class CiWorkflowTest(unittest.TestCase):
         blocks = [block for block in self.runs if "Link preview tags" in block or "og:url" in block]
         self.assertEqual(len(blocks), 1)
         block = blocks[0]
-        # the build at the root and the one under a base path
-        self.assertIn('"$RUNNER_TEMP/dist" / "$RUNNER_TEMP/site/invite" /invite', block)
+        # the build at the root and the one under a base path, each with its data
+        self.assertIn(
+            '"$RUNNER_TEMP/dist" / examples/data "$RUNNER_TEMP/site/invite" /invite examples/data',
+            block,
+        )
         for text in (r're.escape(prefix) + r"/assets/[A-Za-z0-9_-]+/[0-9a-f]{16}\.jpg"',
                      '"og:url" not in tags', '"://" not in value', "300 * 1024",
                      "(1200, 630)", '"assets/og.*"', '"Example"',
-                     'out.glob("*/index.html")', "images.pop()[len(prefix) + 1:]"):  # fmt: skip
+                     'out.glob("*/index.html")', "images.pop()[len(prefix) + 1:]",
+                     "sys.argv[1::3]", '["coupleNames"]', "html.unescape(",
+                     'tags.get("og:title") == title == tags.get("og:image:alt")',
+                     "title.endswith(names) and title[: -len(names)].strip()"):  # fmt: skip
             self.assertIn(text, block)
         self.assertNotIn("stub", block)
         self.assertNotIn('"i/', block)
+        # language-neutral: no words of a language in the check
+        self.assertNotRegex(self.raw, f"[{chr(0x400)}-{chr(0x4FF)}]")
 
     def test_a_build_under_a_base_path(self):
         """The layout a real site uses: the invitations in a directory of it."""

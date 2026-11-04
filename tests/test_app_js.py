@@ -613,7 +613,7 @@ class CoverBarTest(unittest.TestCase):
                          "min-block-size: var(--viewport-height-dynamic);")
         self.assertIn("color-scheme: only light;", self.css)
         template = (ROOT / "template.html").read_text(encoding="utf-8")
-        self.assertIn('<html lang="ru" class="invitation">', template)
+        self.assertIn('<html lang="{{lang}}" class="invitation">', template)
         for other in ("styleguide.html",):
             with self.subTest(page=other):
                 self.assertNotIn("invitation", re.search(r"<html[^>]*>", (ROOT / other).read_text(

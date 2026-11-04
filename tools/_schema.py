@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Callable, Collection, Iterable, Mapping, Sequence
 
-from tools import _data, _media
+from tools import _data, _locale, _media
 from tools._data import (
     FORM_ALIASES,
     FORMS,
@@ -67,6 +67,7 @@ PLACEHOLDERS = (
 
 SITE_FIELDS = (
     "schemaVersion",
+    "lang",
     "coupleNames",
     "rsvpDeadline",
     "mediaDir",
@@ -78,6 +79,7 @@ SITE_FIELDS = (
     "media",
     "texts",
     "linkPreview",
+    "strings",
 )
 #: Fields of `linkPreview`: what the services that show link previews read.
 LINK_PREVIEW_FIELDS = ("description",)
@@ -539,6 +541,7 @@ def check_site(site: Any, report: Any, where: str = SITE_FILE) -> SiteIndex:
     index.version_ok = True
 
     check.unknown_fields(site, SITE_FIELDS, (), _V1_SITE_PROBLEMS)
+    _check_language(check, site)
     check.value(site, "coupleNames", "string", (), required=True, single_line=True)
     check.value(site, "rsvpDeadline", "string", (), single_line=True)
     deadline = site.get("rsvpDeadline")
@@ -564,6 +567,19 @@ def check_site(site: Any, report: Any, where: str = SITE_FILE) -> SiteIndex:
     _check_link_preview(check, site, index)
     index.errors = check.errors
     return index
+
+
+def _check_language(check: _Checker, site: dict) -> None:
+    """`lang` and `strings`: the language of the pages (`tools._locale`)."""
+    for problem in _locale.check_site(site):
+        if problem.unknown:
+            check.errors += 1
+            check.report.error(
+                f"{check.where}: unknown field '{check.path(problem.path)}'"
+                f"{did_you_mean(problem.path[-1], problem.known)}"
+            )
+        else:
+            check.error(problem.path, problem.text)
 
 
 def _check_version(check: _Checker, site: dict) -> bool:

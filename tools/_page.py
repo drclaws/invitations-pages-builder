@@ -11,10 +11,16 @@ in.  The invitation token appears in its tree only in the `href` of the
 event links switched on for it; a link that is not shown may leave a text in
 its place (`pending`), which holds neither the token nor an address.
 
+The words, dates and labels are in the language of the site: the root has
+the language tag (`lang`), the locale of the link preview (`ogLocale`) and
+the labels of the pages (`ui`), resolved by `tools._locale` from the built-in
+pack and `site.json` `strings`.
+
 Everything outside the data comes in through `PageSettings`: the URLs of
 media files and of event calendar files, the media facts (sizes, durations),
 the default event duration, the URL path of the shared files and the fields
-of the site images and colours.  The module reads no files.
+of the site images and colours.  The module reads no files (the packs of
+strings are read by `tools._locale`).
 
 `Usage` records what the trees show; `warn_unused` reports the parts of
 `site.json` that no page shows (their media files are not published).
@@ -29,7 +35,7 @@ from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from typing import Any, Callable, Mapping, Sequence
 
-from tools import _dates, _maps
+from tools import _dates, _locale, _maps
 from tools._data import (
     COMMON_FORM,
     FORMS,
@@ -100,10 +106,6 @@ def location_part(location_id: str) -> str:
 
 TITLE_PART = "title"
 PROGRAM_PART = "program"
-
-#: Labels of a media tile without a description.
-DEFAULT_ALT = {"image": "Фотография", "video": "Видео"}
-VIDEO_LABEL = "Видео"
 
 
 @dataclass(frozen=True)
@@ -179,6 +181,7 @@ class _Page:
         # (canonical name); "" without one
         self.form = canonical_form(invitation.get("form")) or ""
         self._form_reported = False
+        self.strings = _locale.site_strings(site)
         self.media_path = f"{settings.assets_path}/{site['mediaDir']}"
         self.events = site["events"]
         self.event_overrides = invitation.get("events", {})
@@ -209,7 +212,7 @@ class _Page:
         return [item.id for item in self.timeline]
 
     def _text_values(self) -> dict[str, str]:
-        values = text_values(self.site, self.primary_id)
+        values = text_values(self.site, self.primary_id, self.strings)
         values["greeting"] = self.invitation["greeting"]
         return values
 
@@ -299,16 +302,19 @@ class _Page:
             "kind": "primary" if is_primary else "regular",
             "startISO": start_text,
             "endISO": end_text,
-            # default: the build always writes the dates, an event has no
-            # spelling of its own
-            "dateText": _dates.format_date(entry.start),
-            "timeText": _dates.format_time(entry.start),
+            # default: the build always writes the dates, in the patterns of
+            # the language; an event has no spelling of its own
+            "dateText": _dates.format_date(self.strings, entry.start),
+            "timeText": _dates.format_time(self.strings, entry.start),
+            "dateTimeText": _dates.format_date_time(self.strings, entry.start),
             # default: the page shows the start only; the end stays in the
             # calendar and the past/now marks unless `showEnd` asks for it
             "whenText": _dates.format_when(
-                entry.start, entry.end if entry.explicit and raw.get("showEnd") is True else None
+                self.strings,
+                entry.start,
+                entry.end if entry.explicit and raw.get("showEnd") is True else None,
             ),
-            "tabText": _dates.format_tab(entry.start, same_day),
+            "tabText": _dates.format_tab(self.strings, entry.start, same_day),
             "icsPath": self._calendar_src(event_id),
             "location": self.location(
                 raw["location"], dom_id(own_id, location_part(raw["location"])), nested=True
@@ -450,9 +456,11 @@ class _Page:
         if is_video and infos.get(file) is not None:
             duration = format_duration(infos[file].duration_seconds)
         given_alt = _text(item.get("alt"))
-        alt = given_alt or DEFAULT_ALT[kind]
+        # a tile without a description is labelled by its kind
+        video_label = self.strings["video"]
+        alt = given_alt or (video_label if is_video else self.strings["photo"])
         if is_video:
-            label = f"{VIDEO_LABEL}: {given_alt}" if given_alt else VIDEO_LABEL
+            label = f"{video_label}: {given_alt}" if given_alt else video_label
             label += f", {duration}" if duration else ""
         else:
             label = alt
@@ -483,6 +491,9 @@ class _Page:
         self._warn_notes()
         images = {key: self.settings.site_images.get(key, "") for key in SITE_FIELDS}
         return {
+            "lang": _locale.site_lang(self.site),
+            "ogLocale": self.strings["ogLocale"],
+            "ui": _locale.ui_labels(self.strings),
             "greeting": self.invitation["greeting"],
             "form": self.form,
             "informal": self.form == "informal",
@@ -676,16 +687,21 @@ def _place_name(site: dict, event_id: str) -> str:
     return _text(place.get("name")) if place.get("ready", True) is not False else ""
 
 
-def text_values(site: dict, event_id: str) -> dict[str, str]:
+def text_values(
+    site: dict, event_id: str, strings: Mapping[str, Any] | None = None
+) -> dict[str, str]:
     """The values of the placeholders that do not depend on a guest; the
-    `{event…}` ones are those of `event_id` (`{greeting}` is not among them)."""
+    `{event…}` ones are those of `event_id` (`{greeting}` is not among them),
+    the date and the time in the patterns of the site's language (`strings`,
+    resolved from `site` when not given)."""
+    strings = _locale.site_strings(site) if strings is None else strings
     event = site["events"][event_id]
     start = _dates.parse_date_iso(event["start"])
     values = {
         "coupleNames": site["coupleNames"],
         "eventTitle": event["title"],
-        "eventDate": _dates.format_date(start),
-        "eventTime": _dates.format_time(start),
+        "eventDate": _dates.format_date(strings, start),
+        "eventTime": _dates.format_time(strings, start),
         "eventPlace": _place_name(site, event_id),
     }
     if _text(site.get("rsvpDeadline")):
@@ -732,6 +748,7 @@ def site_cover(site: dict, settings: PageSettings) -> dict | None:
     cover = page.section(section, position)
     cover["eyebrow"] = eyebrow or ""
     return {
+        "lang": _locale.site_lang(site),
         "coupleNames": site["coupleNames"],
         "assetsPath": settings.assets_path,
         "cover": cover,
