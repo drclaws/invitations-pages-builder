@@ -3321,6 +3321,37 @@ def copy_assets(
     return sum(len(files) for _root, _dirs, files in os.walk(destination))
 
 
+#: The page script, which holds the strings of the site on one line.
+SCRIPT_FILE = "app.js"
+#: That line: `var STRINGS = {…}; /* @strings */` (JSON between the two).
+_SCRIPT_STRINGS_RE = re.compile(
+    r"^(?P<head>[ \t]*var STRINGS = )(?P<json>.*)(?P<tail>; /\* @strings \*/[ \t\r]*)$", re.M
+)
+
+
+def write_script_strings(assets: Path, strings: Mapping[str, Any]) -> None:
+    """Write the script strings of the site (`tools._locale.script_json`)
+    into the published copy of the page script, `assets/app.js` of the
+    output: they replace the JSON of its one line `var STRINGS = {…};
+    /* @strings */`, nothing else changes (the source keeps the English
+    strings).  No such line, or more than one, is an error."""
+    path = Path(assets) / SCRIPT_FILE
+    expected = "'var STRINGS = {…}; /* @strings */'"
+    try:
+        text = path.read_bytes().decode("utf-8")
+    except (OSError, UnicodeDecodeError):
+        text = ""
+    found = list(_SCRIPT_STRINGS_RE.finditer(text))
+    if len(found) != 1:
+        raise BuildError(
+            f"{ASSETS_DIRNAME}/{SCRIPT_FILE}: expected exactly one line {expected}, "
+            f"found {len(found)}"
+        )
+    start, end = found[0].span("json")
+    written = text[:start] + locale_tools.script_json(strings) + text[end:]
+    _write_file(path, written.encode("utf-8"))
+
+
 def _make_media_dir(destination: Path) -> None:
     """Create `assets/<mediaDir>/`; it must not exist yet."""
     try:
@@ -3877,6 +3908,8 @@ def build_site(
     with _StagedOutput(out_dir, warn=report.warn) as stage:
         written = write_pages(stage, pages)
         assets = copy_assets(assets_dir, stage / ASSETS_DIRNAME, ignore=is_unpublished_asset)
+        # the words of the page script, in the language of the site
+        write_script_strings(stage / ASSETS_DIRNAME, locale_tools.site_strings(data.site))
         write_site_images(images, stage / ASSETS_DIRNAME, palette, neutral_og=og.neutral)
         media = copy_media(data.media, media_dir, stage / ASSETS_DIRNAME / media_name)
         events = write_calendars(stage / ASSETS_DIRNAME / media_name, calendars, published)

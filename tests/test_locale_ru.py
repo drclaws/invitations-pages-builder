@@ -13,6 +13,7 @@ from pathlib import Path
 
 from tests import support
 from tests.support import build
+from tests.test_locale import CHROME, LEFT_SECONDS, plural_category, shipped_strings
 from tools import _locale
 
 ROOT = support.ROOT
@@ -86,6 +87,34 @@ class RussianExampleTests(unittest.TestCase):
                 self.assertIn(text, self.page)
         # the label of a video tile: the word of the pack, the description, the duration
         self.assertRegex(self.page, r'aria-label="Видео: Видео предложения, 0:\d\d"')
+
+    def test_the_script_gets_the_russian_strings(self):
+        strings = shipped_strings(self.out)
+        self.assertEqual(strings, _locale.script_strings(_locale.pack("ru")))
+        for unit, forms in (("days", ("день", "дня", "дней")), ("hours", ("час", "часа", "часов")),
+                            ("minutes", ("минута", "минуты", "минут")),
+                            ("seconds", ("секунда", "секунды", "секунд"))):  # fmt: skip
+            with self.subTest(unit=unit):
+                self.assertEqual(
+                    strings["countdown"][unit],
+                    {"one": forms[0], "few": forms[1], "many": forms[2], "other": forms[1]},
+                )
+        self.assertEqual(strings["lightbox"]["position"], "{item} {n} из {total}")
+        self.assertEqual(strings["lightbox"]["nextItem"], "Вперёд")
+
+    @unittest.skipUnless(CHROME, "Chrome or Chromium is not installed")
+    def test_the_countdown_in_a_real_browser(self):
+        start = self.site["events"][self.site["mainEvent"]]["start"]
+        found = support.countdown_in_browser(self.out, f"{TOKEN}/", CHROME, start, LEFT_SECONDS)
+        self.assertEqual(found["lang"], "ru")
+        self.assertTrue(found["shown"])
+        # 1 day, 2 hours, 5 minutes and about 21 seconds
+        self.assertEqual([cell[1] for cell in found["cells"]][:3], ["1", "02", "05"])
+        self.assertEqual([cell[2] for cell in found["cells"]][:3], ["день", "часа", "минут"])
+        forms = _locale.pack("ru")["countdown"]
+        for unit, value, label in found["cells"]:
+            with self.subTest(unit=unit, value=value):
+                self.assertEqual(label, forms[unit][plural_category("ru", int(value))])
 
     def test_the_pack_holds_the_russian_words(self):
         russian = _locale.pack("ru")

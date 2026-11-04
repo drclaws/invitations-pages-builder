@@ -9,7 +9,9 @@
         not switch the others off.
      3. The modules. They hook only onto data attributes; the is-* classes
         and the marker classes on <html> are states for the styles
-        (section 7 of app.css).
+        (section 7 of app.css). Before the first one that writes words: the
+        strings in the language of the page (STRINGS), one line the build
+        fills in.
 
    No build step and no dependencies; compatible with the CSP
    script-src 'self' (no inline code, eval or new Function). The page
@@ -55,9 +57,9 @@
   }
 
   /* The script loads with defer: DOMContentLoaded has not fired yet. The
-     other branches are a safety net for another way of loading. The subscription
-     comes before the module code: a failure while declaring a later module
-     does not cancel the start of the earlier ones. */
+     other branches are a safety net for another way of loading. The
+     subscription comes before the module code: a failure while declaring a
+     later module does not cancel the start of the earlier ones. */
   document.addEventListener('DOMContentLoaded', start);
   window.addEventListener('load', start);
   if (document.readyState === 'complete') {
@@ -759,37 +761,67 @@
 
 
   /* ==========================================================================
+     The strings — the words the modules write, in the language of the page
+     --------------------------------------------------------------------------
+     One line of JSON: countdown holds the plural forms of every unit of the
+     timer by the categories of the Unicode plural rules (one, few, many,
+     other…), lightbox the texts of the viewer. Here the line holds the
+     English strings; the build writes the strings of the site into the
+     published copy of the file, on this very line. Nothing else reads the
+     page for words: no attribute, no inline script.
+     ========================================================================== */
+
+  var STRINGS = {"countdown":{"days":{"one":"day","other":"days"},"hours":{"one":"hour","other":"hours"},"minutes":{"one":"minute","other":"minutes"},"seconds":{"one":"second","other":"seconds"}},"lightbox":{"close":"Close","error":"The image could not be loaded.","image":"Image viewer","itemImage":"Photo","itemVideo":"Video","loading":"Loading…","mixed":"Photo and video viewer","next":"Next photo","nextItem":"Next","photos":"Photo viewer","position":"{item} {n} of {total}","prev":"Previous photo","prevItem":"Previous","video":"Video viewer","videoError":"The video could not be loaded."}}; /* @strings */
+
+  /* A pattern of the strings with its placeholders filled in:
+     fill('{n} of {total}', { n: 3, total: 5 }) gives '3 of 5'. A plain
+     replace: nothing is evaluated. */
+  function fill(pattern, values) {
+    return pattern.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g, function (match, name) {
+      var known = Object.prototype.hasOwnProperty.call(values, name);
+      return known ? String(values[name]) : match;
+    });
+  }
+
+  /* The plural rules of the language of the page, made on first use: null
+     without Intl.PluralRules or for a tag the browser rejects (RangeError),
+     and then every number takes the form 'other'. */
+  var pluralRules;
+
+  function pluralCategory(count) {
+    if (pluralRules === undefined) {
+      try {
+        pluralRules = new Intl.PluralRules(document.documentElement.lang);
+      } catch (error) {
+        pluralRules = null;
+      }
+    }
+    return pluralRules ? pluralRules.select(count) : 'other';
+  }
+
+  /* The form of a word for a number: forms = { one: …, other: … }. */
+  function pluralForm(count, forms) {
+    return forms[pluralCategory(count)] || forms.other;
+  }
+
+
+  /* ==========================================================================
      The countdown module — the countdown timer [data-countdown="<dateISO>"]
      --------------------------------------------------------------------------
      The container is hidden in the markup (hidden); the date as text always
      stays next to it. With an invalid date or an event that has begun, the
-     container stays hidden.
+     container stays hidden. The labels of the units take the plural form
+     for the number (STRINGS.countdown).
      ========================================================================== */
 
   var ISO_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
 
   var COUNTDOWN_UNITS = [
-    { name: 'days', seconds: 86400, pad: false, forms: ['день', 'дня', 'дней'] },
-    { name: 'hours', seconds: 3600, pad: true, forms: ['час', 'часа', 'часов'] },
-    { name: 'minutes', seconds: 60, pad: true, forms: ['минута', 'минуты', 'минут'] },
-    { name: 'seconds', seconds: 1, pad: true, forms: ['секунда', 'секунды', 'секунд'] }
+    { name: 'days', seconds: 86400, pad: false },
+    { name: 'hours', seconds: 3600, pad: true },
+    { name: 'minutes', seconds: 60, pad: true },
+    { name: 'seconds', seconds: 1, pad: true }
   ];
-
-  /* The Russian word form for a number: forms = [one, two to four, many]. */
-  function pluralRu(count, forms) {
-    var n = Math.abs(count) % 100;
-    var last = n % 10;
-    if (n >= 11 && n <= 14) {
-      return forms[2];
-    }
-    if (last === 1) {
-      return forms[0];
-    }
-    if (last >= 2 && last <= 4) {
-      return forms[1];
-    }
-    return forms[2];
-  }
 
   function parseTarget(value) {
     var text = (value || '').trim();
@@ -858,7 +890,7 @@
         rest -= amount * cell.unit.seconds;
         var text = String(amount);
         setText(cell.value, cell.unit.pad && amount < 10 ? '0' + text : text);
-        setText(cell.label, pluralRu(amount, cell.unit.forms));
+        setText(cell.label, pluralForm(amount, STRINGS.countdown[cell.unit.name]));
       });
       container.hidden = false;
 
@@ -946,22 +978,10 @@
     prev: 'M15 5 8 12 15 19',
     next: 'M9 5 16 12 9 19'
   };
-  var LIGHTBOX_TEXT = {
-    photos: 'Просмотр фотографий',
-    mixed: 'Просмотр фото и видео',
-    image: 'Просмотр изображения',
-    video: 'Просмотр видео',
-    close: 'Закрыть',
-    prev: 'Предыдущая фотография',
-    next: 'Следующая фотография',
-    prevItem: 'Назад',
-    nextItem: 'Вперёд',
-    itemImage: 'Фотография',
-    itemVideo: 'Видео',
-    loading: 'Загрузка…',
-    error: 'Не удалось загрузить изображение.',
-    videoError: 'Не удалось загрузить видео.'
-  };
+  /* The texts of the viewer: the names of the dialog, the labels of the
+     buttons, the names of an item, the notes and the pattern of the
+     position for screen readers. */
+  var LIGHTBOX_TEXT = STRINGS.lightbox;
   var SWIPE_MIN = 48;         /* horizontal px for a gesture to count as a swipe */
   var SWIPE_RATIO = 1.5;      /* the horizontal must dominate the vertical */
   var SWIPE_CLICK_MS = 400;   /* a click right after a gesture does not close the dialog */
@@ -1203,8 +1223,11 @@
       ui.dialog.classList.toggle('is-video', item.video);
       setText(ui.status, '');
       setText(ui.count, (index + 1) + ' / ' + items.length);
-      setText(ui.live, (item.video ? LIGHTBOX_TEXT.itemVideo : LIGHTBOX_TEXT.itemImage) +
-        ' ' + (index + 1) + ' из ' + items.length);
+      setText(ui.live, fill(LIGHTBOX_TEXT.position, {
+        item: item.video ? LIGHTBOX_TEXT.itemVideo : LIGHTBOX_TEXT.itemImage,
+        n: index + 1,
+        total: items.length
+      }));
       setDisabled(ui.prev, index === 0);
       setDisabled(ui.next, index === items.length - 1);
       if (item.video) {

@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -252,6 +253,10 @@ def tokens_css(**overrides: str) -> str:
     return ":root{" + ";".join(f"{name}:{value}" for name, value in colors.items()) + "}\n"
 
 
+#: The fixture page script: the line the build writes the script strings into.
+FIXTURE_SCRIPT = "// fixture\nvar STRINGS = {}; /* @strings */\n"
+
+
 def write_app_css(code_dir: Path, text: str = "", **overrides: str) -> Path:
     """Replace the fixture `app.css`: `text`, then the tokens the build needs."""
     path = Path(code_dir) / "assets" / "app.css"
@@ -353,7 +358,7 @@ def write_assets(directory: Path) -> Path:
     (directory / ".hidden").mkdir(parents=True, exist_ok=True)
     (directory / "app.css").write_text(tokens_css(), encoding="utf-8")
     # every build copies the script of the pages: a previous build has it
-    (directory / "app.js").write_text("// fixture\n", encoding="utf-8")
+    (directory / "app.js").write_text(FIXTURE_SCRIPT, encoding="utf-8")
     (directory / "fonts" / "sans.woff2").write_bytes(b"wOF2 fixture")
     (directory / "fonts" / ".gitkeep").write_text("", encoding="utf-8")
     (directory / ".gitkeep").write_text("", encoding="utf-8")
@@ -456,6 +461,81 @@ def run_main(code_dir: Path, *args: str, env: dict | None = None):
     return SimpleNamespace(
         returncode=code, stdout=stdout.getvalue(), stderr=stderr.getvalue()
     )
+
+
+#: Reads the first countdown of a page once the script has shown it.
+_COUNTDOWN_SCRIPT = """new Promise((done) => {
+  const started = Date.now();
+  (function check() {
+    const box = document.querySelector('[data-countdown]');
+    if ((box && !box.hidden) || Date.now() - started > 5000) {
+      done({
+        lang: document.documentElement.lang,
+        shown: Boolean(box && !box.hidden),
+        cells: Array.from(document.querySelectorAll('[data-countdown-unit]'), (cell) => [
+          cell.getAttribute('data-countdown-unit'),
+          cell.querySelector('[data-countdown-value]').textContent,
+          cell.querySelector('[data-countdown-label]').textContent,
+        ]),
+      });
+    } else {
+      setTimeout(check, 50);
+    }
+  })();
+})"""
+
+
+def countdown_in_browser(
+    out_dir: Path, page: str, chrome: str, start_iso: str, left_seconds: int
+) -> dict:
+    """The countdown of a built page in a real browser with its script on.
+
+    The output directory is served at the root of `127.0.0.1`; the clock of
+    the page is moved so that `left_seconds` remain until `start_iso`.  The
+    result: `lang` of the page, whether the countdown is `shown` and its
+    `cells`, `[unit, value, label]` each.
+    """
+    from tools import _preview
+
+    shift = (
+        "(() => { const target = Date.parse(%s); const real = Date.now.bind(Date);"
+        " const offset = target - %d * 1000 - real(); Date.now = () => real() + offset; })();"
+    ) % (json.dumps(start_iso), left_seconds)
+    deadline = time.monotonic() + _preview.TIMEOUT_SECONDS
+    with tempfile.TemporaryDirectory(prefix="countdown-", ignore_cleanup_errors=True) as profile:
+        # the browser starts before the server thread, as in tools._preview
+        browser = _preview._Browser(chrome, profile, deadline)
+        try:
+            server = _preview._serve(Path(out_dir))
+            try:
+                target = browser.call("Target.createTarget", {"url": "about:blank"})["targetId"]
+                session = browser.call(
+                    "Target.attachToTarget", {"targetId": target, "flatten": True}
+                )["sessionId"]
+                browser.call("Page.enable", session=session)
+                browser.call("Page.setLifecycleEventsEnabled", {"enabled": True}, session)
+                browser.call("Page.addScriptToEvaluateOnNewDocument", {"source": shift}, session)
+                port = server.server_address[1]
+                navigation = browser.call(
+                    "Page.navigate", {"url": f"http://127.0.0.1:{port}/{page}"}, session
+                )
+                loader = navigation.get("loaderId")
+                browser.wait_for(
+                    "Page.lifecycleEvent",
+                    session,
+                    lambda params: params.get("name") == "load" and params.get("loaderId") == loader,
+                )
+                result = browser.call(
+                    "Runtime.evaluate",
+                    {"expression": _COUNTDOWN_SCRIPT, "awaitPromise": True, "returnByValue": True},
+                    session,
+                )
+                return result["result"]["value"]
+            finally:
+                server.shutdown()
+                server.server_close()
+        finally:
+            browser.close()
 
 
 def tree_files(root: Path) -> list[str]:

@@ -68,8 +68,6 @@ class LinkPreviewBuildTests(CliTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # the real template loads the script of the pages
-        (self.code / "assets" / "app.js").write_text("", encoding="utf-8")
         support.write_data(self.data, site=site_with_preview())
 
     def heads(self) -> list[_Head]:

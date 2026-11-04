@@ -5,13 +5,17 @@ the build in a language with a pack and in one without."""
 from __future__ import annotations
 
 import copy
+import json
 import re
+import shutil
+import tempfile
 import unittest
+from pathlib import Path
 
 from tests import fixtures_v2 as F
 from tests import support
 from tests.support import CliTestCase, build
-from tools import _dates, _locale, _page, _schema
+from tools import _locale, _page, _preview, _schema
 
 REAL_TEMPLATE = (support.ROOT / build.TEMPLATE_FILE).read_text(encoding="utf-8")
 #: Any letter of the Cyrillic block (U+0400 to U+04FF).
@@ -454,15 +458,82 @@ class SourcesTests(unittest.TestCase):
                 self.assertNotRegex(path.read_text(encoding="utf-8"), CYRILLIC)
 
 
+SCRIPT = support.ROOT / "assets" / build.SCRIPT_FILE
+#: The line of the page script that holds the strings.
+STRINGS_LINE = re.compile(r"(?m)^  var STRINGS = (.*); /\* @strings \*/$")
+CHROME = _preview.find_chrome()
+
+
+def shipped_strings(out) -> dict:
+    """The script strings of a built page script."""
+    text = (out / "assets" / build.SCRIPT_FILE).read_text(encoding="utf-8")
+    found = STRINGS_LINE.findall(text)
+    assert len(found) == 1, len(found)
+    return json.loads(found[0])
+
+
+def plural_category(lang: str, count: int) -> str:
+    """The category of a whole number (the Unicode plural rules)."""
+    if lang == "en":
+        return "one" if count == 1 else "other"
+    # the rules of Russian and Serbian differ only in the name of the rest
+    last, tens = count % 10, count % 100
+    if last == 1 and tens != 11:
+        return "one"
+    if 2 <= last <= 4 and not 12 <= tens <= 14:
+        return "few"
+    return {"ru": "many", "sr": "other"}[lang]
+
+
+#: One day, two hours, five minutes and 21 seconds before the start.
+LEFT_SECONDS = 86400 + 2 * 3600 + 5 * 60 + 21
+
+
+class ScriptStringsTests(unittest.TestCase):
+    def test_the_source_holds_the_english_strings_as_the_build_writes_them(self):
+        found = STRINGS_LINE.findall(SCRIPT.read_text(encoding="utf-8"))
+        self.assertEqual(found, [_locale.script_json(_locale.pack("en"))])
+
+    def test_the_build_rewrites_the_one_line(self):
+        assets = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, assets, True)
+        # line breaks of another system, kept as they are
+        source ="a();\r\n  var STRINGS = {\"x\":1}; /* @strings */\r\nb();\r\n"
+        (assets / build.SCRIPT_FILE).write_bytes(source.encode("utf-8"))
+        build.write_script_strings(assets, _locale.site_strings({"lang": "sr", "strings": SERBIAN}))
+        written = (assets / build.SCRIPT_FILE).read_bytes().decode("utf-8")
+        lines = written.split("\r\n")
+        self.assertEqual((lines[0], lines[2], lines[3]), ("a();", "b();", ""))
+        self.assertTrue(lines[1].startswith('  var STRINGS = {"countdown":{"days":{"few":"dana",'))
+        self.assertTrue(lines[1].endswith("}; /* @strings */"))
+
+    def test_no_line_or_several_is_an_error(self):
+        assets = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, assets, True)
+        line = "var STRINGS = {}; /* @strings */\n"
+        for text, count in (("", 0), ("var STRINGS = {};\n", 0), (line * 2, 2)):
+            with self.subTest(count=count, text=text):
+                (assets / build.SCRIPT_FILE).write_text(text, encoding="utf-8")
+                with self.assertRaises(build.BuildError) as caught:
+                    build.write_script_strings(assets, _locale.pack("en"))
+                self.assertEqual(
+                    str(caught.exception),
+                    "assets/app.js: expected exactly one line 'var STRINGS = {…}; "
+                    f"/* @strings */', found {count}",
+                )
+        (assets / build.SCRIPT_FILE).unlink()
+        with self.assertRaises(build.BuildError):
+            build.write_script_strings(assets, _locale.pack("en"))
+
+
 class LanguageBuildTests(CliTestCase):
-    """`validate` and `build` with the real template."""
+    """`validate` and `build` with the real template and page script."""
 
     template = REAL_TEMPLATE
 
     def setUp(self) -> None:
         super().setUp()
-        # the real template loads the script of the pages
-        (self.code / "assets" / "app.js").write_text("", encoding="utf-8")
+        shutil.copyfile(SCRIPT, self.code / "assets" / build.SCRIPT_FILE)
 
     def write_site(self, **changes) -> None:
         site = support.site_data()
@@ -546,6 +617,97 @@ class LanguageBuildTests(CliTestCase):
                 [expected],
             )
         self.assertFalse(self.out.exists())
+
+    def test_an_english_build_ships_the_script_as_it_is(self):
+        self.write_site(lang=None)
+        result = self.build_in_process()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.out / "assets" / build.SCRIPT_FILE).read_bytes(), SCRIPT.read_bytes())
+
+    def test_the_script_gets_the_strings_of_the_site(self):
+        for changes, expected in (
+            ({"lang": "sr-Latn", "strings": SERBIAN}, SERBIAN),
+            # a partial override of a pack: merged into the pack
+            ({"lang": "en", "strings": {"lightbox": {"close": "Shut"}}},
+             _locale.merge(_locale.pack("en"), {"lightbox": {"close": "Shut"}})),
+        ):  # fmt: skip
+            with self.subTest(lang=changes["lang"]):
+                self.write_site(**changes)
+                result = self.build_in_process()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(shipped_strings(self.out), _locale.script_strings(expected))
+                # one line differs from the source, nothing else
+                source = SCRIPT.read_text(encoding="utf-8").splitlines()
+                shipped = (self.out / "assets" / build.SCRIPT_FILE).read_text(
+                    encoding="utf-8").splitlines()  # fmt: skip
+                self.assertEqual(len(shipped), len(source))
+                differ = [n for n, (a, b) in enumerate(zip(source, shipped)) if a != b]
+                self.assertEqual(len(differ), 1)
+                self.assertIn("/* @strings */", source[differ[0]])
+                # no attribute, no inline script on the pages: the CSP stays 'self'
+                page = self.page()
+                self.assertEqual(page.count("<script"), 1)
+                self.assertIn('<script src="/assets/app.js" defer></script>', page)
+                self.assertNotIn("countdown", page.split("<body>")[0].replace("app.js", ""))
+
+    def test_a_script_without_the_line_of_strings_stops_the_build(self):
+        (self.code / "assets" / build.SCRIPT_FILE).write_text("// no strings\n", encoding="utf-8")
+        result = self.run_build()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(
+            "error: assets/app.js: expected exactly one line 'var STRINGS = {…}; /* @strings */', "
+            "found 0",
+            result.stderr,
+        )
+        self.assertFalse(self.out.exists())
+
+
+@unittest.skipUnless(CHROME, "Chrome or Chromium is not installed")
+class CountdownInBrowserTests(support.TempDirTestCase):
+    """The plural forms of the countdown as a real browser shows them."""
+
+    def build(self, site: dict) -> Path:
+        code = support.make_code_dir(self.tmp, template=REAL_TEMPLATE)
+        shutil.copyfile(SCRIPT, code / "assets" / build.SCRIPT_FILE)
+        shutil.copyfile(support.ROOT / "assets" / "app.css", code / "assets" / "app.css")
+        data = support.write_data(self.tmp / "data", site=site)
+        media = support.write_media(self.tmp / "media")
+        out = self.tmp / "dist"
+        build.build_site(
+            data, media, out, code_dir=code, log=lambda _line: None,
+            preview=build.PreviewOptions(enabled=False),
+        )  # fmt: skip
+        return out
+
+    def countdown(self, site: dict) -> dict:
+        start = site["events"][site["mainEvent"]]["start"]
+        return support.countdown_in_browser(
+            self.build(site), f"{support.TOKEN_A}/", CHROME, start, LEFT_SECONDS
+        )
+
+    def assertForms(self, found: dict, lang: str, forms: dict) -> None:
+        self.assertTrue(found["shown"])
+        self.assertEqual([cell[0] for cell in found["cells"]], list(_locale.COUNTDOWN_UNITS))
+        for unit, value, label in found["cells"]:
+            with self.subTest(unit=unit, value=value):
+                self.assertEqual(label, forms[unit][plural_category(lang, int(value))])
+
+    def test_english(self):
+        site = support.site_data()
+        site.pop("lang")
+        found = self.countdown(site)
+        self.assertEqual(found["lang"], "en")
+        # 1 day, 2 hours, 5 minutes and about 21 seconds
+        self.assertEqual([cell[1] for cell in found["cells"]][:3], ["1", "02", "05"])
+        self.assertEqual([cell[2] for cell in found["cells"]][:3], ["day", "hours", "minutes"])
+        self.assertForms(found, "en", _locale.pack("en")["countdown"])
+
+    def test_a_language_without_a_pack(self):
+        site = support.site_data(lang="sr-Latn", strings=SERBIAN)
+        found = self.countdown(site)
+        self.assertEqual(found["lang"], "sr-Latn")
+        self.assertEqual([cell[2] for cell in found["cells"]][:3], ["dan", "sata", "minuta"])
+        self.assertForms(found, "sr", SERBIAN["countdown"])
 
 
 if __name__ == "__main__":  # pragma: no cover
