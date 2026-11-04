@@ -6,9 +6,10 @@
 - `format_path` writes a field path: `sections[3].widgets[1].location`.
 - `did_you_mean` suggests the closest of the known names.
 - `is_identifier`, `show_id`, `identifier_problem`: the rule for ids.
-- Texts: a string, or an object with exactly the keys `ty` and `vy` (the
-  informal and the formal form of address).  `{name}` inserts a value, `{{`
-  and `}}` are literal braces; see `check_text` and `resolve_text`.
+- Texts: a string, or an object with the informal and the formal form of
+  address, `informal` and `formal` (`ty` and `vy` are their aliases).
+  `{name}` inserts a value, `{{` and `}}` are literal braces; see
+  `check_text` and `resolve_text`.
   `{text:<id>}` inserts a named text of the site (the registry `texts`) in
   the same form; `expand_texts` replaces them before the placeholders are
   filled in.
@@ -243,11 +244,19 @@ def identifier_problem(value: Any, path: Sequence[PathPart]) -> str | None:
 # Texts: forms of address and placeholders
 # --------------------------------------------------------------------------
 
-#: The informal and the formal form of address.
-FORMS = ("ty", "vy")
+#: The informal and the formal form of address (T-V distinction: tu/vous,
+#: du/Sie, ty/vy).
+FORMS = ("informal", "formal")
+#: Other names of the forms, accepted everywhere a form is named.
+FORM_ALIASES = {"ty": "informal", "vy": "formal"}
+#: Every name of a form: the canonical names, then the aliases.
+FORM_NAMES = (*FORMS, *FORM_ALIASES)
 _PLACEHOLDER_NAME_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*")
 _BRACE_RE = re.compile(r"\{\{|\}\}|[{}]")
-_TEXT_SHAPE = "must be a string or an object with the strings 'ty' and 'vy'"
+_TEXT_SHAPE = (
+    "must be a string or an object with the strings 'informal' and 'formal' "
+    "(or 'ty' and 'vy')"
+)
 
 
 class TextError(ValueError):
@@ -274,8 +283,10 @@ TEXT_REF_PREFIX = "text:"
 #: The common form of a named text: the variant for places without a guest
 #: (the link preview).  Allowed in the registry `texts` only.
 COMMON_FORM = "all"
-#: The keys of a named text given as an object.
+#: The forms of a named text given as an object.
 TEXT_FORMS = (*FORMS, COMMON_FORM)
+#: Every key of a named text given as an object.
+TEXT_FORM_NAMES = (*FORM_NAMES, COMMON_FORM)
 #: How deep named texts may use each other.
 MAX_TEXT_DEPTH = 8
 #: The longest text once its named texts are expanded: a guard against a
@@ -283,13 +294,45 @@ MAX_TEXT_DEPTH = 8
 MAX_EXPANDED_LENGTH = 10000
 
 
+def canonical_form(name: Any) -> str | None:
+    """`informal` or `formal` for a name of a form (an alias included);
+    None for anything else."""
+    if name in FORMS:
+        return name
+    return FORM_ALIASES.get(name) if isinstance(name, str) else None
+
+
+def form_keys(value: Mapping[str, Any], form: str) -> list[str]:
+    """The keys of a text object that give `form` (a canonical name or
+    `all`): the canonical key first, then its alias."""
+    names = [form, *(alias for alias, target in FORM_ALIASES.items() if target == form)]
+    return [name for name in names if name in value]
+
+
+def form_variants(value: Mapping[str, Any]) -> list[tuple[str, str, Any]]:
+    """`(key, canonical form, value)` of every key of a text object that
+    names a form of address, the canonical names first."""
+    return [(key, FORM_ALIASES.get(key, key), value[key]) for key in FORM_NAMES if key in value]
+
+
+def duplicate_forms(value: Mapping[str, Any]) -> list[str]:
+    """A problem for every form an object gives under both of its names."""
+    return [
+        f"gives the {form} form twice ('{alias}' and '{form}')"
+        for alias, form in FORM_ALIASES.items()
+        if alias in value and form in value
+    ]
+
+
 def form_problem(form: Any) -> str | None:
-    """The problem of a form of address, or None; the value is never shown."""
+    """The problem of a canonical form of address, or None; the value is
+    never shown."""
     return None if form in FORMS else f"must be one of: {', '.join(FORMS)}"
 
 
 def text_value_problems(value: Any, path: Sequence[PathPart]) -> list[str]:
-    """Problems with a text's shape: a string or `{"ty": …, "vy": …}`."""
+    """Problems with a text's shape: a string or
+    `{"informal": …, "formal": …}` (or the aliases `ty` and `vy`)."""
     field = format_path(path)
     if isinstance(value, str):
         return []
@@ -300,18 +343,21 @@ def text_value_problems(value: Any, path: Sequence[PathPart]) -> list[str]:
         + (
             f" (the common form '{COMMON_FORM}' is allowed in 'texts' only)"
             if key == COMMON_FORM
-            else did_you_mean(key, FORMS)
+            else did_you_mean(key, FORM_NAMES)
         )
         for key in value
-        if key not in FORMS
+        if key not in FORM_NAMES
     ]
-    missing = [form for form in FORMS if form not in value]
+    problems.extend(f"field '{field}' {problem}" for problem in duplicate_forms(value))
+    missing = [form for form in FORMS if not form_keys(value, form)]
     if missing:
         listed = " and ".join(f"'{form}'" for form in missing)
-        problems.append(f"field '{field}' must have both 'ty' and 'vy' (missing {listed})")
-    for form in FORMS:
-        if form in value and not isinstance(value[form], str):
-            problems.append(f"field '{format_path((*path, form))}' must be a string")
+        problems.append(
+            f"field '{field}' must have both 'informal' and 'formal' (missing {listed})"
+        )
+    for key, _form, text in form_variants(value):
+        if not isinstance(text, str):
+            problems.append(f"field '{format_path((*path, key))}' must be a string")
     return problems
 
 
@@ -400,13 +446,42 @@ def text_refs(text: str) -> list[TextRef]:
 
 
 def text_variant(value: Any, form: str) -> str | None:
-    """The variant of a named text for `form` (`ty`, `vy` or `all`): a string
-    serves every form; None when an object has no such variant."""
+    """The variant of a text for `form` (`informal`, `formal` or `all`;
+    under its canonical name or its alias): a string serves every form; None
+    when an object has no such variant."""
     if isinstance(value, str):
         return value
-    if isinstance(value, dict) and isinstance(value.get(form), str):
-        return value[form]
+    if isinstance(value, dict):
+        for key in form_keys(value, form):
+            if isinstance(value[key], str):
+                return value[key]
     return None
+
+
+def needs_form(value: Any, texts: Mapping[str, Any]) -> bool:
+    """True when a text depends on the form of address: an object of forms,
+    or a string that uses a named text with forms, directly or through other
+    named texts.  An unknown named text counts as none (the checks of the
+    data report it)."""
+    if isinstance(value, dict):
+        return True
+    pending = [value] if isinstance(value, str) else []
+    seen: set[str] = set()
+    while pending:
+        try:
+            refs = text_refs(pending.pop())
+        except TextError:
+            continue
+        for ref in refs:
+            if ref.id in seen or ref.id not in texts:
+                continue
+            seen.add(ref.id)
+            named = texts[ref.id]
+            if isinstance(named, dict):
+                return True
+            if isinstance(named, str):
+                pending.append(named)
+    return False
 
 
 def _known_texts(texts: Mapping[str, Any]) -> str:
@@ -428,7 +503,7 @@ def expand_texts(
     _cache: dict | None = None,
 ) -> str:
     """Replace every `{text:<id>}` with the variant of that named text for
-    `form` (`ty`, `vy` or `all`), recursively.
+    `form` (`informal`, `formal` or `all`), recursively.
 
     The result is source text again: built-in placeholders and `{{`/`}}` are
     kept as written, so that one `substitute` fills them in afterwards (and
@@ -597,9 +672,9 @@ def check_text(
         variants = [(tuple(path), value)]
     elif isinstance(value, dict):
         variants = [
-            ((*path, form), value[form])
-            for form in FORMS
-            if isinstance(value.get(form), str)
+            ((*path, key), text)
+            for key, _form, text in form_variants(value)
+            if isinstance(text, str)
         ]
     else:
         variants = []
@@ -613,15 +688,15 @@ def check_text(
 
 
 def pick_form(value: Any, form: str) -> str:
-    """The variant of a text for a form of address (`ty` or `vy`)."""
+    """The variant of a text for a form of address (`informal` or `formal`;
+    the text may give it under its alias)."""
     problem = form_problem(form)
     if problem is not None:
         raise TextError(problem)
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict) and isinstance(value.get(form), str):
-        return value[form]
-    raise TextError(_TEXT_SHAPE)
+    variant = text_variant(value, form)
+    if variant is None:
+        raise TextError(_TEXT_SHAPE)
+    return variant
 
 
 def substitute(text: str, values: Mapping[str, str], known: Iterable[str]) -> str:

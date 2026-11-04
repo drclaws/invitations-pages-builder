@@ -173,7 +173,10 @@ class VersionTests(SchemaTestCase):
         report = run(change)
         self.assertEqual(len(report.errors), 2)
         self.assertIn("schemaVersion", report.errors[0])
-        self.assertEqual(report.errors[1], f"{GUEST_2}: field 'form' must be one of: ty, vy")
+        self.assertEqual(
+            report.errors[1],
+            f"{GUEST_2}: field 'form' must be one of: informal, formal (or the aliases ty, vy)",
+        )
 
     def test_top_level_types(self):
         report = run(site=[], invitations={})
@@ -1011,9 +1014,30 @@ class MediaDataTests(SchemaTestCase):
 
 class TextTests(SchemaTestCase):
     def test_both_forms(self):
-        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text={"ty": "Привет"}))
+        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text={"ty": "Hello"}))
         self.assertOneError(
-            report, "site.json: field 'sections[1].widgets[0].text' must have both 'ty' and 'vy' (missing 'vy')"
+            report,
+            "site.json: field 'sections[1].widgets[0].text' must have both 'informal' and "
+            "'formal' (missing 'formal')",
+        )
+
+    def test_the_canonical_names_and_the_aliases(self):
+        for text in ({"informal": "Hello", "formal": "Good day"},
+                     {"informal": "Hello", "vy": "Good day"}):  # fmt: skip
+            with self.subTest(text=text):
+                self.assertMessages(run(lambda s, i: s["sections"][1]["widgets"][0].update(text=text)))
+
+    def test_a_form_given_twice(self):
+        text = {"ty": "Hello", "informal": "Hi", "formal": "Good day"}
+        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text=text))
+        self.assertOneError(
+            report,
+            "site.json: field 'sections[1].widgets[0].text' gives the informal form twice ('ty' "
+            "and 'informal')",
+        )
+        self.assertOneError(
+            run(lambda s, i: s["texts"]["invite"].update(formal="Please come")),
+            "site.json: field 'texts.invite' gives the formal form twice ('vy' and 'formal')",
         )
 
     def test_unknown_placeholder_is_not_quoted(self):
@@ -1148,8 +1172,10 @@ class NamedTextTests(SchemaTestCase):
             report.errors,
             [
                 "site.json: field 'texts.number' must be a string or an object with the strings "
-                "'ty' and 'vy' (and, for places without a guest, the common form 'all'), got a number",
-                "site.json: field 'texts.half' must have both 'ty' and 'vy' (missing 'vy')",
+                "'informal' and 'formal' (or 'ty' and 'vy'; and, for places without a guest, the "
+                "common form 'all'), got a number",
+                "site.json: field 'texts.half' must have both 'informal' and 'formal' (missing "
+                "'formal')",
                 "site.json: unknown field 'texts.extra.al' (did you mean 'all'?)",
                 "site.json: field 'texts.empty' must not be empty",
             ],
@@ -1340,10 +1366,16 @@ class InvitationTests(SchemaTestCase):
         self.assertEqual(_data.invitation_label(12), "invitation #12")
 
     def test_form(self):
-        report = run(lambda s, i: i[5].update(form="tu"))
-        self.assertOneError(report, "invitation #6: field 'form' must be one of: ty, vy")
-        report = run(lambda s, i: i[5].pop("form"))
-        self.assertOneError(report, "invitation #6: field 'form' is required ('ty' or 'vy')")
+        expected = "invitation #6: field 'form' must be one of: informal, formal (or the aliases ty, vy)"
+        for form in ("tu", "Formal", "all", "", 1, None):
+            with self.subTest(form=form):
+                self.assertOneError(run(lambda s, i: i[5].update(form=form)), expected)
+        # the canonical names and the permanent aliases
+        for form in ("informal", "formal", "ty", "vy"):
+            with self.subTest(form=form):
+                self.assertMessages(run(lambda s, i: i[5].update(form=form)))
+        # optional here: the page tree reports it when a text with forms needs it
+        self.assertMessages(run(lambda s, i: i[5].pop("form")))
 
     def test_greeting_is_one_line(self):
         report = run(lambda s, i: i[0].update(greeting="Дорогая\nКэрол"))
@@ -1705,8 +1737,9 @@ class LinkPendingTests(SchemaTestCase):
             ("Фото {foo}", f"has an unknown placeholder at character 6; {available}"),
             ("Фото {token", "has an unclosed '{' at character 6 (write '{{' for a literal brace)"),
             ("{text:nope}", "refers to an unknown text 'nope' at character 1; known: announce, invite"),
-            (3, "must be a string or an object with the strings 'ty' and 'vy'"),
-            ({"ty": "Фото"}, "must have both 'ty' and 'vy' (missing 'vy')"),
+            (3, "must be a string or an object with the strings 'informal' and 'formal' "
+                "(or 'ty' and 'vy')"),
+            ({"ty": "Photos"}, "must have both 'informal' and 'formal' (missing 'formal')"),
         ):
             with self.subTest(value=value):
                 self.assertOneError(run(change_photos(pending=value)), f"{PHOTOS}.pending' {problem}")

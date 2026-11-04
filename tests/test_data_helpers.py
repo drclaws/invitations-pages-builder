@@ -286,16 +286,39 @@ class TextShapeTests(unittest.TestCase):
     def test_a_string_or_both_forms(self):
         self.assertEqual(self.problems(SECRET), [])
         self.assertEqual(self.problems({"ty": SECRET, "vy": SECRET}), [])
+        self.assertEqual(self.problems({"informal": SECRET, "formal": SECRET}), [])
+        # the aliases are permanent and mix with the canonical names
+        self.assertEqual(self.problems({"informal": SECRET, "vy": SECRET}), [])
         self.assertEqual(self.problems(""), [])
 
     def test_a_missing_form(self):
         self.assertEqual(
             self.problems({"ty": SECRET}),
-            [f"field '{self.field}' must have both 'ty' and 'vy' (missing 'vy')"],
+            [f"field '{self.field}' must have both 'informal' and 'formal' (missing 'formal')"],
+        )
+        self.assertEqual(
+            self.problems({"formal": SECRET}),
+            [f"field '{self.field}' must have both 'informal' and 'formal' (missing 'informal')"],
         )
         self.assertEqual(
             self.problems({}),
-            [f"field '{self.field}' must have both 'ty' and 'vy' (missing 'ty' and 'vy')"],
+            [
+                f"field '{self.field}' must have both 'informal' and 'formal' "
+                "(missing 'informal' and 'formal')"
+            ],
+        )
+
+    def test_a_form_given_twice(self):
+        self.assertEqual(
+            self.problems({"ty": SECRET, "informal": SECRET, "formal": SECRET}),
+            [f"field '{self.field}' gives the informal form twice ('ty' and 'informal')"],
+        )
+        self.assertEqual(
+            self.problems({"ty": "a", "informal": "b", "vy": "c", "formal": "d"}),
+            [
+                f"field '{self.field}' gives the informal form twice ('ty' and 'informal')",
+                f"field '{self.field}' gives the formal form twice ('vy' and 'formal')",
+            ],
         )
 
     def test_an_extra_key(self):
@@ -313,7 +336,7 @@ class TextShapeTests(unittest.TestCase):
                     self.problems(value),
                     [
                         f"field '{self.field}' must be a string or an object "
-                        "with the strings 'ty' and 'vy'"
+                        "with the strings 'informal' and 'formal' (or 'ty' and 'vy')"
                     ],
                 )
         self.assertEqual(
@@ -332,27 +355,61 @@ class TextShapeTests(unittest.TestCase):
 
 class FormTests(unittest.TestCase):
     def test_pick_form(self):
-        self.assertEqual(data_tools.pick_form("Общий текст", "ty"), "Общий текст")
-        self.assertEqual(data_tools.pick_form("Общий текст", "vy"), "Общий текст")
-        value = {"ty": "Приходи", "vy": "Приходите"}
-        self.assertEqual(data_tools.pick_form(value, "ty"), "Приходи")
-        self.assertEqual(data_tools.pick_form(value, "vy"), "Приходите")
+        self.assertEqual(data_tools.pick_form("Common text", "informal"), "Common text")
+        self.assertEqual(data_tools.pick_form("Common text", "formal"), "Common text")
+        for value in (
+            {"informal": "Come", "formal": "Do come"},
+            {"ty": "Come", "vy": "Do come"},
+            {"ty": "Come", "formal": "Do come"},
+        ):
+            with self.subTest(value=value):
+                self.assertEqual(data_tools.pick_form(value, "informal"), "Come")
+                self.assertEqual(data_tools.pick_form(value, "formal"), "Do come")
+
+    def test_the_canonical_names(self):
+        self.assertEqual(data_tools.FORMS, ("informal", "formal"))
+        for name, form in (("informal", "informal"), ("ty", "informal"),
+                           ("formal", "formal"), ("vy", "formal")):  # fmt: skip
+            with self.subTest(name=name):
+                self.assertEqual(data_tools.canonical_form(name), form)
+        for name in ("all", "TY", "Formal", "", None, 1, [], SECRET):
+            with self.subTest(name=name):
+                self.assertIsNone(data_tools.canonical_form(name))
 
     def test_an_invalid_form(self):
-        self.assertIsNone(data_tools.form_problem("ty"))
-        self.assertIsNone(data_tools.form_problem("vy"))
-        for form in ("tu", "TY", "", None, 1, SECRET):
+        self.assertIsNone(data_tools.form_problem("informal"))
+        self.assertIsNone(data_tools.form_problem("formal"))
+        # the aliases are resolved before a form is used
+        for form in ("tu", "TY", "ty", "vy", "", None, 1, SECRET):
             with self.subTest(form=form):
-                self.assertEqual(data_tools.form_problem(form), "must be one of: ty, vy")
+                self.assertEqual(
+                    data_tools.form_problem(form), "must be one of: informal, formal"
+                )
                 with self.assertRaises(data_tools.TextError) as caught:
-                    data_tools.pick_form({"ty": "a", "vy": "b"}, form)
-                self.assertEqual(str(caught.exception), "must be one of: ty, vy")
+                    data_tools.pick_form({"informal": "a", "formal": "b"}, form)
+                self.assertEqual(str(caught.exception), "must be one of: informal, formal")
+
+    def test_a_text_needs_a_form(self):
+        texts = {"plain": "Hello", "both": {"ty": "a", "vy": "b"}, "via": "{text:both}!"}
+        for value, expected in (
+            ("Hello", False),
+            ("{text:plain} {coupleNames}", False),
+            ({"informal": "a", "formal": "b"}, True),
+            ("{text:both}", True),
+            # through another named text
+            ("{text:plain} {text:via}", True),
+            # unknown texts and broken syntax are reported by the checks
+            ("{text:missing}", False),
+            ("{broken", False),
+        ):
+            with self.subTest(value=value):
+                self.assertIs(data_tools.needs_form(value, texts), expected)
 
     def test_a_value_that_is_not_a_text(self):
         with self.assertRaises(data_tools.TextError):
-            data_tools.pick_form({"ty": "a"}, "vy")
+            data_tools.pick_form({"ty": "a"}, "formal")
         with self.assertRaises(data_tools.TextError):
-            data_tools.pick_form(5, "ty")
+            data_tools.pick_form(5, "informal")
 
 
 class PlaceholderSyntaxTests(unittest.TestCase):
@@ -499,7 +556,15 @@ class PlaceholderCheckTests(unittest.TestCase):
         self.assertEqual(data_tools.check_text("{greeting}", ("title",), KNOWN), [])
         self.assertEqual(
             data_tools.check_text(5, ("title",), KNOWN),
-            ["field 'title' must be a string or an object with the strings 'ty' and 'vy'"],
+            [
+                "field 'title' must be a string or an object with the strings 'informal' and "
+                "'formal' (or 'ty' and 'vy')"
+            ],
+        )
+        # the fields of a text with the canonical names
+        self.assertEqual(
+            data_tools.check_text({"informal": "{greeting}", "formal": "x"}, path, KNOWN, ()),
+            ["field 'sections[0].eyebrow.informal' uses {greeting}, but 'greeting' is not set"],
         )
 
     def test_texts_are_never_shown(self):
@@ -559,11 +624,12 @@ class SubstitutionTests(unittest.TestCase):
     def test_resolve_text(self):
         value = {"ty": "Приходи, {greeting}", "vy": "Приходите, {greeting}"}
         self.assertEqual(
-            data_tools.resolve_text(value, "vy", self.values, KNOWN),
+            data_tools.resolve_text(value, "formal", self.values, KNOWN),
             "Приходите, Дорогая Ева!",
         )
         self.assertEqual(
-            data_tools.resolve_text("{coupleNames}", "ty", self.values, KNOWN), "Алиса и Боб"
+            data_tools.resolve_text("{coupleNames}", "informal", self.values, KNOWN),
+            self.values["coupleNames"],
         )
         with self.assertRaises(data_tools.TextError):
             data_tools.resolve_text(value, "you", self.values, KNOWN)
@@ -583,10 +649,10 @@ class NamedTextTests(unittest.TestCase):
         "both": "{text:announce} {text:invite}",
     }
 
-    def expand(self, text, form="ty", texts=None, **options):
+    def expand(self, text, form="informal", texts=None, **options):
         return data_tools.expand_texts(text, form, self.texts if texts is None else texts, **options)
 
-    def assertExpandError(self, text, expected, form="ty", texts=None, **options):
+    def assertExpandError(self, text, expected, form="informal", texts=None, **options):
         with self.assertRaises(data_tools.TextError) as caught:
             self.expand(text, form, texts, **options)
         self.assertEqual(str(caught.exception), expected)
@@ -622,14 +688,17 @@ class NamedTextTests(unittest.TestCase):
         self.assertEqual(self.expand("{text:sign} {{x}}"), "{{с любовью}} {{x}}")
 
     def test_the_form_of_the_field_picks_the_variant(self):
-        self.assertEqual(self.expand("{text:invite}", "ty"), "Ждём тебя. {{с любовью}}")
-        self.assertEqual(self.expand("{text:invite}", "vy"), "Ждём вас. {{с любовью}}")
+        # the named texts give the forms under the aliases
+        for form, key in (("informal", "ty"), ("formal", "vy")):
+            with self.subTest(form=form):
+                expected = self.texts["invite"][key].replace("{text:sign}", self.texts["sign"])
+                self.assertEqual(self.expand("{text:invite}", form), expected)
         self.assertEqual(self.expand("{text:invite}", "all"), "Ждём вас.")
 
     def test_nested_texts(self):
         used = set()
         self.assertEqual(
-            self.expand("{text:both}", "vy", used=used),
+            self.expand("{text:both}", "formal", used=used),
             "Мы, {coupleNames}, женимся! Ждём вас. {{с любовью}}",
         )
         self.assertEqual(used, {"both", "announce", "invite", "sign"})
@@ -674,7 +743,7 @@ class NamedTextTests(unittest.TestCase):
         )
         # the other form has no cycle
         self.assertEqual(
-            self.expand("{text:a}", "vy", {"a": "{text:b}", "b": {"ty": "{text:a}", "vy": "-"}}),
+            self.expand("{text:a}", "formal", {"a": "{text:b}", "b": {"ty": "{text:a}", "vy": "-"}}),
             "-",
         )
 
@@ -723,7 +792,7 @@ class NamedTextTests(unittest.TestCase):
     def test_values_of_placeholders_are_not_parsed_for_texts(self):
         values = {"greeting": "{text:announce}", "coupleNames": "Алиса и Боб"}
         self.assertEqual(
-            data_tools.resolve_text("{greeting} {text:announce}", "ty", values, KNOWN, self.texts),
+            data_tools.resolve_text("{greeting} {text:announce}", "informal", values, KNOWN, self.texts),
             "{text:announce} Мы, Алиса и Боб, женимся!",
         )
 

@@ -29,6 +29,7 @@ from typing import Any, Callable, Collection, Iterable, Mapping, Sequence
 
 from tools import _data, _media
 from tools._data import (
+    FORM_ALIASES,
     FORMS,
     ID_RULE,
     IMAGE_EXTENSIONS,
@@ -202,8 +203,8 @@ RATIO_TOLERANCE = 0.01
 
 INVITATION_FIELDS = ("token", "greeting", "form", "primaryEvent", "events", "sections")
 V1_INVITATION_HINTS = {
-    "ty": 'use "form": "ty"',
-    "vy": 'use "form": "vy"',
+    "ty": 'use "form": "informal"',
+    "vy": 'use "form": "formal"',
     "plusOne": 'show the section about a companion: "sections": '
     '{ "<id>": { "visible": true } }',
     "outOfTown": "show the section for guests from other cities: "
@@ -1010,7 +1011,7 @@ def _check_link_pending(
     variants = (
         [(where, value)]
         if isinstance(value, str)
-        else [((*where, form), value.get(form)) for form in FORMS]
+        else [((*where, key), text) for key, _form, text in _data.form_variants(value)]
         if isinstance(value, dict)
         else []
     )
@@ -1065,14 +1066,15 @@ def _check_text(
     value = obj[key]
     for problem in _data.check_text(value, where, PLACEHOLDERS, index.available):
         check.raw_error(problem)
+    # (field path, the forms it gives, its text): a string serves both forms
     variants = (
-        [(where, value)]
+        [(where, FORMS, value)]
         if isinstance(value, str)
-        else [((*where, form), value.get(form)) for form in FORMS]
+        else [((*where, name), (form,), text) for name, form, text in _data.form_variants(value)]
         if isinstance(value, dict)
         else []
     )
-    for variant_parts, text in variants:
+    for variant_parts, forms, text in variants:
         if not isinstance(text, str):
             continue
         if required and not text.strip():
@@ -1080,8 +1082,7 @@ def _check_text(
         elif single_line and ("\n" in text or "\r" in text):
             check.error(variant_parts, "must be a single line (no line breaks)")
         elif index.texts is not None and _valid_syntax(text):
-            # the named texts in the form of this variant (a string serves both)
-            forms = FORMS if isinstance(value, str) else (variant_parts[-1],)
+            # the named texts in the form of this variant
             for form in forms:
                 try:
                     expanded = _data.expand_texts(text, form, index.texts)
@@ -1116,13 +1117,15 @@ def _placeholder_names(text: str) -> set[str]:
 
 
 _TEXT_SHAPE = (
-    "must be a string or an object with the strings 'ty' and 'vy' "
-    f"(and, for places without a guest, the common form '{_data.COMMON_FORM}')"
+    "must be a string or an object with the strings 'informal' and 'formal' "
+    "(or 'ty' and 'vy'; and, for places without a guest, the common form "
+    f"'{_data.COMMON_FORM}')"
 )
 
 
 def _check_texts(check: _Checker, site: dict, index: SiteIndex) -> dict | None:
-    """The named texts: `texts.<id>` is a string or `{ty, vy[, all]}`."""
+    """The named texts: `texts.<id>` is a string or
+    `{informal, formal[, all]}` (or `ty` and `vy` for the first two)."""
     texts = _registry(check, site, "texts")
     if not texts:
         return texts
@@ -1133,23 +1136,25 @@ def _check_texts(check: _Checker, site: dict, index: SiteIndex) -> dict | None:
             variants = [(parts, None, value)]
         elif isinstance(value, dict):
             for key in value:
-                if key not in _data.TEXT_FORMS:
+                if key not in _data.TEXT_FORM_NAMES:
                     check.errors += 1
                     check.report.error(
                         f"{check.where}: unknown field '{check.path((*parts, key))}'"
-                        f"{did_you_mean(key, _data.TEXT_FORMS)}"
+                        f"{did_you_mean(key, _data.TEXT_FORM_NAMES)}"
                     )
-            missing = [form for form in FORMS if form not in value]
+            for problem in _data.duplicate_forms(value):
+                check.error(parts, problem)
+            missing = [form for form in FORMS if not _data.form_keys(value, form)]
             if missing:
                 listed = " and ".join(f"'{form}'" for form in missing)
-                check.error(parts, f"must have both 'ty' and 'vy' (missing {listed})")
-            for key in _data.TEXT_FORMS:
+                check.error(parts, f"must have both 'informal' and 'formal' (missing {listed})")
+            for key in _data.TEXT_FORM_NAMES:
                 if key in value and not isinstance(value[key], str):
                     check.error((*parts, key), f"must be a string, got {json_type(value[key])}")
             variants = [
-                ((*parts, form), form, value[form])
-                for form in _data.TEXT_FORMS
-                if isinstance(value.get(form), str)
+                ((*parts, key), FORM_ALIASES.get(key, key), value[key])
+                for key in _data.TEXT_FORM_NAMES
+                if isinstance(value.get(key), str)
             ]
         else:
             check.error(parts, f"{_TEXT_SHAPE}, got {json_type(value)}")
@@ -1463,12 +1468,11 @@ def _check_invitation(
                 seen[key] = number
     check.unknown_fields(invitation, INVITATION_FIELDS, (), _V1_INVITATION_PROBLEMS)
     check.value(invitation, "greeting", "string", (), required=True, single_line=True)
-    # default: the form of address is one field
-    if "form" not in invitation:
-        if "ty" not in invitation and "vy" not in invitation:  # else: an old field
-            check.error(("form",), "is required ('ty' or 'vy')")
-    else:
-        check.choice(invitation, "form", FORMS, ())
+    # default: the form of address is one field; it is needed only by a page
+    # that shows a text with forms (the page tree reports a missing one)
+    if "form" in invitation and _data.canonical_form(invitation["form"]) is None:
+        aliases = ", ".join(FORM_ALIASES)
+        check.error(("form",), f"must be one of: {', '.join(FORMS)} (or the aliases {aliases})")
     if not index.version_ok:
         return  # site.json cannot be used: the references are not checked
 

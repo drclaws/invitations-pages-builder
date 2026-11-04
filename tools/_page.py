@@ -32,10 +32,13 @@ from typing import Any, Callable, Mapping, Sequence
 from tools import _dates, _maps
 from tools._data import (
     COMMON_FORM,
+    FORMS,
     TextError,
+    canonical_form,
     expand_texts,
     format_path,
     invitation_label,
+    needs_form,
     pick_form,
     show_id,
     substitute,
@@ -162,16 +165,20 @@ class _Page:
         warn: Callable[[str], None] | None,
         label: str,
         place_warnings: set[tuple[str, str]],
+        error: Callable[[str], None] | None = None,
     ) -> None:
         self.site = site
         self.invitation = invitation
         self.settings = settings
         self.usage = usage
         self.warn = warn
+        self.error = error
         self.label = label
         self.place_warnings = place_warnings
         # default: the form of address is the field `form` of the invitation
-        self.form = invitation["form"]
+        # (canonical name); "" without one
+        self.form = canonical_form(invitation.get("form")) or ""
+        self._form_reported = False
         self.media_path = f"{settings.assets_path}/{site['mediaDir']}"
         self.events = site["events"]
         self.event_overrides = invitation.get("events", {})
@@ -206,15 +213,36 @@ class _Page:
         values["greeting"] = self.invitation["greeting"]
         return values
 
-    def _expand(self, text: str) -> str:
-        """A text with its named texts expanded in the invitation's form."""
-        return expand_texts(text, self.form, self.site.get("texts", {}), used=self.usage.texts)
+    def _form_for(self, value: Any, where: str) -> str:
+        """The form of address to resolve `value` in.
+
+        Without a form on the invitation, a text that depends on one is an
+        error, reported once per page with the first such field (`where`);
+        a text that does not depend on one reads the same in every form.
+        """
+        if self.form:
+            return self.form
+        if not self._form_reported and needs_form(value, self.site.get("texts", {})):
+            self._form_reported = True
+            message = (
+                f"{self.label or 'invitation'}: field 'form' is required: this page shows a "
+                f"text with forms of address (first: {where}); set \"informal\" or \"formal\""
+            )
+            if self.error is None:
+                raise TextError(message)
+            self.error(message)
+        return FORMS[-1]
+
+    def _expand(self, text: str, form: str) -> str:
+        """A text with its named texts expanded in `form`."""
+        return expand_texts(text, form, self.site.get("texts", {}), used=self.usage.texts)
 
     def resolve(self, value: Any, parts: Sequence[Any]) -> str:
         """A `site.json` text in the invitation's form."""
         if value is None:
             return ""
-        source = self._expand(pick_form(value, self.form))
+        form = self._form_for(value, f"{SITE_FILE} field '{format_path(parts)}'")
+        source = self._expand(pick_form(value, form), form)
         self._check_place(source, parts)
         return substitute(source, self.values, PLACEHOLDERS)
 
@@ -224,11 +252,13 @@ class _Page:
         blank stays "" (the fragment then leaves the field out)."""
         return _text(self.resolve(value, parts))
 
-    def resolve_note(self, value: Any) -> str:
-        """A note of the invitation (placeholders and named texts, no forms)."""
+    def resolve_note(self, value: Any, parts: Sequence[Any]) -> str:
+        """A note of the invitation at `parts` (placeholders and named texts
+        in the invitation's form, no forms of its own)."""
         if not _text(value):
             return ""
-        return substitute(self._expand(value), self.values, PLACEHOLDERS)
+        form = self._form_for(value, f"field '{format_path(parts)}'")
+        return substitute(self._expand(value, form), self.values, PLACEHOLDERS)
 
     def _check_place(self, text: str, parts: Sequence[Any]) -> None:
         if self.warn is None or self.values["eventPlace"]:
@@ -261,7 +291,9 @@ class _Page:
             "description": self.registry_text(
                 raw.get("description"), ("events", event_id, "description")
             ),
-            "note": self.resolve_note(self.event_overrides.get(event_id, {}).get("note")),
+            "note": self.resolve_note(
+                self.event_overrides.get(event_id, {}).get("note"), ("events", event_id, "note")
+            ),
             "isMain": event_id == self.main_id,
             "isPrimary": is_primary,
             "kind": "primary" if is_primary else "regular",
@@ -453,8 +485,8 @@ class _Page:
         return {
             "greeting": self.invitation["greeting"],
             "form": self.form,
-            "ty": self.form == "ty",
-            "vy": self.form == "vy",
+            "informal": self.form == "informal",
+            "formal": self.form == "formal",
             "coupleNames": self.site["coupleNames"],
             "rsvpDeadline": _text(self.site.get("rsvpDeadline")),
             "assetsPath": self.settings.assets_path,
@@ -517,7 +549,7 @@ class _Page:
             )
             if resolved is not None:
                 widgets.append(resolved)
-        note = self.resolve_note(override.get("note"))
+        note = self.resolve_note(override.get("note"), ("sections", section_id, "note"))
         if not widgets and not note:
             if self.warn is not None and override.get("visible") is True:
                 self.warn(
@@ -691,7 +723,7 @@ def site_cover(site: dict, settings: PageSettings) -> dict | None:
     if position is None:
         return None
     # nobody in particular: the main event, the formal form, no greeting
-    nobody = {"greeting": "", "form": "vy"}
+    nobody = {"greeting": "", "form": "formal"}
     # the cover links no calendar file
     settings = replace(settings, calendar_src=lambda _event_id: "")
     page = _Page(site, nobody, settings, Usage(), None, "", set())
@@ -798,11 +830,12 @@ def build_pages(
     """
     usage = Usage()
     warn = report_warning(report) if report is not None else None
+    error = report.error if report is not None else None
     place_warnings: set[tuple[str, str]] = set()
     pages = []
     for number, invitation in enumerate(invitations, start=1):
         label = invitation_label(number)
-        page = _Page(site, invitation, settings, usage, warn, label, place_warnings)
+        page = _Page(site, invitation, settings, usage, warn, label, place_warnings, error)
         tree = page.tree()
         repeated = repeated_ids(tree)
         if repeated and report is not None:

@@ -26,7 +26,7 @@ from typing import Callable
 
 from tests import fixtures_v2 as F
 from tests.support import ROOT, build
-from tools import _maps, _page, _schema
+from tools import _data, _maps, _page, _schema
 
 FRAGMENTS_DIR = ROOT / build.FRAGMENTS_DIRNAME
 
@@ -39,7 +39,7 @@ MEDIA_TYPES = _schema.MEDIA_TYPES
 # --- the contract: the fields of every node of the page tree ----------------
 
 ROOT_FIELDS = (
-    "greeting", "form", "ty", "vy", "coupleNames", "rsvpDeadline", "assetsPath", "mediaPath",
+    "greeting", "form", "informal", "formal", "coupleNames", "rsvpDeadline", "assetsPath", "mediaPath",
     "faviconPath", "faviconType", "ogImage", "ogImageType", "ogImageWidth",
     "ogImageHeight", "themeColor", "siteName", "linkDescription", "primaryEvent", "sections",
 )
@@ -465,9 +465,11 @@ class PageTree:
         return result
 
     def root(self) -> Strict:
+        # the tree names the form canonically, whatever name the data gives
+        form = {"ty": "informal", "vy": "formal"}[self.guest["form"]]
         return node(
-            ROOT_FIELDS, greeting=self.guest["greeting"], form=self.guest["form"],
-            ty=self.guest["form"] == "ty", vy=self.guest["form"] == "vy",
+            ROOT_FIELDS, greeting=self.guest["greeting"], form=form,
+            informal=form == "informal", formal=form == "formal",
             coupleNames=COUPLE_NAMES, rsvpDeadline=RSVP_DEADLINE, assetsPath="/assets",
             mediaPath=MEDIA_PATH, faviconPath="/assets/favicon.svg", faviconType="image/svg+xml",
             ogImage="/assets/og.png", ogImageType="image/png", ogImageWidth=1200,
@@ -707,7 +709,8 @@ def section_variants() -> list[Strict]:
 def harness_root(items: list) -> Strict:
     """The root of the page plus `harness`: the list the stub frame goes over."""
     return node(
-        ROOT_FIELDS + ("harness",), greeting="Дорогая Ева!", form="ty", ty=True, vy=False,
+        ROOT_FIELDS + ("harness",), greeting=GUESTS[2]["greeting"], form="informal",
+        informal=True, formal=False,
         coupleNames=COUPLE_NAMES, rsvpDeadline=RSVP_DEADLINE, assetsPath="/assets",
         mediaPath=MEDIA_PATH, faviconPath="/assets/favicon.svg", faviconType="image/svg+xml",
         ogImage="/assets/og.png", ogImageType="image/png", ogImageWidth=1200,
@@ -1372,7 +1375,8 @@ class DataLayerPageTests(unittest.TestCase):
         main = [(tree, page) for label, tree, page in self.pages if label.startswith("main")]
         texts = []
         for (tree, page), invitation in zip(main, F.INVITATIONS):
-            paragraph = f'<p class="events__actions card__text">{pending[tree["form"]]}</p>'
+            text = _data.text_variant(pending, tree["form"])
+            paragraph = f'<p class="events__actions card__text">{text}</p>'
             # once on the page: in the card of the dinner, not in the cover or the date
             texts.append(page.count(paragraph))
             self.assertEqual(page.count('href="/photos/'), 1 - texts[-1])
