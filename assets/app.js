@@ -1,17 +1,19 @@
-/* Скрипт страницы приглашения: прогрессивное улучшение поверх готового HTML.
+/* The invitation page script: progressive enhancement over finished HTML.
 
-   Устройство файла:
-     1. Класс js на <html> — первое действие; только под ним действуют скрытые
-        начальные состояния анимаций. Не загрузился скрипт — всё видно сразу.
-     2. Реестр модулей: register(name, init). Каждый init выполняется после
-        разбора документа в собственном try/catch — ошибка одного модуля не
-        отключает остальные.
-     3. Модули. Цепляются только за data-атрибуты; классы is-* и классы-маркеры
-        на <html> — это состояния для стилей (секция 7 в app.css).
+   File layout:
+     1. The js class on <html> is the first action; the hidden initial
+        states of the animations apply only under it. If the script does
+        not load, everything is visible at once.
+     2. The module registry: register(name, init). Every init runs after the
+        document is parsed, in its own try/catch — one module's error does
+        not switch the others off.
+     3. The modules. They hook only onto data attributes; the is-* classes
+        and the marker classes on <html> are states for the styles
+        (section 7 of app.css).
 
-   Без сборки и зависимостей; совместимо с CSP script-src 'self'
-   (нет inline-кода, eval, new Function). Содержимое страницы доступно
-   и без скрипта. */
+   No build step and no dependencies; compatible with the CSP
+   script-src 'self' (no inline code, eval or new Function). The page
+   content is available without the script too. */
 (function () {
   'use strict';
 
@@ -21,19 +23,19 @@
 
 
   /* ==========================================================================
-     Реестр модулей
+     Module registry
      ========================================================================== */
 
   var modules = [];
   var started = false;
 
-  /* Только имя модуля и тип ошибки — без данных страницы. */
+  /* Only the module name and the error type — no page data. */
   function report(name, error) {
     console.warn('app: module "' + name + '" failed (' +
       (error && error.name ? error.name : 'Error') + ')');
   }
 
-  /* init(document) вызывается один раз, когда DOM разобран. */
+  /* init(document) is called once, when the DOM is parsed. */
   function register(name, init) {
     modules.push({ name: name, init: init });
   }
@@ -52,9 +54,10 @@
     });
   }
 
-  /* Скрипт подключён с defer: DOMContentLoaded ещё впереди. Остальные ветки —
-     страховка на случай другого способа подключения. Подписка стоит до кода
-     модулей: сбой при объявлении позднего модуля не отменит запуск ранних. */
+  /* The script loads with defer: DOMContentLoaded has not fired yet. The
+     other branches are a safety net for another way of loading. The subscription
+     comes before the module code: a failure while declaring a later module
+     does not cancel the start of the earlier ones. */
   document.addEventListener('DOMContentLoaded', start);
   window.addEventListener('load', start);
   if (document.readyState === 'complete') {
@@ -68,11 +71,11 @@
 
 
   /* ==========================================================================
-     Модуль cover — анимация обложки при загрузке
+     The cover module — the cover animation on load
      --------------------------------------------------------------------------
-     Сама анимация — в CSS под маркером cover-animate на <html>. Маркер ставится,
-     только если страница ещё не была отрисована: иначе уже видимая обложка
-     исчезла бы и появилась заново.
+     The animation itself is in CSS, under the cover-animate marker on
+     <html>. The marker is set only if the page has not been painted yet:
+     otherwise a cover already in view would vanish and appear again.
      ========================================================================== */
 
   var COVER_LATE_MS = 1000;
@@ -86,7 +89,7 @@
     if (types && types.indexOf('paint') !== -1 && typeof perf.getEntriesByType === 'function') {
       return perf.getEntriesByType('paint').length > 0;
     }
-    /* Нет Paint Timing — судим по времени от начала навигации. */
+    /* No Paint Timing: judge by the time since the navigation started. */
     return perf.now() > COVER_LATE_MS;
   }
 
@@ -99,17 +102,19 @@
 
 
   /* ==========================================================================
-     Модуль coverBar — сворачивание обложки [data-cover] в панель [data-cover-bar]
+     The coverBar module — collapsing the cover [data-cover] into the bar
+     [data-cover-bar]
      --------------------------------------------------------------------------
-     Панель и все правила сворачивания — в CSS под маркером cover-bar-on на
-     <html>; без маркера панели нет, обложка неподвижна. Прогресс
-     --cover-progress (0…1) там, где есть временные шкалы прокрутки, считает
-     сам CSS, и модуль только ставит маркер. Условие выбора — то же, что у
-     @supports в app.css. Иначе модуль считает прогресс по положению обложки
-     не чаще раза в кадр и пишет его через CSSOM на обложку и панель. При
-     сокращённом движении прогресс ступенчатый: 0 или 1. Любая ошибка снимает
-     маркер и записанные значения — страница возвращается к виду без модуля.
-     Своих строк у модуля нет; модуль cover он не трогает.
+     The bar and all the collapse rules are in CSS, under the cover-bar-on
+     marker on <html>; without the marker there is no bar and the cover
+     does not move. Where scroll timelines exist, CSS computes the progress
+     --cover-progress (0…1) itself, and the module only sets the marker. The
+     condition is the same as the @supports in app.css. Otherwise the module
+     computes the progress from the cover position at most once a frame and
+     writes it through CSSOM on the cover and the bar. Under reduced motion
+     the progress is a step: 0 or 1. Any error removes the marker and the
+     written values — the page returns to its look without the module.
+     The module has no strings of its own; it leaves the cover module alone.
      ========================================================================== */
 
   var COVER_BAR_TIMELINES = '(animation-timeline: --a) and (timeline-scope: --a)';
@@ -135,7 +140,8 @@
     var frame = 0;
     var last = '';
 
-    /* 0 — верх обложки у верха окна, 1 — от обложки осталась полоса панели. */
+    /* 0 — the cover top at the viewport top, 1 — a bar-high strip of the
+       cover is left. */
     function progress() {
       var box = cover.getBoundingClientRect();
       var span = box.height - bar.offsetHeight;
@@ -185,11 +191,12 @@
       }
     }
 
-    /* Сначала маркер: без него панель скрыта и её высоту не измерить.
-       Подписка до первого расчёта: при ошибке stop() её же и снимет.
-       На сенсорном экране страницу приглашения прокручивает body (app.css,
-       секция 3), а scroll элемента до window не всплывает — слушатель ловит
-       его на фазе перехвата, прокрутку документа (десктоп) тоже. */
+    /* The marker first: without it the bar is hidden and its height cannot
+       be measured. The subscription comes before the first computation: on
+       an error stop() removes it. On a touch screen body scrolls the
+       invitation page (app.css, section 3), and an element's scroll event
+       does not bubble up to window — the listener catches it in the
+       capture phase, and the document scroll (desktop) as well. */
     root.classList.add('cover-bar-on');
     window.addEventListener('scroll', onChange, { passive: true, capture: true });
     window.addEventListener('resize', onChange);
@@ -199,50 +206,53 @@
 
 
   /* ==========================================================================
-     Модуль events — переключатель событий [data-events]
+     The events module — the event switcher [data-events]
      --------------------------------------------------------------------------
-     Без скрипта карточки событий идут подряд по времени начала, список
-     вкладок скрыт атрибутом hidden в разметке. Со скриптом — вкладки по
-     шаблону ARIA Tabs: видна одна карточка; стрелки (по кругу), Home и End,
-     выбор следует за фокусом, tabindex="0" только у выбранной вкладки. Роли
-     и связи панелей ставит скрипт, id берёт из разметки (aria-controls).
-     Число вкладок уходит в стили переменной --events-count через CSSOM.
+     Without the script the event cards follow one another by start time,
+     and the tab list is hidden with the hidden attribute in the markup.
+     With the script they become tabs following the ARIA Tabs pattern: one
+     card is visible; the arrows (wrapping around), Home and End, selection
+     follows focus, tabindex="0" only on the selected tab. The script sets
+     the roles and the panel relations, taking the ids from the markup
+     (aria-controls). The tab count goes to the styles as the --events-count
+     variable through CSSOM.
 
-     Время: у карточки data-events-start и data-events-end — ISO со
-     смещением; окончание сборка подставляет всегда. Моменты сравниваются
-     абсолютно, часовой пояс гостя не влияет. Событие прошло, когда
-     наступило окончание, и идёт между началом и окончанием. Пометки —
-     элементы [data-events-when="past|now"] в разметке: скрипт только
-     снимает и ставит hidden и классы is-past / is-now на вкладке и
-     карточке. Своих текстов у модуля нет.
+     Time: a card's data-events-start and data-events-end are ISO with an
+     offset; the build always fills in the end. Moments are compared as
+     absolute times, so the guest's time zone does not matter. An event is
+     past once its end has come, and in progress between its start and its
+     end. The marks are [data-events-when="past|now"] elements in the
+     markup: the script only removes and sets hidden and the is-past /
+     is-now classes on the tab and the card. The module has no texts of its
+     own.
 
-     Вкладка по умолчанию — функция defaultTab(): первостепенное событие
-     (id карточки в data-events-primary), пока оно не прошло; потом
-     ближайшее непрошедшее; прошли все — последнее. Без корректного
-     времени — первостепенное, иначе первое.
+     The default tab comes from defaultTab(): the primary event (the card id
+     in data-events-primary) until it is past; then the nearest event that
+     is not past; once all are past, the last one. Without a valid time,
+     the primary one, otherwise the first.
 
-     Пересчёт — на ближайшей границе событий, но не реже раза в час, и при
-     возврате на вкладку браузера. Выбранную вкладку пересчёт не меняет,
-     если гость выбирал её сам, пока фокус внутри виджета (переключение
-     догонит, когда фокус уйдёт) и пока открыто модальное окно (проверка
-     повторяется, пока окно не закроют). Любая ошибка возвращает разметку к
-     виду «без скрипта».
+     The recheck runs at the nearest event boundary, but at least once an
+     hour, and on return to the browser tab. The recheck leaves the selected
+     tab alone if the guest picked it themselves, while focus is inside the
+     widget (the switch catches up when focus leaves) and while a modal
+     dialog is open (the check repeats until the dialog is closed). Any
+     error returns the markup to its look without the script.
 
-     Модуль объявлен раньше reveal и запускается раньше него: скрытие
-     карточек укорачивает страницу, и reveal должен мерить блоки уже в
-     окончательной раскладке — иначе при перезагрузке посреди страницы
-     блок, который на самом деле на экране, появился бы с затуханием.
-     Время разбирает parseTarget из модуля countdown (к запуску модулей весь
-     файл уже выполнен).
+     The module is declared before reveal and starts before it: hiding the
+     cards shortens the page, and reveal must measure the blocks in the
+     final layout — otherwise, on a reload in the middle of the page, a
+     block actually on screen would fade in. parseTarget from the countdown
+     module parses the times (by the time the modules start, the whole file
+     has run).
      ========================================================================== */
 
-  var EVENTS_RECHECK_MS = 3600000;    /* пересчёт не реже раза в час */
-  var EVENTS_MODAL_RETRY_MS = 1000;   /* пока открыто окно — ждать его закрытия */
-  var EVENTS_EDGE_MS = 50;            /* пересчёт чуть позже границы, а не до неё */
+  var EVENTS_RECHECK_MS = 3600000;    /* recheck at least once an hour */
+  var EVENTS_MODAL_RETRY_MS = 1000;   /* while a dialog is open, wait for it to close */
+  var EVENTS_EDGE_MS = 50;            /* recheck just after a boundary, not before it */
   var EVENTS_STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
 
-  /* Открыто окно просмотра или другой <dialog>: вкладка под ним не
-     переключается. */
+  /* The viewer or another <dialog> is open: the tab under it does not
+     switch. */
   function modalOpen() {
     if (root.classList.contains('is-lightbox-open')) {
       return true;
@@ -256,7 +266,7 @@
     return false;
   }
 
-  /* Пометка времени на вкладке или карточке: 'past', 'now' или ''. */
+  /* The time mark on a tab or a card: 'past', 'now' or ''. */
   function markTime(node, state) {
     node.classList.toggle('is-past', state === 'past');
     node.classList.toggle('is-now', state === 'now');
@@ -275,8 +285,8 @@
         return panel.id === id;
       })[0];
     });
-    /* Одна карточка — переключать нечего; карточка без вкладки или вкладка
-       без карточки — разметка не та, всё остаётся видимым. */
+    /* One card: nothing to switch; a card without a tab or a tab without a
+       card: unexpected markup, everything stays visible. */
     if (tabs.length < 2 || panels.length !== all.length || panels.indexOf(undefined) !== -1) {
       return;
     }
@@ -296,7 +306,7 @@
     }).indexOf(widget.getAttribute('data-events-primary'));
 
     var current = -1;
-    var chosen = false;   /* гость выбрал вкладку сам — пересчёт её не меняет */
+    var chosen = false;   /* the guest picked the tab themselves: the recheck keeps it */
     var timer = 0;
 
     function select(index, focus) {
@@ -312,8 +322,8 @@
       }
     }
 
-    /* Ставит пометки на момент now и возвращает индекс непрошедшего
-       события, ближайшего по времени (-1 — прошли все). */
+    /* Sets the marks for the moment now and returns the index of the
+       nearest event that is not past (-1 when all are past). */
     function mark(now) {
       var next = -1;
       panels.forEach(function (panel, i) {
@@ -327,8 +337,8 @@
       return next;
     }
 
-    /* Выбор вкладки по умолчанию — здесь и только здесь; заодно обновляет
-       пометки. */
+    /* The default tab is chosen here and only here; it also updates the
+       marks. */
     function defaultTab(now) {
       if (!timed) {
         return Math.max(primary, 0);
@@ -340,8 +350,8 @@
       return next === -1 ? panels.length - 1 : next;
     }
 
-    /* Следующий пересчёт — на ближайшей границе; в фоновой вкладке цепочка
-       не крутится (её перезапускает visibilitychange). */
+    /* The next recheck is at the nearest boundary; in a background tab the
+       chain does not run (visibilitychange restarts it). */
     function schedule(now, soon) {
       clearTimeout(timer);
       timer = 0;
@@ -368,8 +378,8 @@
       schedule(now, modal);
     }
 
-    /* Вид «без скрипта»: список вкладок скрыт, все карточки видны, роли и
-       пометки сняты, исходные связи возвращены. */
+    /* The look without the script: the tab list hidden, all the cards
+       visible, the roles and marks removed, the original relations back. */
     function restore() {
       clearTimeout(timer);
       timer = 0;
@@ -441,7 +451,7 @@
       select(to, true);
     });
 
-    /* Фокус ушёл из виджета — отложенное переключение можно сделать. */
+    /* Focus has left the widget: a deferred switch can happen. */
     var onFocusOut = guarded(function (event) {
       if (timed && !chosen && !widget.contains(event.relatedTarget)) {
         clearTimeout(timer);
@@ -485,28 +495,30 @@
 
 
   /* ==========================================================================
-     Модуль reveal — появление блоков [data-reveal] при прокрутке
+     The reveal module — revealing [data-reveal] blocks on scroll
      --------------------------------------------------------------------------
-     Скрытое состояние действует только под маркером reveal-on на <html>;
-     маркер ставится последним шагом и снимается при любой ошибке. Показанный
-     блок получает is-revealed, наблюдение за ним снимается; когда переход
-     появления завершён — is-settled: переход и задержка каскада больше не
-     действуют и не мешают собственным переходам элемента.
+     The hidden state applies only under the reveal-on marker on <html>; the
+     marker is set as the last step and removed on any error. A revealed
+     block gets is-revealed and leaves the observer; when its reveal
+     transition ends it gets is-settled: from then on the transition and the
+     cascade delay do not apply and do not get in the way of the element's
+     own transitions.
      ========================================================================== */
 
-  /* Доля высоты экрана, на которую блок должен войти, прежде чем появиться.
-     0 — появление начинается с первого показанного пикселя: иначе у нижнего
-     края экрана остаётся полоса, где блок уже на экране, но пуст. */
+  /* The share of the screen height a block must enter before it appears.
+     0: the reveal starts with the first visible pixel; otherwise a strip at
+     the bottom edge of the screen shows a block that is on screen but
+     empty. */
   var REVEAL_INSET = 0;
   var REVEAL_MARGIN = '0px 0px -' + (REVEAL_INSET * 100) + '% 0px';
-  var REVEAL_STAGGER_MAX = 4;   /* предел каскада задержек в одной группе */
-  var REVEAL_SETTLE_MS = 2000;  /* страховка, если transitionend не пришёл */
+  var REVEAL_STAGGER_MAX = 4;   /* cascade delay limit within one group */
+  var REVEAL_SETTLE_MS = 2000;  /* safety net if transitionend never comes */
 
   register('reveal', function (doc) {
     var pending = Array.prototype.slice.call(doc.querySelectorAll('[data-reveal]'));
     if (!pending.length || typeof window.IntersectionObserver !== 'function' ||
         prefersReducedMotion()) {
-      return; /* маркер не ставится — всё видно */
+      return; /* no marker: everything is visible */
     }
 
     var observer = null;
@@ -516,7 +528,8 @@
       return window.innerHeight || root.clientHeight;
     }
 
-    /* Появление завершено: снять переход, задержку каскада и свои слушатели. */
+    /* The reveal is over: drop the transition, the cascade delay and its own
+       listeners. */
     function settle(element) {
       if (element.classList.contains('is-settled')) {
         return;
@@ -528,14 +541,15 @@
       }
     }
 
-    /* Конец появления — только настоящий конец перехода opacity самого блока.
-       Chromium во время прокрутки присылает лишний transitionend с
-       elapsedTime 0 в первом кадре перехода (перенос времени его старта);
-       если принять его, is-settled снимет переход посреди появления, а там,
-       где такое снятие обрывает переход, блок «выскочит» скачком. */
+    /* The end of a reveal is only the real end of the block's own opacity
+       transition. During scrolling Chromium sends a stray transitionend
+       with elapsedTime 0 in the first frame of the transition (a shift of
+       its start time); accepting it would make is-settled drop the
+       transition mid-reveal, and where that cuts the transition short the
+       block would pop in with a jump. */
     function isRevealEnd(event, element) {
       if (event.target !== element) {
-        return false; /* переход вложенного элемента */
+        return false; /* a transition of a nested element */
       }
       if (event.type === 'transitioncancel') {
         return true;
@@ -559,7 +573,8 @@
       timer = setTimeout(done, REVEAL_SETTLE_MS);
     }
 
-    /* order — место в группе появившихся одновременно; instant — без перехода. */
+    /* order: the place in the group revealed at the same time; instant: no
+       transition. */
     function show(element, order, instant) {
       var at = pending.indexOf(element);
       if (at === -1) {
@@ -606,7 +621,7 @@
       finish();
     }
 
-    /* Оборачивает обработчики событий: после сбоя всё остаётся видимым. */
+    /* Wraps the event handlers: after a failure everything stays visible. */
     function guarded(handler) {
       return function (argument) {
         try {
@@ -618,9 +633,10 @@
       };
     }
 
-    /* Показывает всё, что уже на экране или выше него (быстрая прокрутка,
-       переход к концу страницы, возврат из фоновой вкладки). inset — доля
-       высоты экрана снизу, в которую блок ещё должен войти; без неё — 0. */
+    /* Shows everything already on screen or above it (fast scrolling, a
+       jump to the end of the page, a return from a background tab). inset
+       is the share of the screen height at the bottom that a block has yet
+       to enter; 0 when there is none. */
     function sweepWithin(inset) {
       var limit = viewportHeight() * (1 - inset);
       var order = 0;
@@ -639,7 +655,7 @@
       sweepWithin(0);
     });
 
-    /* Фокус с клавиатуры внутри ещё скрытого блока — показать немедленно. */
+    /* Keyboard focus inside a block that is hidden: show it at once. */
     var onFocusIn = guarded(function (event) {
       var node = event.target;
       while (node && node.nodeType === 1) {
@@ -650,13 +666,14 @@
       }
     });
 
-    /* Прокрутка, смена размера или ориентации: проверка не зависит от того,
-       пришёл ли колбэк наблюдателя, и идёт не чаще кадра. Граница та же, что у
-       наблюдателя; у самого конца страницы блок может до неё не дойти — там
-       она снимается. */
-    /* Конец страницы — у body, если прокручивает он (страница приглашения
-       на сенсорном экране, app.css секция 3), иначе у документа. Документ
-       тогда размером с окно и «в конце» всегда — его не спрашивать. */
+    /* Scrolling, a resize or an orientation change: the check does not
+       depend on whether the observer callback came, and runs at most once a
+       frame. The boundary is the observer's; at the very end of the page a
+       block may never reach it, so there it is dropped. */
+    /* The end of the page is body's if body scrolls (the invitation page on
+       a touch screen, app.css section 3), otherwise the document's. The
+       document is then as large as the viewport and always "at the end" —
+       do not ask it. */
     function atEnd() {
       var body = doc.body;
       if (window.getComputedStyle(body).overflowY !== 'visible') {
@@ -695,7 +712,7 @@
           order += 1;
         }
       });
-      /* Блоки, которые прокрутка «перепрыгнула», пересечения не дают. */
+      /* Blocks that the scroll jumped over give no intersection. */
       var passed = pending.filter(function (element) {
         return element.getBoundingClientRect().bottom <= 0;
       });
@@ -705,8 +722,8 @@
     });
 
     try {
-      /* Блоки, видимые при загрузке, помечаются до включения скрытого
-         состояния: они не скрываются вовсе, поэтому не «мигают». */
+      /* Blocks visible on load are marked before the hidden state switches
+         on: they are never hidden, so they do not flicker. */
       var limit = viewportHeight();
       pending.slice().forEach(function (element) {
         if (element.getBoundingClientRect().top < limit) {
@@ -725,8 +742,8 @@
         observer.observe(element);
       });
       doc.addEventListener('focusin', onFocusIn);
-      /* Перехват: прокрутка body (страница приглашения на сенсорном экране)
-         до window не всплывает. */
+      /* Capture: the body scroll (the invitation page on a touch screen)
+         does not bubble up to window. */
       window.addEventListener('scroll', onViewportChange, { passive: true, capture: true });
       window.addEventListener('resize', onViewportChange);
       window.addEventListener('orientationchange', onViewportChange);
@@ -742,10 +759,11 @@
 
 
   /* ==========================================================================
-     Модуль countdown — таймер обратного отсчёта [data-countdown="<dateISO>"]
+     The countdown module — the countdown timer [data-countdown="<dateISO>"]
      --------------------------------------------------------------------------
-     Контейнер в разметке скрыт (hidden); рядом всегда остаётся текстовая дата.
-     Некорректная дата или наступившее событие — контейнер остаётся скрытым.
+     The container is hidden in the markup (hidden); the date as text always
+     stays next to it. With an invalid date or an event that has begun, the
+     container stays hidden.
      ========================================================================== */
 
   var ISO_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
@@ -757,7 +775,7 @@
     { name: 'seconds', seconds: 1, pad: true, forms: ['секунда', 'секунды', 'секунд'] }
   ];
 
-  /* Русская словоформа по числу: forms = [один, два–четыре, много]. */
+  /* The Russian word form for a number: forms = [one, two to four, many]. */
   function pluralRu(count, forms) {
     var n = Math.abs(count) % 100;
     var last = n % 10;
@@ -815,7 +833,7 @@
       }
     }
 
-    /* Таймер больше не нужен: остаётся текстовая дата. */
+    /* The countdown is not needed: the date as text remains. */
     function finish() {
       stop();
       over = true;
@@ -828,12 +846,12 @@
       stop();
       var left = target - Date.now();
       if (left <= 0) {
-        /* Событие наступило: нули не показываются. */
+        /* The event has begun: no zeros are shown. */
         finish();
         return;
       }
 
-      /* Округление вверх: последняя секунда — «1», затем таймер скрывается. */
+      /* Rounding up: the last second shows "1", then the countdown hides. */
       var rest = Math.ceil(left / 1000);
       cells.forEach(function (cell) {
         var amount = Math.floor(rest / cell.unit.seconds);
@@ -844,15 +862,16 @@
       });
       container.hidden = false;
 
-      /* Следующее обновление — на границе секунды, отсчёт всегда от Date.now():
-         ошибка не накапливается. В фоновой вкладке цепочка не крутится. */
+      /* The next update is at the second boundary, always counted from
+         Date.now(): the error does not add up. In a background tab the
+         chain does not run. */
       if (!document.hidden) {
         timer = setTimeout(tick, (left % 1000) || 1000);
       }
     }
 
-    /* Вызывается и из таймера, и из событий — вне try/catch реестра: при
-       любой ошибке отсчёт останавливается, контейнер скрывается. */
+    /* Called both from the timer and from events — outside the registry's
+       try/catch: on any error the countdown stops and the container hides. */
     function tick() {
       try {
         update();
@@ -878,8 +897,8 @@
     tick();
   }
 
-  /* Таймеров на странице может быть несколько (виджет даты в разных
-     секциях): сбой одного не мешает остальным. */
+  /* A page may have several countdowns (a date widget in several sections):
+     a failure of one does not affect the others. */
   register('countdown', function (doc) {
     Array.prototype.forEach.call(doc.querySelectorAll('[data-countdown]'), function (container) {
       try {
@@ -893,29 +912,32 @@
 
 
   /* ==========================================================================
-     Модуль gallery — окно просмотра фото и видео для ссылок a[data-lightbox]
+     The gallery module — the photo and video viewer for a[data-lightbox]
+     links
      --------------------------------------------------------------------------
-     Ссылка-плитка ведёт на файл и без скрипта открывает его как обычно:
-     картинку браузер показывает, ролик играет своим плеером. Ссылки внутри
-     одного [data-gallery] листаются как группа; ссылка вне [data-gallery] —
-     одиночный элемент без стрелок и счётчика.
+     A tile link leads to a file and without the script opens it as usual:
+     the browser shows a picture and plays a video in its own player. The
+     links inside one [data-gallery] are swiped through as a group; a link
+     outside [data-gallery] is a single item without arrows or a counter.
 
-     Ролик помечен на плитке: data-media="video" (href — файл ролика),
-     data-media-poster — постер, data-media-ratio — пропорция кадра «w / h»
-     до загрузки метаданных.
+     A video is marked on its tile: data-media="video" (href is the video
+     file), data-media-poster is the poster, data-media-ratio is the frame
+     ratio "w / h" before the metadata loads.
 
-     Окно — нативный <dialog>, открытый через showModal(): верхний слой,
-     фокус внутри окна и закрытие по Esc (и кнопкой «Назад» на Android) даёт
-     браузер; история не меняется. Нет showModal — модуль не включается.
-     Окно создаётся при первом открытии; при любой ошибке модуль отключается,
-     а переход по ссылке не отменяется.
+     The dialog is a native <dialog> opened with showModal(): the browser
+     provides the top layer, focus inside the dialog and closing with Esc
+     (and the Back button on Android); the history does not change. Without
+     showModal the module does not switch on. The dialog is created on the
+     first opening; on any error the module switches off, and the link
+     navigation is not cancelled.
 
-     Ролик играет в одном на всё окно <video controls> с нативной панелью
-     браузера: одновременно звучит не больше одного ролика. Запуск — play()
-     синхронно в обработчике нажатия на плитку (жест пользователя: без него
-     iOS и встроенные браузеры не дают звука). К ролику, до которого
-     долистали, файл не запрашивается и сам он не стартует; при уходе с него
-     и при закрытии окна — пауза и обрыв загрузки.
+     Videos play in a single <video controls> for the whole dialog, with
+     the browser's native panel: at most one video plays at a time. Playback
+     starts with play() called synchronously in the tile's press handler
+     (a user gesture: without one iOS and in-app browsers give no sound). A
+     video reached by swiping does not request its file and does not start
+     by itself; leaving it or closing the dialog pauses it and aborts the
+     download.
      ========================================================================== */
 
   var SVG_NS = 'http://www.w3.org/2000/svg';
@@ -940,13 +962,13 @@
     error: 'Не удалось загрузить изображение.',
     videoError: 'Не удалось загрузить видео.'
   };
-  var SWIPE_MIN = 48;         /* px по горизонтали, чтобы жест стал листанием */
-  var SWIPE_RATIO = 1.5;      /* горизонталь должна преобладать над вертикалью */
-  var SWIPE_CLICK_MS = 400;   /* клик сразу после жеста окно не закрывает */
-  var LOADING_NOTE_MS = 300;  /* «Загрузка…» — только если файл не из кэша */
-  var ZOOMED_SCALE = 1.01;    /* страница увеличена щипком */
-  var HAVE_NOTHING = 0;       /* readyState ролика, о котором ещё ничего не загружено */
-  /* Пропорция кадра из разметки: «w / h», целые больше нуля. */
+  var SWIPE_MIN = 48;         /* horizontal px for a gesture to count as a swipe */
+  var SWIPE_RATIO = 1.5;      /* the horizontal must dominate the vertical */
+  var SWIPE_CLICK_MS = 400;   /* a click right after a gesture does not close the dialog */
+  var LOADING_NOTE_MS = 300;  /* the loading note only when the file is not cached */
+  var ZOOMED_SCALE = 1.01;    /* the page is pinch-zoomed */
+  var HAVE_NOTHING = 0;       /* readyState of a video with nothing loaded yet */
+  /* The frame ratio from the markup: "w / h", whole numbers above zero. */
   var RATIO_RE = /^\s*[1-9]\d*\s*\/\s*[1-9]\d*\s*$/;
 
   function createElement(tag, className) {
@@ -973,8 +995,9 @@
     return button;
   }
 
-  /* Лента галереи: ссылка, получившая фокус, показывается целиком. Частично
-     видимый элемент браузер сам не доводит; двигается только лента. */
+  /* The gallery ribbon: a link that gets focus is shown whole. The browser
+     does not bring a partly visible item into view by itself; only the
+     ribbon moves. */
   function revealInRibbon(event) {
     var link = event.target;
     var ribbon = link && typeof link.closest === 'function' &&
@@ -991,8 +1014,9 @@
     }
   }
 
-  /* Элемент ленты по ссылке-плитке. label — подпись элемента в окне: alt
-     картинки плитки, у ролика — доступное имя самой плитки. */
+  /* The viewer item for a tile link. label is the item's caption in the
+     dialog: the alt of the tile picture, or for a video the accessible name
+     of the tile itself. */
   function readItem(link) {
     var thumb = link.getElementsByTagName('img')[0];
     var alt = thumb ? thumb.alt : '';
@@ -1018,30 +1042,30 @@
 
     var Dialog = window.HTMLDialogElement;
     if (typeof Dialog !== 'function' || typeof Dialog.prototype.showModal !== 'function') {
-      return; /* ссылки остаются обычными ссылками на файлы */
+      return; /* the links stay plain links to the files */
     }
-    /* Отсюда ссылка открывает окно — это объявляется экранному диктору. Без
-       скрипта окна нет, нет и атрибута. */
+    /* From here on a link opens the dialog, and screen readers are told so.
+       Without the script there is no dialog and no attribute. */
     Array.prototype.forEach.call(links, function (link) {
       link.setAttribute('aria-haspopup', 'dialog');
     });
 
-    var ui = null;      /* элементы окна; создаются при первом открытии */
-    var items = [];     /* readItem() каждой ссылки открытой группы */
+    var ui = null;      /* the dialog elements; created on the first opening */
+    var items = [];     /* readItem() of every link of the open group */
     var index = 0;
-    var opener = null;  /* ссылка, которой вернётся фокус */
+    var opener = null;  /* the link that gets focus back */
     var loadingTimer = 0;
     var preloaded = [];
     var touches = 0;
-    var swipe = null;   /* { id, x, y } — начало жеста одним пальцем */
+    var swipe = null;   /* { id, x, y }: the start of a one-finger gesture */
     var swipedAt = 0;
 
     function lockScroll(on) {
       if (on) {
-        /* Место исчезнувшей полосы прокрутки занимает отступ: страница под
-           окном не сдвигается. Полоса — у окна или у body, если прокручивает
-           он (страница приглашения на сенсорном экране, app.css секция 3);
-           рамки у body нет. */
+        /* Padding takes the place of the vanished scrollbar: the page under
+           the dialog does not shift. The scrollbar belongs to the window, or
+           to body if body scrolls (the invitation page on a touch screen,
+           app.css section 3); body has no border. */
         var body = doc.body;
         var gap = window.innerWidth - root.clientWidth +
           (body ? body.offsetWidth - body.clientWidth : 0);
@@ -1058,8 +1082,9 @@
       }
     }
 
-    /* Ролик в окне больше не нужен: остановить и оборвать загрузку. Без
-       источника load() сбрасывает элемент, и браузер закрывает соединение. */
+    /* The video in the dialog is not needed: stop it and abort the
+       download. Without a source load() resets the element, and the browser
+       closes the connection. */
     function releaseVideo() {
       var video = ui && ui.video;
       if (!video || !video.getAttribute('src')) {
@@ -1067,12 +1092,12 @@
       }
       try {
         video.pause();
-      } catch (ignored) { /* уже остановлен */ }
+      } catch (ignored) { /* stopped already */ }
       video.removeAttribute('src');
       video.removeAttribute('poster');
       try {
         video.load();
-      } catch (ignored) { /* источника нет — сбрасывать нечего */ }
+      } catch (ignored) { /* no source: nothing to reset */ }
     }
 
     function fail(error) {
@@ -1085,7 +1110,7 @@
         if (ui && ui.dialog.open) {
           ui.dialog.close();
         }
-      } catch (ignored) { /* окно уже недоступно */ }
+      } catch (ignored) { /* the dialog is unavailable */ }
       lockScroll(false);
       report('gallery', error);
     }
@@ -1108,8 +1133,8 @@
       }
     }
 
-    /* Соседа подгружает картинка: фото целиком, у ролика — только постер.
-       Файл ролика заранее не запрашивается никогда. */
+    /* An image preloads a neighbour: the whole photo, or only the poster of
+       a video. A video file is never requested ahead. */
     function preload(at) {
       var item = items[at];
       var src = item && (item.video ? item.poster : item.href);
@@ -1122,12 +1147,13 @@
       image.src = src;
     }
 
-    /* Отказ браузера (нет жеста, политика встроенного браузера) — не ошибка:
-       ролик остаётся на постере, запустить его можно с панели. */
+    /* A refusal by the browser (no gesture, an in-app browser policy) is not
+       an error: the video stays on its poster and can be started from the
+       panel. */
     function startVideo() {
       var promise = ui.video.play();
       if (promise && typeof promise.then === 'function') {
-        promise.then(null, function () { /* не запустился — ждёт нажатия */ });
+        promise.then(null, function () { /* did not start: waits for a press */ });
       }
     }
 
@@ -1167,7 +1193,7 @@
       }
     }
 
-    /* autoplay — только когда show() вызван из обработчика нажатия на плитку. */
+    /* autoplay only when show() is called from the tile's press handler. */
     function show(at, autoplay) {
       index = Math.max(0, Math.min(at, items.length - 1));
       var item = items[index];
@@ -1197,7 +1223,7 @@
 
     function onImageLoad() {
       if (!ui.image.getAttribute('src')) {
-        return; /* показан ролик */
+        return; /* a video is shown */
       }
       clearTimeout(loadingTimer);
       ui.dialog.classList.remove('is-loading');
@@ -1218,18 +1244,18 @@
 
     function onVideoError() {
       if (!ui.video.getAttribute('src')) {
-        return; /* источник сняли сами (releaseVideo) */
+        return; /* the source was removed on purpose (releaseVideo) */
       }
       ui.dialog.classList.add('is-error');
       setText(ui.status, LIGHTBOX_TEXT.videoError);
     }
 
-    /* Большая кнопка ▶ по центру кадра и щелчок по кадру в Chrome ничего не
-       делают, пока о ролике ничего не загружено (preload="none"); кнопка ▶
-       панели и пробел работают. Запуск по нажатию на кадр — только в этом
-       состоянии: дальше щелчок по кадру обрабатывает сам браузер (пауза и
-       продолжение), и двойного переключения не бывает. Это тоже жест
-       пользователя, звук разрешён. */
+    /* In Chrome the big ▶ button in the centre of the frame and a click on
+       the frame do nothing while nothing of the video has loaded
+       (preload="none"); the panel's ▶ button and Space work. Starting on a
+       press on the frame happens only in this state: after it the browser
+       handles a click on the frame itself (pause and resume), so there is
+       no double toggle. This is a user gesture too, so sound is allowed. */
     function onVideoClick() {
       var video = ui.video;
       if (video.paused && video.readyState === HAVE_NOTHING && video.getAttribute('src')) {
@@ -1241,17 +1267,18 @@
       return !!window.visualViewport && window.visualViewport.scale > ZOOMED_SCALE;
     }
 
-    /* Пока страница увеличена щипком, жесты принадлежат браузеру: иначе
-       увеличенное изображение нельзя было бы сдвинуть. */
+    /* While the page is pinch-zoomed, gestures belong to the browser:
+       otherwise a zoomed image could not be panned. */
     var onZoom = guarded(function () {
       ui.dialog.classList.toggle('is-zoomed', isZoomed());
     });
 
-    /* Клавиши слушает документ, пока окно открыто, а не само окно: выйдя из
-       полноэкранного режима, Chrome через секунду-другую переводит фокус на
-       <body>, и окно перестало бы получать клавиши. Нажатия на самом ролике
-       (фокус на нём или в его панели) принадлежат плееру: пробел — пауза,
-       стрелки и Home/End — перемотка, Tab — ход по кнопкам панели. */
+    /* The document, not the dialog, listens to keys while the dialog is
+       open: after leaving full screen, Chrome moves focus to <body> within a
+       second or two, and the dialog would stop getting keys. Keys pressed on
+       the video itself (focus on it or in its panel) belong to the player:
+       Space pauses, the arrows and Home/End seek, Tab moves through the
+       panel buttons. */
     function onKeyDown(event) {
       if (!ui.dialog.open || event.target === ui.video ||
           event.altKey || event.ctrlKey || event.metaKey) {
@@ -1259,8 +1286,9 @@
       }
       var key = event.key;
       if (key === 'Tab') {
-        /* Круг по элементам окна — и там, где браузер выпускает фокус в свою
-           панель. Ролик — одна остановка: дальше Tab ведёт браузер. */
+        /* Cycle through the dialog elements, also where the browser lets
+           focus out into its own bar. The video is one stop: from there the
+           browser leads Tab. */
         var stops = [ui.close, ui.video, ui.prev, ui.next].filter(function (node) {
           return node === ui.video ? ui.dialog.classList.contains('is-video') &&
             !ui.dialog.classList.contains('is-error') : !node.hidden;
@@ -1291,8 +1319,8 @@
         return;
       }
       touches += 1;
-      /* Жест на кадре ролика — это перемотка по дорожке нативной панели
-         (события из неё приходят от самого <video>), а не листание. */
+      /* A gesture on the video frame is seeking on the native panel's track
+         (its events come from the <video> itself), not a swipe. */
       swipe = touches === 1 && event.target !== ui.video ?
         { id: event.pointerId, x: event.clientX, y: event.clientY } : null;
     }
@@ -1302,7 +1330,8 @@
         return;
       }
       touches = Math.max(0, touches - 1);
-      /* Палец подняли уже после закрытия (Esc во время жеста): листать нечего. */
+      /* The finger lifted after the dialog closed (Esc during a gesture):
+         nothing to swipe. */
       if (!ui.dialog.open) {
         swipe = null;
         return;
@@ -1314,7 +1343,7 @@
       swipe = null;
       var dx = event.clientX - from.x;
       var dy = event.clientY - from.y;
-      /* Вертикальный жест и жест на увеличенной странице — не листание. */
+      /* A vertical gesture or a gesture on a zoomed page is not a swipe. */
       if (event.type !== 'pointerup' || isZoomed() ||
           Math.abs(dx) < SWIPE_MIN || Math.abs(dx) < Math.abs(dy) * SWIPE_RATIO) {
         return;
@@ -1323,7 +1352,7 @@
       step(dx < 0 ? 1 : -1);
     }
 
-    /* Клик мимо изображения и кнопок — по подложке. */
+    /* A click that misses the image and the buttons lands on the backdrop. */
     function onDialogClick(event) {
       var target = event.target;
       if (Date.now() - swipedAt > SWIPE_CLICK_MS &&
@@ -1343,9 +1372,10 @@
       ui.dialog.classList.remove('is-zoomed');
       var link = opener;
       opener = null;
-      /* Плитку могли скрыть, пока окно было открыто (например, другой модуль
-         переключил её панель). Тогда фокус не возвращается в скрытый элемент,
-         но и в закрытом окне не остаётся. */
+      /* The tile may have been hidden while the dialog was open (another
+         module switched its panel, for instance). Then focus does not go
+         back to a hidden element, but does not stay in the closed dialog
+         either. */
       if (link && typeof link.focus === 'function' && link.getClientRects().length) {
         link.focus({ preventScroll: true });
       } else if (ui.dialog.contains(doc.activeElement)) {
@@ -1373,9 +1403,10 @@
       image.alt = '';
       image.decoding = 'async';
       image.draggable = false;
-      /* Нативная панель; на iPhone без playsinline ролик сразу ушёл бы в
-         системный полноэкранный плеер. preload="none": к ролику, до которого
-         долистали, до нажатия не уходит ни байта. */
+      /* The native panel; on an iPhone without playsinline the video would
+         go straight into the system full-screen player. preload="none": a
+         video reached by swiping loads not a single byte until it is
+         pressed. */
       video.setAttribute('controls', '');
       video.setAttribute('playsinline', '');
       video.setAttribute('preload', 'none');
@@ -1420,7 +1451,7 @@
       };
     }
 
-    /* Подпись окна по составу группы. */
+    /* The dialog label by the make-up of the group. */
     function dialogLabel() {
       var videos = items.filter(function (item) {
         return item.video;
@@ -1461,18 +1492,18 @@
       lockScroll(true);
       ui.dialog.showModal();
       doc.addEventListener('keydown', ui.onKey);
-      /* Всё ещё внутри обработчика нажатия на плитку: play() в show() получает
-         жест пользователя. Счётчик меняется уже в открытом окне — экранный
-         диктор его объявит. */
+      /* This runs inside the tile's press handler: play() in show() gets the
+         user gesture. The counter changes inside the open dialog, so a
+         screen reader announces it. */
       show(group.indexOf(link), true);
-      /* У ролика фокус — на нём самом: пробел ставит его на паузу, а не
-         нажимает «Закрыть». */
+      /* For a video, focus goes to the video itself: Space pauses it rather
+         than pressing the close button. */
       (items[index].video ? ui.video : ui.close).focus();
       if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', onZoom);
       }
-      /* Страница могла быть увеличена щипком ещё до открытия: события resize
-         не будет, состояние снимается сразу. */
+      /* The page may have been pinch-zoomed before the dialog opened: no
+         resize event will come, so the state is read at once. */
       onZoom();
     }
 
@@ -1480,7 +1511,7 @@
       if (event.defaultPrevented || event.button !== 0 || event.altKey ||
           event.ctrlKey || event.metaKey || event.shiftKey ||
           !event.target || typeof event.target.closest !== 'function') {
-        return; /* открытие в новой вкладке и т.п. — как у обычной ссылки */
+        return; /* opening in a new tab and so on: as with a plain link */
       }
       var link = event.target.closest('a[data-lightbox]');
       if (!link || !link.getAttribute('href') || (ui && ui.dialog.open)) {
@@ -1490,7 +1521,7 @@
         open(link);
         event.preventDefault();
       } catch (error) {
-        fail(error); /* переход по ссылке не отменён: файл откроется как обычно */
+        fail(error); /* the navigation is not cancelled: the file opens as usual */
       }
     }
 
@@ -1499,16 +1530,18 @@
 
 
   /* ==========================================================================
-     Место для следующих модулей
+     Adding a module
      --------------------------------------------------------------------------
-     Каждый модуль — отдельный блок ниже этой черты, внутри этой же функции:
+     Every module is a block of its own below this line, inside this same
+     function:
 
-       register('имя', function (doc) {
-         // найти свои элементы по data-атрибутам; нет элементов — выйти
+       register('name', function (doc) {
+         // find its elements by data attributes; no elements: return
        });
 
-     Модуль не полагается на другие модули и на порядок их запуска; состояние
-     для стилей отдаёт классами is-* и CSS-переменными через style.setProperty.
+     A module does not rely on other modules or on their start order; it
+     hands state to the styles through is-* classes and CSS variables set
+     with style.setProperty.
      ========================================================================== */
 
 }());

@@ -621,7 +621,7 @@ class AllowPathTests(FailingBuildTestCase):
         # repeats collapse; a trailing '/' is dropped
         self.assertBuildPasses(*self.ALLOW, "--allow-path", "/photos/", "--allow-path", "/other")
 
-    def test_without_it_the_messages_are_as_before(self):
+    def test_without_it_the_link_fails_without_naming_the_path(self):
         self.add_to_template('<a href="/photos/SecretWord/">x</a>')
         result = self.assertBuildFails("<a href>: '/…' does not exist in the output")
         self.assertNotIn("photos", result.stderr)

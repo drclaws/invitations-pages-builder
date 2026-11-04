@@ -741,7 +741,7 @@ class FragmentFilesTests(unittest.TestCase):
                 source = path.read_text(encoding="utf-8")
                 first = source[: source.index("-->")]
                 self.assertTrue(source.startswith("<!-- "), "no contract comment")
-                self.assertIn("ожидает в ", first)
+                self.assertIn("expects in ", first)
 
     def test_class_modifiers_come_only_from_checked_enumerations(self):
         for path in sorted(FRAGMENTS_DIR.rglob("*.html")):
@@ -967,7 +967,7 @@ class FragmentContractTests(unittest.TestCase):
             primaryDomId="w--e-a")])
         self.assertIn('<section class="events__program" aria-labelledby="w--e-a--program">', card)
         self.assertNotIn('<h3 class="schedule__name">', card)
-        # an event without a program: no heading "Программа" at all
+        # an event without a programme: no programme heading at all
         bare = self.render("widgets", [bare_widget(
             "events", items=[bare_event("a", False, primary=True)], count=1, multiple=False,
             primaryDomId="w--e-a")])
@@ -1007,10 +1007,10 @@ class FragmentContractTests(unittest.TestCase):
         def caption(credit: str) -> str:
             return re.search(r"<figcaption[^>]*>.*?</figcaption>", scheme(credit), re.DOTALL).group(0)
 
-        # without a credit: the caption as it always was
+        # without a credit: the bare caption
         self.assertEqual(caption(""), '<figcaption class="gallery__caption">Схема проезда</figcaption>')
-        # with one: right after "Схема проезда" and a plain space, in an element
-        # of its own, with no separator between them
+        # with one: right after the directions label and a plain space, in an
+        # element of its own, with no separator between them
         self.assertEqual(
             caption("© Картограф"),
             '<figcaption class="gallery__caption">Схема проезда '

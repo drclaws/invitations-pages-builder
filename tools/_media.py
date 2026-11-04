@@ -1,5 +1,5 @@
-"""Facts about media files: the size of a picture, the facts of a video and the
-published name of a file (standard library only).
+"""Facts about media files: a picture's size, a video's facts and a file's
+published name (standard library only).
 
 - `image_size` reads the size of a PNG, JPEG or WebP picture from its header;
   the file is never read whole (a JPEG is walked segment header by segment

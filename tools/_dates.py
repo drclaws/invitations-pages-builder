@@ -1,9 +1,9 @@
-"""Dates in Russian and the end times of events.
+"""Russian dates and event end times.
 
-Everything is written in the UTC offset of the event itself, that is in the
-local time of the place: never in UTC and never in the time zone of the
-machine that runs the build.  The names of the months and of the days of the
-week come from the tables below, not from the locale of the operating system.
+Everything is written in the event's own UTC offset, that is in the local
+time of the place: never in UTC and never in the time zone of the machine
+that runs the build.  Month and weekday names come from the tables below,
+not from the operating system's locale.
 
 The functions take `datetime` values with a UTC offset (as `parse_date_iso`
 reads them from the data); a value without an offset raises `ValueError`.
@@ -52,7 +52,7 @@ def parse_date_iso(value: str) -> datetime:
     return parsed
 
 
-#: Months in the genitive case, as in "15 июня".
+#: Month names in the genitive case, the form that follows a day number.
 MONTHS_GENITIVE = (
     "января",
     "февраля",
@@ -97,23 +97,25 @@ def format_time(moment: datetime) -> str:
 
 
 def format_day_month(moment: datetime) -> str:
-    """`15 июня`."""
+    """`<day> <month name in the genitive>`, such as the 15th of June."""
     _require_offset(moment)
     return f"{moment.day} {MONTHS_GENITIVE[moment.month - 1]}"
 
 
 def format_date(moment: datetime) -> str:
-    """`15 июня 2030`."""
+    """`<day> <month name in the genitive> <year>`, such as the 15th of June
+    2030."""
     return f"{format_day_month(moment)} {moment.year}"
 
 
 def format_when(start: datetime, end: datetime | None = None) -> str:
     """The time of an event for its card.
 
-    `Суббота, 15 июня 2030, 16:00`; with an end on the same local day
-    `…, 16:00–23:30`; with an end on another day `…, 22:00 — 16 июня, 2:00`
-    (and the year when that changes too).  The end is shown on the clock of
-    the start.
+    `<Weekday>, <date>, <time>` with the weekday capitalised (Saturday, the
+    15th of June 2030, 16:00); with an end on the same local day
+    `…, 16:00–23:30`; with an end on another day
+    `…, 22:00 — <day> <month>, 2:00` (with the year when that changes too).
+    The end is shown on the start's clock.
     """
     _require_offset(start)
     weekday = WEEKDAYS[start.weekday()]
@@ -136,8 +138,8 @@ def same_local_day(moments: Iterable[datetime]) -> bool:
 
 
 def format_tab(start: datetime, same_day: bool) -> str:
-    """The label of an event tab: `11:00` when all the events of the set are
-    on one day (see `same_local_day`), else `15 июня, 11:00`."""
+    """An event tab label: `11:00` when every event of the set falls on one
+    day (see `same_local_day`), otherwise `<day> <month>, 11:00`."""
     if same_day:
         return format_time(start)
     return f"{format_day_month(start)}, {format_time(start)}"
@@ -164,10 +166,10 @@ def event_timeline(
 ) -> list[TimelineEntry]:
     """Events `(id, start, end or None)` in order, each with an end.
 
-    The order is by the moment of the start, then by id.  An event without an
-    end lasts `default_duration`; that end is given on the clock of its start.
-    The end of an event never depends on the other events: it is the same for
-    everybody who sees the event (and in its calendar file).
+    The order is by start, then by id.  An event without an end lasts
+    `default_duration`; that end is given on its start's clock.  An event's
+    end never depends on the other events: it is the same for everybody who
+    sees the event (and in its calendar file).
 
     An end that is not later than its start raises `ValueError`.
     """
@@ -187,7 +189,7 @@ def event_timeline(
         if end is not None:
             timeline.append(TimelineEntry(event_id, start, end, True))
             continue
-        # added in UTC: the duration is real time whatever the clock of start
+        # added in UTC: the duration is real time whatever the start's clock
         effective = _in_offset_of(start.astimezone(timezone.utc) + default_duration, start)
         timeline.append(TimelineEntry(event_id, start, effective, False))
     return timeline

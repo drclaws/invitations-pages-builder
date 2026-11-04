@@ -9,10 +9,9 @@ scroll bars.  The CSS window is the first of `VIEWPORTS` that the cover fits
 into, scaled to `IMAGE_SIZE` device pixels; the quality goes down from
 `QUALITIES[0]` while the file is larger than `MAX_IMAGE_BYTES`.
 
-Everything temporary (the page, the profile of the browser) lives under
-`tempfile` (`TMPDIR`) and is removed; the browser is closed whatever
-happens.  Messages never name the files of the data nor the path of the
-browser.  On one machine with one browser and one set of fonts two renders
+Everything temporary (the page, the browser profile) lives under `tempfile`
+(`TMPDIR`) and is removed; the browser is closed whatever happens.  Messages
+never name the data files or the browser path.  On one machine with one browser and one set of fonts two renders
 give the same bytes.
 
 Standard library only.
@@ -49,12 +48,12 @@ QUALITIES = (85, 80, 75, 70, 65, 60)
 TIMEOUT_SECONDS = 60.0
 #: Screenshots taken until two in a row are the same.
 MAX_CAPTURES = 5
-#: The text of the cover stays inside the middle square of the image (what a
-#: square crop keeps): x from 285 to 915 of 1200.
+#: The cover text stays inside the middle square of the image (what a square
+#: crop keeps): x from 285 to 915 of 1200.
 SAFE_LEFT = (IMAGE_SIZE[0] - IMAGE_SIZE[1]) / 2
 SAFE_RIGHT = SAFE_LEFT + IMAGE_SIZE[1]
 
-#: The environment variable with the path of the browser (`--chrome`).
+#: The environment variable with the browser path (`--chrome`).
 CHROME_VARIABLE = "CHROME"
 #: Where the browser usually is: macOS applications, then names in `PATH`.
 DEFAULT_CHROME_PATHS = (
@@ -103,7 +102,7 @@ _FIT_SCRIPT = (
     " && box.right <= innerWidth && root.scrollWidth <= innerWidth"
     " && root.scrollHeight <= innerHeight; })()"
 )
-#: Where the text of the cover is: the union of the boxes of its lines.
+#: Where the cover text is: the union of its line boxes.
 _TEXT_BOX_SCRIPT = (
     "(() => { let box = null;"
     " for (const element of document.querySelectorAll("
@@ -119,7 +118,7 @@ _TEXT_BOX_SCRIPT = (
 
 
 class PreviewError(Exception):
-    """The image cannot be made; the message names no file of the data."""
+    """The image cannot be made; the message names no data file."""
 
 
 @dataclass(frozen=True)
@@ -134,7 +133,7 @@ class PreviewImage:
     viewport: tuple[int, int]
     #: False when even the lowest quality is larger than `MAX_IMAGE_BYTES`.
     fits: bool = True
-    #: (left, top, right, bottom) of the text of the cover, in image pixels.
+    #: (left, top, right, bottom) of the cover text, in image pixels.
     text_box: tuple[float, float, float, float] | None = None
     #: False when the cover fitted into none of `VIEWPORTS` (the widest is used).
     window_fits: bool = True

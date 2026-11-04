@@ -1,9 +1,9 @@
 """Read the design tokens (CSS custom properties on `:root`) of `app.css`.
 
 Only what the image generators and the build need is supported: the
-top-level `:root` rules, `var(--name)` references and the colour notations `#rgb`, `#rgba`,
-`#rrggbb`, `#rrggbbaa`, `rgb()` and `rgba()`.  Anything else is reported with
-the name of the token, so that a change of the tokens that the generators do
+top-level `:root` rules, `var(--name)` references and the colour notations
+`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()` and `rgba()`.  Anything else
+is reported with the token name, so that a token change the generators do
 not understand fails the build instead of producing wrong colours.
 
 Standard library only.

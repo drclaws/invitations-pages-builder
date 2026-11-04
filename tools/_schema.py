@@ -111,8 +111,8 @@ COVER_FOCUSES = (
     "bottom-left",
     "bottom-right",
 )
-#: A photo behind the cover larger than this gets a warning: it is loaded
-#: first, before anything else of the page.  TEMP: the size is not final.
+#: A photo behind the cover larger than this gets a warning: it loads first,
+#: before anything else on the page.
 COVER_BACKGROUND_WARN_BYTES = 1024 * 1024
 
 WIDGET_BASE_FIELDS = ("type", "id", "visible")
@@ -134,13 +134,13 @@ EVENT_FIELDS = (
     "title", "location", "start", "end", "showEnd", "schedule", "description", "visible",
     "links",
 )
-#: Fields of a link of an event (`events.<id>.links.<id>`): a button in the
-#: card of the event that leads to another page of the site, and the text
-#: that stands in its place while the link is not shown (`pending`).
+#: Event link fields (`events.<id>.links.<id>`): a button in the event card
+#: that leads to another page of the site, and the text that stands in its
+#: place while the link is not shown (`pending`).
 LINK_FIELDS = ("text", "href", "visible", "pending")
-#: Stands for the token of the invitation in the `href` of a link.
+#: Stands for the invitation token in a link's `href`.
 TOKEN_PLACEHOLDER = "{token}"
-#: Its name, as the parser of texts sees it.
+#: Its name, as the text parser sees it.
 _TOKEN_NAME = TOKEN_PLACEHOLDER[1:-1]
 MAX_LINK_HREF_LENGTH = 200
 _LINK_SEGMENT_RE = re.compile(r"[A-Za-z0-9_-]+")
@@ -230,7 +230,7 @@ MAX_LISTED = 8
 
 
 def _old(hints: Mapping[str, str]) -> dict[str, str]:
-    """The problems of the fields of the old format, with their hints."""
+    """The problems of the old-format fields, with their hints."""
     return {name: f"is no longer supported: {hint}" for name, hint in hints.items()}
 
 
@@ -913,9 +913,9 @@ def _check_events(check: _Checker, site: dict, index: SiteIndex) -> dict | None:
 
 
 def link_href_problem(href: str) -> str | None:
-    """The problem of the `href` of a link of an event, or None.
+    """The problem of an event link's `href`, or None.
 
-    A path from the root of the site to a directory of it: `/`, segments of
+    A path from the site root to one of its directories: `/`, segments of
     A-Z, a-z, 0-9, `_` and `-` (or exactly `{token}`, at most once) each
     followed by `/`; at most `MAX_LINK_HREF_LENGTH` characters.  The value
     is never quoted.
@@ -973,8 +973,8 @@ def _check_event_links(
         if link is None:
             continue
         check.unknown_fields(link, LINK_FIELDS, link_parts)
-        # default: the text of a link is a plain line, as the title of an
-        # event: no forms of address, nothing is filled in
+        # default: a link's text is a plain line, like an event title: no
+        # forms of address, nothing is filled in
         text = check.value(link, "text", "string", link_parts, required=True, single_line=True)
         if text is not MISSING and ("{" in text or "}" in text):
             check.error(
@@ -997,11 +997,11 @@ def _check_event_links(
 def _check_link_pending(
     check: _Checker, link: dict, parts: Sequence[PathPart], index: SiteIndex
 ) -> None:
-    """`pending` of a link: a text like the `description` of an event (forms
-    of address, named texts, placeholders), on one line, without `{token}`.
+    """A link's `pending`: a text like an event's `description` (forms of
+    address, named texts, placeholders), on one line, without `{token}`.
 
-    `{token}` gets a message of its own, and the other problems of that text
-    are reported once it is gone: one broken thing gives one message.
+    `{token}` gets a message of its own, and the text's other problems are
+    reported once it is removed: one broken thing gives one message.
     """
     if "pending" not in link:
         return

@@ -420,7 +420,7 @@ class LinkTests(unittest.TestCase):
 
     def test_a_hidden_link_leaves_its_text_without_the_token(self):
         pages = build(photos_pending(PENDING))
-        # in the form of the invitation: #1, #3 and #4 say "ты", the rest "вы"
+        # in the invitation's form of address: #1, #3 and #4 use "ty", the rest "vy"
         for number in (0, 2, 3, 4, 5, 6):
             invitation = F.INVITATIONS[number]
             with self.subTest(invitation=number + 1):

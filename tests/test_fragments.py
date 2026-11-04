@@ -208,7 +208,7 @@ class ChooseByTypeTests(unittest.TestCase):
         for value in (
             "../secret", "../../build", "widgets/text", "x/y", "text/", "/text",
             "Text", "TEXT", "CON", "a b", " text", "text\n", ".text", "-text", "1text",
-            "te_xt", "%2e%2e", "text%00", "tеxt",  # Cyrillic "е"
+            "te_xt", "%2e%2e", "text%00", "tеxt",  # with a Cyrillic e (U+0435)
             "ｔｅｘｔ",  # fullwidth letters
             "a" * 41, "a" * 10000, "",
             5, 0, None, True, False, ["text"], {"type": "text"},

@@ -465,7 +465,7 @@ def report_created(path: Path, size: int) -> None:
 
 
 def load_tokens(css_path: Path) -> Palette:
-    """The colours of the images from the design tokens of a style sheet."""
+    """The image colours from a style sheet's design tokens."""
     try:
         return load_palette(css_path)
     except TokenError as exc:

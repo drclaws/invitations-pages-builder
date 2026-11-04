@@ -573,8 +573,8 @@ class CoverBarTest(unittest.TestCase):
 
     def test_the_strip_above_the_bar_is_filled_by_the_bar_itself(self):
         # a pseudo-element of the bar: it shows and fades with the bar (its
-        # opacity, the reduced-motion step), is gone with it without the marker
-        # and in print, takes no room and catches no taps
+        # opacity, the reduced-motion step), disappears with it without the
+        # marker and in print, takes no room and catches no taps
         rules = re.findall(r"([^{}]+)\{([^{}]*)\}", self.css)
         fills = [(selector.strip(), body) for selector, body in rules if "::before" in selector
                  and "cover-bar" in selector]
@@ -606,9 +606,9 @@ class CoverBarTest(unittest.TestCase):
         for selector, body in rules:
             first.setdefault(selector, body)  # the rules outside the touch-screen block come first
         self.assertEqual(first["html.invitation"].strip(), "background-color: var(--color-cover-veil);")
-        # with a background of <html> the one of body no longer reaches the
+        # when <html> has a background, the body background does not reach the
         # canvas: body is at least as tall as the window, so a short page shows
-        # its own background below the content, as before
+        # the page background below the content, not the canvas
         self.assertEqual(first["html.invitation body"].strip(),
                          "min-block-size: var(--viewport-height-dynamic);")
         self.assertIn("color-scheme: only light;", self.css)

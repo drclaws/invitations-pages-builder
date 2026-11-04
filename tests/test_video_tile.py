@@ -83,7 +83,7 @@ class NativeControlsTests(unittest.TestCase):
     def test_there_is_no_vendor_directory(self):
         self.assertFalse((ROOT / "assets" / "vendor").exists())
 
-    def test_no_trace_of_the_former_library(self):
+    def test_no_player_library_is_referenced(self):
         for name in SOURCES:
             with self.subTest(name=name):
                 text = (ROOT / name).read_text(encoding="utf-8")
@@ -160,9 +160,9 @@ class FragmentTests(unittest.TestCase):
 class StylesTests(unittest.TestCase):
     """The tile, the single layout and the video in the viewer."""
 
-    def test_media_tokens_are_marked_and_the_player_ones_are_gone(self):
-        self.assertRegex(APP_CSS, r"\n  --media-play-size: calc\(var\(--tap-min\) \+ var\(--icon-size\)\);\s*/\* TEMP")
-        self.assertRegex(APP_CSS, r"\n  --media-play-icon-size: [^;]+;\s*/\* TEMP")
+    def test_the_badge_tokens_are_set_and_there_are_no_player_styles(self):
+        self.assertRegex(APP_CSS, r"\n  --media-play-size: calc\(var\(--tap-min\) \+ var\(--icon-size\)\);")
+        self.assertRegex(APP_CSS, r"\n  --media-play-icon-size: [^;]+;")
         self.assertNotIn("--player-", APP_CSS)
         self.assertIn("--ratio-video:", APP_CSS)
         for selector in (".player", ".player__sizer", ".player__media"):

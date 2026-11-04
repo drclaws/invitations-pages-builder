@@ -32,7 +32,7 @@ class TokenCommandTests(CliTestCase):
         token = result.stdout.strip()
         self.assertEqual(len(result.stdout.splitlines()), 1)
         self.assertIsNone(data_tools.check_token(token))
-        self.assertGreaterEqual(len(token), 20)  # fully random, as before
+        self.assertGreaterEqual(len(token), 20)  # fully random without a prefix
 
     def test_prefix_prints_a_readable_token_with_a_random_tail(self):
         result = run_cli(self.code, "token", "--prefix", "otter", cwd=self.work)
