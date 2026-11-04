@@ -7,7 +7,7 @@
 For every set it generates the placeholder media (the main set only, with
 ``tools/gen_example_media.py`` into ``examples/media/``, which git ignores),
 builds the invitations into ``<out>/<set>/`` with ``build.py build
---base-path / --allow-path /menu`` (the examples link to a page of their
+--base-path / --allow-path /photos`` (the examples link to a page of their
 fictional site that is not built) and prints where they are, how to look at
 them and the address of every page with its greeting (the data of the
 examples is fictional).  The directory of a set is the root to serve: the
@@ -54,7 +54,7 @@ NEEDS_FFMPEG = ("data",)
 BASE_PATH = "/"
 #: The examples link to a neighbouring directory of their fictional site,
 #: which the build does not write (`build.py build --allow-path`).
-ALLOW_PATHS = ("/menu",)
+ALLOW_PATHS = ("/photos",)
 CI_ENVIRONMENT_VARIABLES = ("CI", "GITHUB_ACTIONS")
 
 

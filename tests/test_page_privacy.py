@@ -112,8 +112,8 @@ class TreePrivacyTests(unittest.TestCase):
                 self.assertIn("/seating/", hrefs)
                 with_token = [href for href in hrefs if token in href]
                 self.assertEqual(text.count(token), len(with_token))
-                self.assertEqual(set(with_token), {f"/menu/{token}/"} if with_token else set())
-                rest = text.replace(f'"href": "/menu/{token}/"', "")
+                self.assertEqual(set(with_token), {f"/photos/{token}/"} if with_token else set())
+                rest = text.replace(f'"href": "/photos/{token}/"', "")
                 self.assertNotIn(token, rest)
                 for other in invitations:
                     if other is not invitation:
@@ -124,9 +124,9 @@ class TreePrivacyTests(unittest.TestCase):
 
     def test_a_text_in_place_of_a_link_holds_no_token(self):
         site, invitations = F.site(), F.invitations()
-        site["events"]["dinner"]["links"]["menu"]["pending"] = {
-            "ty": "{greeting} Меню появится здесь позже — мы тебе напишем",
-            "vy": "{greeting} Меню появится здесь позже — мы вам напишем",
+        site["events"]["dinner"]["links"]["photos"]["pending"] = {
+            "ty": "{greeting} Фотографии появятся здесь позже — мы тебе напишем",
+            "vy": "{greeting} Фотографии появятся здесь позже — мы вам напишем",
         }
         pages, _usage = _page.build_pages(site, invitations, F.settings())
         guests_with_text = 0
@@ -142,7 +142,7 @@ class TreePrivacyTests(unittest.TestCase):
                         self.assertEqual((link["href"], link["text"]), ("", ""))
                         self.assertTrue(link["pending"].startswith(invitation["greeting"]))
                     else:
-                        self.assertEqual(link["href"], f"/menu/{token}/")
+                        self.assertEqual(link["href"], f"/photos/{token}/")
                 # the token only in the `href` of the links shown to the guest
                 self.assertEqual(text.count(token), sum(token in link["href"] for link in links))
             guests_with_text += any(link["pending"] for link in links)

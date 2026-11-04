@@ -1502,12 +1502,12 @@ class InvitationTests(SchemaTestCase):
         self.assertTrue(all(message.startswith("site.json") for message in report.errors))
 
 
-MENU = "site.json: field 'events.dinner.links.menu"
+PHOTOS = "site.json: field 'events.dinner.links.photos"
 
 
-def change_menu(**fields):
-    """A change of the link `menu` of the dinner in site.json."""
-    return lambda s, i: s["events"]["dinner"]["links"]["menu"].update(fields)
+def change_photos(**fields):
+    """A change of the link `photos` of the dinner in site.json."""
+    return lambda s, i: s["events"]["dinner"]["links"]["photos"].update(fields)
 
 
 class EventLinkTests(SchemaTestCase):
@@ -1520,41 +1520,41 @@ class EventLinkTests(SchemaTestCase):
         self.assertEqual(_schema.GUEST_LINK_FIELDS, ("visible",))
         # visible by default, without the token, several of them: no message
         def change(site, invitations):
-            change_menu(visible=True)(site, invitations)
+            change_photos(visible=True)(site, invitations)
             site["events"]["ceremony"]["links"] = {
                 "seating": {"text": "Рассадка", "href": "/seating/", "visible": False},
-                "photos": {"text": "Фото", "href": "/a/{token}/b-1_c/"},
+                "video": {"text": "Видео", "href": "/a/{token}/b-1_c/"},
             }
             site["events"]["brunch"]["links"] = {}
 
         self.assertMessages(run(change))
 
     def test_unknown_field(self):
-        report = run(change_menu(hrf="/menu/"))
+        report = run(change_photos(hrf="/photos/"))
         self.assertOneError(
-            report, "site.json: unknown field 'events.dinner.links.menu.hrf' (did you mean 'href'?)"
+            report, "site.json: unknown field 'events.dinner.links.photos.hrf' (did you mean 'href'?)"
         )
 
     def test_required_fields(self):
         for key in ("text", "href"):
             with self.subTest(key=key):
-                report = run(lambda s, i: s["events"]["dinner"]["links"]["menu"].pop(key))
-                self.assertOneError(report, f"{MENU}.{key}' is required")
+                report = run(lambda s, i: s["events"]["dinner"]["links"]["photos"].pop(key))
+                self.assertOneError(report, f"{PHOTOS}.{key}' is required")
 
     def test_the_text_is_one_plain_line(self):
         for text, problem in (
-            ("Меню\nужина", "must be a single line (no line breaks)"),
-            ({"ty": "Меню", "vy": "Меню"}, "must be a string, got an object"),
+            ("Фотографии\nс ужина", "must be a single line (no line breaks)"),
+            ({"ty": "Фото", "vy": "Фото"}, "must be a string, got an object"),
             ("", "must not be empty"),
-            ("Меню {eventTitle}", "must not contain '{' or '}': the text of a link is shown as it "
+            ("Фото {eventTitle}", "must not contain '{' or '}': the text of a link is shown as it "
                                   "is, without placeholders or named texts"),
             ("{text:announce}", "must not contain '{' or '}': the text of a link is shown as it "
                                 "is, without placeholders or named texts"),
-            ("Меню }}", "must not contain '{' or '}': the text of a link is shown as it is, "
+            ("Фото }}", "must not contain '{' or '}': the text of a link is shown as it is, "
                         "without placeholders or named texts"),
         ):  # fmt: skip
             with self.subTest(text=text):
-                self.assertOneError(run(change_menu(text=text)), f"{MENU}.text' {problem}")
+                self.assertOneError(run(change_photos(text=text)), f"{PHOTOS}.text' {problem}")
 
     def test_every_class_of_a_wrong_href(self):
         segment = (
@@ -1567,37 +1567,37 @@ class EventLinkTests(SchemaTestCase):
             "with a scheme or a host)"
         )
         for href, problem in (
-            ("https://example.invalid/menu/", start),
-            ("menu/{token}/", start),
-            ("//example.invalid/menu/", segment),
-            ("/menu/../x/", segment),
-            ("/menu/./x/", segment),
-            ("/menu?a=1/", segment),
-            ("/menu#a/", segment),
-            ("/me%6Eu/", segment),
-            ("/me nu/", segment),
-            ("/меню/", segment),
-            ("/menu\\x/", segment),
-            ("/menu/x{token}/", segment),
-            ("/menu/{TOKEN}/", segment),
-            ("/menu/{token}", "must end with '/': a link leads to a directory of the site"),
-            ("/menu/x.html", "must end with '/': a link leads to a directory of the site"),
+            ("https://example.invalid/photos/", start),
+            ("photos/{token}/", start),
+            ("//example.invalid/photos/", segment),
+            ("/photos/../x/", segment),
+            ("/photos/./x/", segment),
+            ("/photos?a=1/", segment),
+            ("/photos#a/", segment),
+            ("/ph%6Ftos/", segment),
+            ("/pho tos/", segment),
+            ("/фото/", segment),
+            ("/photos\\x/", segment),
+            ("/photos/x{token}/", segment),
+            ("/photos/{TOKEN}/", segment),
+            ("/photos/{token}", "must end with '/': a link leads to a directory of the site"),
+            ("/photos/x.html", "must end with '/': a link leads to a directory of the site"),
             ("/", "must name a directory below the root of the site"),
             ("/{token}/{token}/", "uses {token} more than once"),
             ("/" + "m" * 199 + "/", "is longer than 200 characters"),
             ("", "must not be empty"),
-            (["/menu/"], "must be a string, got an array"),
+            (["/photos/"], "must be a string, got an array"),
         ):
             with self.subTest(href=href):
-                report = run(change_menu(href=href))
-                self.assertOneError(report, f"{MENU}.href' {problem}")
+                report = run(change_photos(href=href))
+                self.assertOneError(report, f"{PHOTOS}.href' {problem}")
                 if isinstance(href, str) and len(href) > 3:
                     self.assertNotIn(href, report.errors[0])
         # at the limit
-        self.assertMessages(run(change_menu(href="/" + "m" * 198 + "/")))
+        self.assertMessages(run(change_photos(href="/" + "m" * 198 + "/")))
 
     def test_the_href_rule(self):
-        for href in ("/menu/", "/menu/{token}/", "/{token}/", "/a/B_c-1/{token}/d/"):
+        for href in ("/photos/", "/photos/{token}/", "/{token}/", "/a/B_c-1/{token}/d/"):
             with self.subTest(href=href):
                 self.assertIsNone(_schema.link_href_problem(href))
         self.assertEqual(_schema.MAX_LINK_HREF_LENGTH, 200)
@@ -1605,8 +1605,8 @@ class EventLinkTests(SchemaTestCase):
 
     def test_visible_is_a_boolean(self):
         self.assertOneError(
-            run(change_menu(visible="yes")),
-            f"{MENU}.visible' must be a boolean (true or false), got a string",
+            run(change_photos(visible="yes")),
+            f"{PHOTOS}.visible' must be a boolean (true or false), got a string",
         )
 
     def test_the_shape_of_the_links(self):
@@ -1615,27 +1615,27 @@ class EventLinkTests(SchemaTestCase):
         self.assertOneError(
             report, "site.json: field 'events.dinner.links' must be an object { id: … }, got an array"
         )
-        report = run(lambda s, i: s["events"]["dinner"]["links"].update(menu="/menu/"))
-        self.assertOneError(report, f"{MENU}' must be an object, got a string")
+        report = run(lambda s, i: s["events"]["dinner"]["links"].update(photos="/photos/"))
+        self.assertOneError(report, f"{PHOTOS}' must be an object, got a string")
 
     def test_a_link_id_follows_the_id_rule(self):
         def change(site, invitations):
-            site["events"]["dinner"]["links"] = {"Menu": site["events"]["dinner"]["links"]["menu"]}
-            invitations[1]["events"]["dinner"]["links"] = {"Menu": {"visible": True}}
+            site["events"]["dinner"]["links"] = {"Photos": site["events"]["dinner"]["links"]["photos"]}
+            invitations[1]["events"]["dinner"]["links"] = {"Photos": {"visible": True}}
 
         # one message: the invitation may refer to the broken key
         self.assertOneError(
             run(change),
-            "site.json: field 'events.dinner.links.Menu' is not an identifier: an id has "
+            "site.json: field 'events.dinner.links.Photos' is not an identifier: an id has "
             f"{_data.ID_RULE}",
         )
 
 
-#: A text in place of the link `menu` (fictional): the same shape as the
+#: A text in place of the link `photos` (fictional): the same shape as the
 #: description of an event.
 PENDING = {
-    "ty": "Меню появится здесь позже — мы тебе напишем",
-    "vy": "Меню появится здесь позже — мы вам напишем",
+    "ty": "Фотографии появятся здесь позже — мы тебе напишем",
+    "vy": "Фотографии появятся здесь позже — мы вам напишем",
 }
 TOKEN_IN_PENDING = (
     "must not contain {token}: the text stands in place of the link and holds no token"
@@ -1646,55 +1646,55 @@ class LinkPendingTests(SchemaTestCase):
     """`events.<id>.links.<id>.pending`: the text in place of the button."""
 
     def test_a_string_or_forms_of_address(self):
-        for value in ("Меню появится здесь позже", PENDING):
+        for value in ("Фотографии появятся здесь позже", PENDING):
             with self.subTest(value=value):
-                self.assertMessages(run(change_menu(pending=value)))
+                self.assertMessages(run(change_photos(pending=value)))
 
     def test_named_texts_and_placeholders_as_in_a_description(self):
         for value in (
-            "{text:announce} Меню — {eventTitle}, {eventDate}, {eventPlace}",
-            {"ty": "{greeting} Меню — позже", "vy": "{coupleNames}: меню — позже"},
-            "Меню {{скоро}}",
+            "{text:announce} Фото — {eventTitle}, {eventDate}, {eventPlace}",
+            {"ty": "{greeting} Фото — позже", "vy": "{coupleNames}: фото — позже"},
+            "Фото {{скоро}}",
         ):
             with self.subTest(value=value):
-                self.assertMessages(run(change_menu(pending=value)))
+                self.assertMessages(run(change_photos(pending=value)))
 
     def test_blank_is_no_text(self):
         for value in ("", "   "):
             with self.subTest(value=value):
-                self.assertMessages(run(change_menu(pending=value)))
+                self.assertMessages(run(change_photos(pending=value)))
 
     def test_one_line(self):
         for value, field, problem in (
-            ("Меню\nпозже", "pending", "must be a single line (no line breaks)"),
-            ({"ty": "Меню", "vy": "Меню\r\nпозже"}, "pending.vy",
+            ("Фото\nпозже", "pending", "must be a single line (no line breaks)"),
+            ({"ty": "Фото", "vy": "Фото\r\nпозже"}, "pending.vy",
              "must be a single line (no line breaks)"),
             # `texts.invite` has several lines
             ("{text:invite}", "pending",
              "must be a single line (no line breaks), but a text it uses has several lines"),
         ):  # fmt: skip
             with self.subTest(value=value):
-                self.assertOneError(run(change_menu(pending=value)), f"{MENU}.{field}' {problem}")
+                self.assertOneError(run(change_photos(pending=value)), f"{PHOTOS}.{field}' {problem}")
 
     def test_the_token_is_an_error_of_its_own(self):
         # one message for the field, whatever else is wrong with the text; the
         # text is never quoted
         for value, field in (
-            ("Меню {token}", "pending"),
-            ("Меню {token}, {token} и {foo}\nпозже", "pending"),
-            ({"ty": "Меню {token}", "vy": "Меню"}, "pending.ty"),
+            ("Фото {token}", "pending"),
+            ("Фото {token}, {token} и {foo}\nпозже", "pending"),
+            ({"ty": "Фото {token}", "vy": "Фото"}, "pending.ty"),
         ):
             with self.subTest(value=value):
-                report = run(change_menu(pending=value))
-                self.assertOneError(report, f"{MENU}.{field}' {TOKEN_IN_PENDING}")
-                self.assertNotIn("Меню", report.errors[0])
-        report = run(change_menu(pending={"ty": "{token}", "vy": "Меню {token}"}))
+                report = run(change_photos(pending=value))
+                self.assertOneError(report, f"{PHOTOS}.{field}' {TOKEN_IN_PENDING}")
+                self.assertNotIn("Фото", report.errors[0])
+        report = run(change_photos(pending={"ty": "{token}", "vy": "Фото {token}"}))
         self.assertMessages(
             report,
-            errors=[f"{MENU}.pending.ty' {TOKEN_IN_PENDING}", f"{MENU}.pending.vy' {TOKEN_IN_PENDING}"],
+            errors=[f"{PHOTOS}.pending.ty' {TOKEN_IN_PENDING}", f"{PHOTOS}.pending.vy' {TOKEN_IN_PENDING}"],
         )
         # a literal brace is text
-        self.assertMessages(run(change_menu(pending="Меню {{token}}")))
+        self.assertMessages(run(change_photos(pending="Фото {{token}}")))
 
     def test_the_problems_of_a_text(self):
         available = (
@@ -1702,22 +1702,22 @@ class LinkPendingTests(SchemaTestCase):
             "{eventTime}, {eventPlace} (write '{{' for a literal brace)"
         )
         for value, problem in (
-            ("Меню {foo}", f"has an unknown placeholder at character 6; {available}"),
-            ("Меню {token", "has an unclosed '{' at character 6 (write '{{' for a literal brace)"),
+            ("Фото {foo}", f"has an unknown placeholder at character 6; {available}"),
+            ("Фото {token", "has an unclosed '{' at character 6 (write '{{' for a literal brace)"),
             ("{text:nope}", "refers to an unknown text 'nope' at character 1; known: announce, invite"),
             (3, "must be a string or an object with the strings 'ty' and 'vy'"),
-            ({"ty": "Меню"}, "must have both 'ty' and 'vy' (missing 'vy')"),
+            ({"ty": "Фото"}, "must have both 'ty' and 'vy' (missing 'vy')"),
         ):
             with self.subTest(value=value):
-                self.assertOneError(run(change_menu(pending=value)), f"{MENU}.pending' {problem}")
+                self.assertOneError(run(change_photos(pending=value)), f"{PHOTOS}.pending' {problem}")
 
         def without_deadline(site, invitations):
-            change_menu(pending="Меню до {rsvpDeadline}")(site, invitations)
+            change_photos(pending="Фото до {rsvpDeadline}")(site, invitations)
             site.pop("rsvpDeadline")
 
         # (the text of the section `rsvp` uses it as well)
         self.assertIn(
-            f"{MENU}.pending' uses {{rsvpDeadline}}, but 'rsvpDeadline' is not set",
+            f"{PHOTOS}.pending' uses {{rsvpDeadline}}, but 'rsvpDeadline' is not set",
             run(without_deadline).errors,
         )
 
@@ -1734,59 +1734,59 @@ class GuestLinkTests(SchemaTestCase):
                 self.assertOneError(
                     report,
                     f"{GUEST_2}: field 'events.dinner.links.<unknown key>' refers to an unknown "
-                    "link of event 'dinner'; known: menu",
+                    "link of event 'dinner'; known: photos",
                 )
-        report = run(lambda s, i: i[1]["events"]["dinner"]["links"].update(men={"visible": True}))
+        report = run(lambda s, i: i[1]["events"]["dinner"]["links"].update(photo={"visible": True}))
         self.assertOneError(
             report,
             f"{GUEST_2}: field 'events.dinner.links.<unknown key>' refers to an unknown link of "
-            "event 'dinner' (did you mean 'menu'?); known: menu",
+            "event 'dinner' (did you mean 'photos'?); known: photos",
         )
         # a declared id is shown, as everywhere in the invitations
-        report = run(lambda s, i: i[1]["events"].update(ceremony={"links": {"menu": {"visible": True}}}))
+        report = run(lambda s, i: i[1]["events"].update(ceremony={"links": {"photos": {"visible": True}}}))
         self.assertOneError(
             report,
-            f"{GUEST_2}: field 'events.ceremony.links.menu' refers to an unknown link of event "
+            f"{GUEST_2}: field 'events.ceremony.links.photos' refers to an unknown link of event "
             "'ceremony'; the event has no links",
         )
 
     def test_only_visible(self):
-        report = run(lambda s, i: i[1]["events"]["dinner"]["links"]["menu"].update(note="x"))
-        self.assertOneError(report, f"{GUEST_2}: unknown field 'events.dinner.links.menu.note'")
+        report = run(lambda s, i: i[1]["events"]["dinner"]["links"]["photos"].update(note="x"))
+        self.assertOneError(report, f"{GUEST_2}: unknown field 'events.dinner.links.photos.note'")
         # the text in place of a link belongs to site.json: one switch per guest
-        for value in ("Меню позже", PENDING):
+        for value in ("Фото позже", PENDING):
             with self.subTest(pending=value):
                 report = run(
-                    lambda s, i: i[1]["events"]["dinner"]["links"]["menu"].update(pending=value)
+                    lambda s, i: i[1]["events"]["dinner"]["links"]["photos"].update(pending=value)
                 )
                 self.assertOneError(
-                    report, f"{GUEST_2}: unknown field 'events.dinner.links.menu.<unknown key>'"
+                    report, f"{GUEST_2}: unknown field 'events.dinner.links.photos.<unknown key>'"
                 )
-        report = run(lambda s, i: i[1]["events"]["dinner"]["links"]["menu"].update(visble=True))
+        report = run(lambda s, i: i[1]["events"]["dinner"]["links"]["photos"].update(visble=True))
         self.assertOneError(
             report,
-            f"{GUEST_2}: unknown field 'events.dinner.links.menu.<unknown key>' "
+            f"{GUEST_2}: unknown field 'events.dinner.links.photos.<unknown key>' "
             "(did you mean 'visible'?)",
         )
-        report = run(lambda s, i: i[1]["events"]["dinner"]["links"]["menu"].update(visible="yes"))
+        report = run(lambda s, i: i[1]["events"]["dinner"]["links"]["photos"].update(visible="yes"))
         self.assertOneError(
             report,
-            f"{GUEST_2}: field 'events.dinner.links.menu.visible' must be a boolean (true or "
+            f"{GUEST_2}: field 'events.dinner.links.photos.visible' must be a boolean (true or "
             "false), got a string",
         )
-        report = run(lambda s, i: i[1]["events"]["dinner"]["links"].update(menu=True))
+        report = run(lambda s, i: i[1]["events"]["dinner"]["links"].update(photos=True))
         self.assertOneError(
-            report, f"{GUEST_2}: field 'events.dinner.links.menu' must be an object, got a boolean"
+            report, f"{GUEST_2}: field 'events.dinner.links.photos' must be an object, got a boolean"
         )
-        report = run(lambda s, i: i[1]["events"]["dinner"].update(links=["menu"]))
+        report = run(lambda s, i: i[1]["events"]["dinner"].update(links=["photos"]))
         self.assertOneError(
             report, f"{GUEST_2}: field 'events.dinner.links' must be an object, got an array"
         )
 
     def test_switched_off_and_on_again(self):
         def change(site, invitations):
-            change_menu(visible=True)(site, invitations)
-            invitations[0]["events"]["dinner"] = {"links": {"menu": {"visible": False}}}
+            change_photos(visible=True)(site, invitations)
+            invitations[0]["events"]["dinner"] = {"links": {"photos": {"visible": False}}}
 
         self.assertMessages(run(change))
 
@@ -1801,7 +1801,7 @@ class GuestLinkTests(SchemaTestCase):
             warnings=[
                 f"{GUEST_2}: field 'events.dinner.note' is set, but the event is hidden for this "
                 "invitation",
-                f"{GUEST_2}: field 'events.dinner.links.menu.visible' switches the link on, but "
+                f"{GUEST_2}: field 'events.dinner.links.photos.visible' switches the link on, but "
                 "the event is hidden for this invitation",
             ],
         )
@@ -1809,7 +1809,7 @@ class GuestLinkTests(SchemaTestCase):
         # switched off: nothing to warn about
         def off(site, invitations):
             change(site, invitations)
-            invitations[1]["events"]["dinner"]["links"]["menu"]["visible"] = False
+            invitations[1]["events"]["dinner"]["links"]["photos"]["visible"] = False
 
         self.assertEqual(len(run(off).warnings), 1)
 
@@ -1822,7 +1822,7 @@ class GuestKeyPrivacyTests(SchemaTestCase):
             "section": lambda s, i: i[0]["sections"].update({key: {"visible": True}}),
             "event": lambda s, i: i[0]["events"].update({key: {"visible": True}}),
             "link": lambda s, i: i[1]["events"]["dinner"]["links"].update({key: {"visible": True}}),
-            "link field": lambda s, i: i[1]["events"]["dinner"]["links"]["menu"].update({key: True}),
+            "link field": lambda s, i: i[1]["events"]["dinner"]["links"]["photos"].update({key: True}),
             "widget": lambda s, i: i[5]["sections"]["travel"]["widgets"].update({key: {"visible": True}}),
             "field": lambda s, i: i[0].update({key: True}),
             "section field": lambda s, i: i[0]["sections"]["personal"].update({key: True}),
@@ -1919,15 +1919,15 @@ class PageWarningTests(SchemaTestCase):
             [
                 f"{GUEST_2}: field 'events.dinner.note' is set, but no 'events' widget on this "
                 "page shows the event",
-                f"{GUEST_2}: field 'events.dinner.links.menu.visible' {tail}",
-                f"invitation #8: field 'events.dinner.links.menu.visible' {tail}",
+                f"{GUEST_2}: field 'events.dinner.links.photos.visible' {tail}",
+                f"invitation #8: field 'events.dinner.links.photos.visible' {tail}",
             ],
         )
 
         # a link visible by default is not switched on by anybody: no warning
         def default(site, invitations):
             change(site, invitations)
-            change_menu(visible=True)(site, invitations)
+            change_photos(visible=True)(site, invitations)
             for invitation in invitations:
                 invitation.get("events", {}).get("dinner", {}).pop("links", None)
 

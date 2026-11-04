@@ -561,8 +561,8 @@ class ExampleDataTests(CliTestCase):
             {item[key] for item in site["media"].values() for key in ("file", "poster", "thumb")
              if key in item}
         )  # fmt: skip
-        # the link to the menu leads to a directory of the fictional site
-        out = self.build_example("data", names, "--allow-path", "/menu")
+        # the link to the photos leads to a directory of the fictional site
+        out = self.build_example("data", names, "--allow-path", "/photos")
         media = out / "assets" / site["mediaDir"]
         calendars = support.calendar_names(site, invitations)
         self.assertEqual(list(calendars), ["ceremony", "dinner", "brunch"])
@@ -577,12 +577,12 @@ class ExampleDataTests(CliTestCase):
         with_link = [
             number
             for number, invitation in enumerate(invitations, start=1)
-            if f'href="/menu/{invitation["token"]}/">Меню ужина</a>'
+            if f'href="/photos/{invitation["token"]}/">Фотографии с ужина</a>'
             in (out / invitation["token"] / "index.html").read_text(encoding="utf-8")
         ]
         self.assertEqual(with_link, [2, 8])
         # the others see the text in place of the button, in their form
-        pending = site["events"]["dinner"]["links"]["menu"]["pending"]
+        pending = site["events"]["dinner"]["links"]["photos"]["pending"]
         with_text = [
             number
             for number, invitation in enumerate(invitations, start=1)

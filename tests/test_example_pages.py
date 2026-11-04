@@ -26,7 +26,7 @@ from tests.support import build
 ROOT = support.ROOT
 DATA_SETS = ("data", "data-venue-pending")
 #: The main set links to a directory of its fictional site that is not built.
-ALLOW_PATHS = ("/menu",)
+ALLOW_PATHS = ("/photos",)
 
 #: Script hooks whose elements never carry the reveal mark.
 NO_REVEAL_HOOKS = ("data-gallery", "data-lightbox", "data-countdown")
@@ -340,7 +340,7 @@ class PrivacyTests(ExamplePagesTestCase):
                             self.assertEqual(content.lower().count(token.lower()), len(hrefs))
                             rest = content
                             for href in hrefs:
-                                self.assertEqual(href, f"/menu/{token}/")
+                                self.assertEqual(href, f"/photos/{token}/")
                                 self.assertEqual(rest.count(f'href="{href}"'), 1)
                                 rest = rest.replace(f'href="{href}"', "")
                             self.assertNotIn(token.lower(), rest.lower())
@@ -349,18 +349,18 @@ class PrivacyTests(ExamplePagesTestCase):
                             self.assertNotIn(token.lower(), content.lower(), path)
                     self.assertEqual([path for path in files if token in path], [page])
                 linked += len(hrefs)
-        # the link to the menu is switched on for two guests of the main set
+        # the link to the photos is switched on for two guests of the main set
         self.assertEqual(linked, 2)
 
     def test_the_button_or_the_text_in_its_place(self):
         site, invitations, files = self.built["data"]
-        menu = site["events"]["dinner"]["links"]["menu"]
+        photos = site["events"]["dinner"]["links"]["photos"]
         with_button = []
         for number, invitation in enumerate(invitations, start=1):
             page = files[f"{invitation['token']}/index.html"]
-            button = f'<a class="btn btn--secondary" href="/menu/{invitation["token"]}/">{menu["text"]}</a>'
-            text = build.text_to_html(menu["pending"][invitation["form"]])
-            other = build.text_to_html(menu["pending"]["vy" if invitation["form"] == "ty" else "ty"])
+            button = f'<a class="btn btn--secondary" href="/photos/{invitation["token"]}/">{photos["text"]}</a>'
+            text = build.text_to_html(photos["pending"][invitation["form"]])
+            other = build.text_to_html(photos["pending"]["vy" if invitation["form"] == "ty" else "ty"])
             with self.subTest(invitation=number):
                 self.assertNotIn(other, page)
                 if button in page:
@@ -371,15 +371,15 @@ class PrivacyTests(ExamplePagesTestCase):
                     # in place of the button, once: in the card of the dinner
                     self.assertEqual(page.count(f'<p class="events__actions card__text">{text}</p>'), 1)
                     self.assertEqual(page.count(text), 1)
-                    self.assertNotIn(f'>{menu["text"]}</a>', page)
-                    self.assertNotIn("/menu/", page)
+                    self.assertNotIn(f'>{photos["text"]}</a>', page)
+                    self.assertNotIn("/photos/", page)
         # one switch per guest: the second and the eighth see the button
         self.assertEqual(with_button, [2, 8])
         # the text is on the pages of the guests only
         for path, content in files.items():
             if not path.endswith("/index.html"):
                 for form in ("ty", "vy"):
-                    self.assertNotIn(build.text_to_html(menu["pending"][form]), content, path)
+                    self.assertNotIn(build.text_to_html(photos["pending"][form]), content, path)
         # the set without places has no links
         for path, content in self.built["data-venue-pending"][2].items():
             self.assertNotIn("events__actions card__text", content, path)

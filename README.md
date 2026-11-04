@@ -244,7 +244,7 @@ a resource under `PATH` (`src`, `poster`, `srcset`, `<link href>`, `url()` and
   data.
 
 ```
-python3 build.py build --data data --media media --out dist/invite --base-path /invite --allow-path /menu
+python3 build.py build --data data --media media --out dist/invite --base-path /invite --allow-path /photos
 ```
 
 ### 2.2. `validate` — проверить данные, ничего не записывая
@@ -422,8 +422,8 @@ python3 tools/build_examples.py [--set data|data-venue-pending|all] [--out DIR] 
 ```
 
 Скрипт генерирует медиа-заглушки основного набора в `examples/media/` (в
-`.gitignore`), собирает наборы с `--base-path /` и `--allow-path /menu` (ссылка
-«Меню ужина» в примерах ведёт в каталог вымышленного сайта, которого нет, — для
+`.gitignore`), собирает наборы с `--base-path /` и `--allow-path /photos` (ссылка
+«Фотографии с ужина» в примерах ведёт в каталог вымышленного сайта, которого нет, — для
 вымышленных данных это допустимо) в `dist/data/` и
 `dist/data-venue-pending/` (по умолчанию оба) и печатает строки сборки, путь к
 приглашениям, команду просмотра `python3 -m http.server -d dist/<набор> 8000` и
@@ -763,7 +763,7 @@ of a link is an error with a hint.
 
 ```json
 "dinner": { "title": "Праздничный ужин", "location": "manor", "start": "2030-06-15T16:00:00+03:00",
-            "links": { "menu": { "text": "Меню ужина", "href": "/menu/{token}/" } } }
+            "links": { "photos": { "text": "Фотографии с ужина", "href": "/photos/{token}/" } } }
 ```
 
 Only the "Events" widget shows the links (the date widget and the cover do
@@ -776,7 +776,7 @@ the output.
 
 **A text in place of the button** (`pending`). While a link is not shown to a
 guest, its place in the card may hold a text instead: for example, that the
-menu will appear here closer to the day. Each guest sees either the button or
+photos will appear here after the day. Each guest sees either the button or
 the text, never both, and the same switch of the invitation
 (`events.<id>.links.<id>.visible`) turns one into the other; an invitation has
 no text of its own. The text holds neither the token nor an address: `{token}`
@@ -785,9 +785,9 @@ place of the link and holds no token`). A link without `pending` leaves nothing
 in its place.
 
 ```json
-"menu": { "text": "Меню ужина", "href": "/menu/{token}/",
-          "pending": { "ty": "Меню ужина появится здесь ближе к празднику — мы тебе напишем",
-                       "vy": "Меню ужина появится здесь ближе к празднику — мы вам напишем" } }
+"photos": { "text": "Фотографии с ужина", "href": "/photos/{token}/",
+            "pending": { "ty": "Фотографии с ужина появятся здесь после праздника — мы тебе напишем",
+                         "vy": "Фотографии с ужина появятся здесь после праздника — мы вам напишем" } }
 ```
 
 #### Места (`locations.<id>`)
@@ -1237,7 +1237,7 @@ Id **видны**: в атрибутах `id` разметки и в сообщ�
 
 ```json
 "sections": { "personal": { "note": "Помнишь, как мы познакомились?\n\nЖдём!" } },
-"events": { "dinner": { "note": "Напиши нам про аллергию — подберём меню." } }
+"events": { "dinner": { "note": "Напиши нам про аллергию — учтём это при выборе блюд." } }
 ```
 
 Для личной приписки удобна секция без виджетов (`"widgets": []`): у кого
@@ -1263,22 +1263,23 @@ personal (e.g. a page of the site made for this guest):
 
 ```json
 "dinner": { "title": "Праздничный ужин", "location": "manor", "start": "2030-06-15T16:00:00+03:00",
-            "links": { "menu": { "text": "Меню ужина", "href": "/menu/{token}/" } } }
+            "links": { "photos": { "text": "Фотографии с ужина", "href": "/photos/{token}/" } } }
 ```
 
 The guests who should see it get it switched on:
 
 ```json
 { "token": "…", "greeting": "Дорогой Дэйв!", "form": "ty",
-  "events": { "dinner": { "links": { "menu": { "visible": true } } } } }
+  "events": { "dinner": { "links": { "photos": { "visible": true } } } } }
 ```
 
-The button «Меню ужина» appears in the card of the dinner of these guests only,
-right after «Добавить в календарь», and leads to `/menu/<their token>/`. The
-build does not write that page, so the directory is allowed explicitly:
+The button «Фотографии с ужина» appears in the card of the dinner of these
+guests only, right after «Добавить в календарь», and leads to
+`/photos/<their token>/`. The build does not write that page, so the directory
+is allowed explicitly:
 
 ```
-python3 build.py build --data data --media media --out dist/invite --base-path /invite --allow-path /menu
+python3 build.py build --data data --media media --out dist/invite --base-path /invite --allow-path /photos
 ```
 
 Whether the page exists is up to whoever publishes the whole site. A link
@@ -1290,9 +1291,9 @@ have the link may see a line in the place of the button, in their form of
 address:
 
 ```json
-"links": { "menu": { "text": "Меню ужина", "href": "/menu/{token}/",
-                     "pending": { "ty": "Меню ужина появится здесь ближе к празднику — мы тебе напишем",
-                                  "vy": "Меню ужина появится здесь ближе к празднику — мы вам напишем" } } }
+"links": { "photos": { "text": "Фотографии с ужина", "href": "/photos/{token}/",
+                       "pending": { "ty": "Фотографии с ужина появятся здесь после праздника — мы тебе напишем",
+                                    "vy": "Фотографии с ужина появятся здесь после праздника — мы вам напишем" } } }
 ```
 
 A guest without the link sees the line, muted, right after «Добавить в
@@ -2813,12 +2814,12 @@ CSP работает потому, что страница по построен
 | Chrome есть на раннере и запускается headless от обычного пользователя, с песочницей, как его запускает сборка (печать версии, пустая страница; нет или не запустился — ошибка с выводом Chrome): им сборка рисует картинку превью, и тесты с настоящим браузером идут после этого шага, а не пропускаются | `google-chrome --version && google-chrome --headless=new --disable-gpu --dump-dom about:blank` |
 | тесты | `python3 -m unittest` |
 | генерация медиа-заглушек (при необходимости ставится `ffmpeg`) | `python3 tools/gen_example_media.py` |
-| проверка и сборка основного примера (с `SITE_NAME=Example` и `--allow-path /menu`: ссылка «Меню ужина» ведёт в каталог вымышленного сайта) | `python3 build.py validate && SITE_NAME=Example python3 build.py build --allow-path /menu --out /tmp/dist` |
+| проверка и сборка основного примера (с `SITE_NAME=Example` и `--allow-path /photos`: ссылка «Фотографии с ужина» ведёт в каталог вымышленного сайта) | `python3 build.py validate && SITE_NAME=Example python3 build.py build --allow-path /photos --out /tmp/dist` |
 | проверка и сборка примера без площадки и медиа | `python3 build.py build --data examples/data-venue-pending --media examples/media-none --out /tmp/dist-pending` |
-| сборка основного примера под префиксом — раскладка, которой пользуется настоящий сайт (с `SITE_NAME=Example` и `--allow-path /menu`) | `SITE_NAME=Example python3 build.py build --base-path /invite --allow-path /menu --out /tmp/site/invite` |
+| сборка основного примера под префиксом — раскладка, которой пользуется настоящий сайт (с `SITE_NAME=Example` и `--allow-path /photos`) | `SITE_NAME=Example python3 build.py build --base-path /invite --allow-path /photos --out /tmp/site/invite` |
 | теги превью ссылки на страницах основного примера (обе сборки): `og:image` — `/assets/<mediaDir>/<хэш>.jpg` у обычной сборки и `/invite/assets/…` у сборки под префиксом, файл есть внутри сборки, это JPEG 1200×630 не больше 300 KB, по `assets/og.*` ничего нет, есть `og:site_name`, нет `og:url`, нет `://` в `<meta>` | `grep -o '<meta property="og:[^>]*>' /tmp/site/invite/*/index.html` |
 | проверка результата (все три сборки): нет `index.html`, `404.html`, `_headers`, `robots.txt`, нет `*.json`, `*.map`, файлов витрины и страницы-превью, число страниц `*/index.html` вне `assets/` равно числу приглашений | `ls /tmp/dist` — только `assets` и каталоги страниц |
-| воспроизводимость: две сборки подряд (основной пример, `--allow-path /menu`) дают одинаковые контрольные суммы | собрать дважды в разные каталоги и сравнить `sha256` файлов |
+| воспроизводимость: две сборки подряд (основной пример, `--allow-path /photos`) дают одинаковые контрольные суммы | собрать дважды в разные каталоги и сравнить `sha256` файлов |
 | рабочее дерево осталось чистым | `git status --porcelain` |
 
 Chrome на `ubuntu-24.04` — уже установленный на раннере `google-chrome` (пакет
