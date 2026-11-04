@@ -54,8 +54,8 @@
     });
   }
 
-  /* The script loads with defer: DOMContentLoaded is still ahead. The other
-     branches are a safety net for another way of loading. The subscription
+  /* The script loads with defer: DOMContentLoaded has not fired yet. The
+     other branches are a safety net for another way of loading. The subscription
      comes before the module code: a failure while declaring a later module
      does not cancel the start of the earlier ones. */
   document.addEventListener('DOMContentLoaded', start);
@@ -107,7 +107,7 @@
      --------------------------------------------------------------------------
      The bar and all the collapse rules are in CSS, under the cover-bar-on
      marker on <html>; without the marker there is no bar and the cover
-     stays still. Where scroll timelines exist, CSS computes the progress
+     does not move. Where scroll timelines exist, CSS computes the progress
      --cover-progress (0…1) itself, and the module only sets the marker. The
      condition is the same as the @supports in app.css. Otherwise the module
      computes the progress from the cover position at most once a frame and
@@ -499,7 +499,7 @@
      --------------------------------------------------------------------------
      The hidden state applies only under the reveal-on marker on <html>; the
      marker is set as the last step and removed on any error. A revealed
-     block gets is-revealed and is no longer observed; when its reveal
+     block gets is-revealed and leaves the observer; when its reveal
      transition ends it gets is-settled: from then on the transition and the
      cascade delay do not apply and do not get in the way of the element's
      own transitions.
@@ -635,8 +635,8 @@
 
     /* Shows everything already on screen or above it (fast scrolling, a
        jump to the end of the page, a return from a background tab). inset
-       is the share of the screen height at the bottom that a block still
-       has to enter; 0 when there is none. */
+       is the share of the screen height at the bottom that a block has yet
+       to enter; 0 when there is none. */
     function sweepWithin(inset) {
       var limit = viewportHeight() * (1 - inset);
       var order = 0;
@@ -1492,7 +1492,7 @@
       lockScroll(true);
       ui.dialog.showModal();
       doc.addEventListener('keydown', ui.onKey);
-      /* Still inside the tile's press handler: play() in show() gets the
+      /* This runs inside the tile's press handler: play() in show() gets the
          user gesture. The counter changes inside the open dialog, so a
          screen reader announces it. */
       show(group.indexOf(link), true);

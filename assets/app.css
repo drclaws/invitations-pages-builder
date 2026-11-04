@@ -64,7 +64,7 @@
      px    — hairlines and borders, the focus ring, radii, shadows, --tap-min
              (44px is a requirement on the physical size of a tap target;
              growing with the font would only take width from the text),
-             motion amplitudes. Independent of the font.
+             motion amplitudes. They do not depend on the font.
      em/ch — tracking and widths "in characters": they follow the element's
              own font.
    At the default font size and a viewport of --vw-min or wider, every
@@ -560,8 +560,8 @@
 
 /* prefers-reduced-motion is honoured at the token level: motion is zeroed
    once, here, and the components know nothing about this media query.
-   0.01ms rather than 0s, so that transitionend/animationend events still
-   fire and scripts do not hang waiting for them. */
+   0.01ms rather than 0s, so that transitionend/animationend events fire
+   all the same and scripts do not hang waiting for them. */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --duration-fast: 0.01ms;
@@ -1675,7 +1675,7 @@ a.btn[aria-disabled="true"] {
    the bar upwards in its own colour by the screen height — enough for any
    system area. It is part of the bar: it shows and fades with it (its
    opacity; under reduced motion the same step), and without the marker or
-   in print it is gone together with the bar. It takes no part in the flow
+   in print it disappears together with the bar. It takes no part in the flow
    (the layout does not shift) and catches no taps. Until the bar sticks,
    the cover is above it — by then almost the same colour.
    The fill does not cover the strip under the header of the Telegram in-app
@@ -2264,7 +2264,7 @@ html.js.cover-animate .cover__inner > :nth-child(4) { --cover-index: 3; }
        bar (not on <html>: that would restyle the whole page every frame);
        the three rules below read it.
    Everything is under the cover-bar-on marker: the coverBar module sets it;
-   without the script the cover stays still and there is no bar. The
+   without the script the cover does not move and there is no bar. The
    cover-in animation (the children of .cover__inner) and the fade-out of
    .cover__inner itself multiply and do not conflict. */
 @property --cover-progress {
@@ -2363,9 +2363,9 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
   }
 
   /* The collapse is a single step: the cover photo and text do not change
-     with scrolling, and the bar appears at once when the cover is gone. All
-     three animations span the full travel with a step at the end (in the
-     script, the progress is 0 or 1). */
+     with scrolling, and the bar appears at once when the cover has scrolled
+     away. All three animations span the full travel with a step at the end
+     (in the script, the progress is 0 or 1). */
   html.js.cover-bar-on .cover__backdrop::after,
   html.js.cover-bar-on .cover__inner,
   html.js.cover-bar-on .cover-bar[data-cover-bar] {

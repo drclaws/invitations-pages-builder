@@ -1000,8 +1000,8 @@ def _check_link_pending(
     """A link's `pending`: a text like an event's `description` (forms of
     address, named texts, placeholders), on one line, without `{token}`.
 
-    `{token}` gets a message of its own, and the other problems of that text
-    are reported once it is gone: one broken thing gives one message.
+    `{token}` gets a message of its own, and the text's other problems are
+    reported once it is removed: one broken thing gives one message.
     """
     if "pending" not in link:
         return

@@ -1332,18 +1332,18 @@ def _is_under(path: str, directory: str) -> bool:
 def check_allow_paths(
     values: Iterable[Any], base_path: str = DEFAULT_BASE_PATH, pages: Iterable[str] = ()
 ) -> tuple[str, ...]:
-    """`build --allow-path`: directories of the site that the build does not
-    write and that the links of the pages may lead to.
+    """`build --allow-path`: site directories that the build does not write
+    and that page links may lead to.
 
     Each value is checked by `check_allow_path`; repeats are dropped, the
     order is kept.  A value must lie apart from the output and from
     `base_path` (normalised): not the same path, not above it, and not below
     it unless the base path is `/` - the addresses under the base path are
-    files of the output and are looked up as before.  At the base path `/`
-    a value must not lead into the output either: its first segment is
-    neither `assets` nor one of `pages`, the tokens of the invitations (the
-    directories of their pages; letter case aside, as on a file system that
-    ignores it).  `ValueError` names the problem, never the value.
+    output files and are always looked up in the output.  At the base path
+    `/` a value must not lead into the output either: its first segment is
+    neither `assets` nor one of `pages`, the invitation tokens (their page
+    directories; letter case aside, as on a file system that ignores it).
+    `ValueError` names the problem, never the value.
     """
     paths: list[str] = []
     page_dirs = {token.lower() for token in pages if isinstance(token, str)}
@@ -4154,8 +4154,8 @@ LINKS_BASE_REPLACED = (
 
 
 class _ReplacedOption(argparse.Action):
-    """An option that is gone: a usage error (code 2) with a hint, whatever
-    else the command line holds."""
+    """A replaced option: a usage error (code 2) with a hint, whatever else
+    the command line holds."""
 
     def __init__(self, option_strings: Sequence[str], dest: str, **kwargs: Any) -> None:
         self.hint = kwargs.pop("hint")
