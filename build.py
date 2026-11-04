@@ -194,7 +194,7 @@ ICS_UID_DOMAIN = "invitation"
 #: `DTSTAMP` is a constant so that equal inputs give a byte-identical output.
 ICS_DTSTAMP = "20000101T000000Z"
 ICS_LINE_OCTETS = 75
-#: Between the names of the couple and the title of the event in `SUMMARY`.
+#: Between the couple's names and the event title in `SUMMARY`.
 ICS_SUMMARY_SEPARATOR = " · "
 
 #: The only external links a page may contain: map services, opened on click.
@@ -1146,7 +1146,7 @@ DEFAULT_SITE_IMAGES = SiteImages(
 #: services crop without visible loss.
 OG_RATIO_TOLERANCE = 0.1
 
-#: How much of a file is read to find the size of an image.
+#: How much of a file is read to find an image's size.
 _IMAGE_HEADER_BYTES = 1024 * 1024
 _IMAGE_SIGNATURES = {
     ".png": (png_tools.PNG_SIGNATURE,),
@@ -1392,7 +1392,7 @@ def site_images_context(
     """The computed fields of the icon and the link preview image.
 
     Every URL is a path from the site root under `base_path`: the build never
-    knows the address of the site.  None of the fields depends on the data.
+    knows the site address.  None of the fields depends on the data.
     """
     assets = assets_url_path(base_path)
     return {
@@ -1649,7 +1649,7 @@ def event_calendar(media_dir: str, event: dict, *, couple_names: str) -> bytes:
     `event` is an event of `tools._page.calendar_events` (an event of a page
     tree has the same fields); `couple_names` is `coupleNames` of the site.
     The title of the entry is `<couple names> · <event title>`, so that it
-    stands out among the other entries of a calendar.  Nothing of an
+    stands out among the other calendar entries.  Nothing from an
     invitation goes into the file: the notes stay on the page.  The uid
     depends on the media directory, the id and the start of the event, so a
     new time gives a new entry, while a new title, names, end or place
@@ -1681,14 +1681,13 @@ class CalendarFile(NamedTuple):
     content: bytes
 
 
-#: Hex digits of the name of a calendar file.
+#: Hex digits in a calendar file name.
 CALENDAR_NAME_DIGITS = 16
 
 
 def calendar_key(tokens: Iterable[str]) -> bytes:
-    """The key of the names of the calendar files: sha256 of the tokens of
-    all invitations, sorted and joined with a line feed (a token never holds
-    one).
+    """The key of the calendar file names: sha256 of all the invitation
+    tokens, sorted and joined with a line feed (a token never holds one).
 
     The contents of a calendar file are easy to guess (a title, a time, a
     place), so a plain hash of them could be found by trying; with this key,
@@ -1725,7 +1724,7 @@ def calendar_files(data: Data) -> dict[str, CalendarFile]:
 # HTML comments
 # --------------------------------------------------------------------------
 
-#: What may follow the text of a comment: `-->`, `--!>`, or the `>` / `->` of an
+#: What may follow a comment's text: `-->`, `--!>`, or the `>` / `->` of an
 #: abruptly closed `<!-->` / `<!--->`.
 _COMMENT_END_RE = re.compile(r"-{0,2}!?\s*>")
 
@@ -2212,7 +2211,7 @@ _CSS_STRING_RE = re.compile(_CSS_STRING)
 
 
 def _blank(match: re.Match) -> str:
-    """Replacement that keeps the line numbers of the rest of the text."""
+    """A replacement that keeps the line numbers of the remaining text."""
     return "\n" * match.group(0).count("\n") or " "
 
 
@@ -2684,7 +2683,7 @@ def _check_output_tree(
 ) -> list[str]:
     """Allow-list of the output: only what the invitations need is published.
 
-    `pages` are the tokens of the invitations: the top of the output holds
+    `pages` are the invitation tokens: the top of the output holds
     `assets/` and one directory `<token>/` per invitation with the page and
     nothing else.  `assets/<media_dir>/` holds exactly the published names
     `media` and the calendar files `calendars` (and does not exist without
@@ -2897,7 +2896,7 @@ def display_path(path: Path | str) -> str:
     return shown
 
 
-#: A run of the characters of a token (`redact_tokens`).
+#: A run of token characters (`redact_tokens`).
 _TOKEN_RUN_RE = re.compile(r"[A-Za-z0-9_-]+")
 #: A path in a message: a word with at least one separator in it.
 _PATH_WORD_RE = re.compile(r"[^\s/\\]*(?:[/\\][^\s/\\]*)+")
@@ -2934,8 +2933,8 @@ def redact_tokens(text: Any, tokens: Collection[str]) -> str:
 def _output_path(relative: str) -> str:
     """A path inside the output for a message.
 
-    Every entry at the top of the output but `assets` is the directory of a
-    page, named after its token, or something the build never writes: it is
+    Every entry at the top of the output but `assets` is a page directory,
+    named after its token, or something the build never writes: it is
     shown as `…`, unless its name has a dot (a token never has one).
     """
     top, sep, rest = relative.partition("/")
@@ -3038,8 +3037,8 @@ def _check_out_dir(out_dir: Path, code_dir: Path, data_dir: Path, media_dir: Pat
 
 
 def _directory_entries(path: str) -> dict[str, os.DirEntry] | None:
-    """The entries of a directory but the files of the operating system;
-    None when it cannot be read."""
+    """A directory's entries except the operating system's own files; None
+    when it cannot be read."""
     try:
         with os.scandir(path) as iterator:
             return {entry.name: entry for entry in iterator if entry.name not in OS_JUNK_FILES}
@@ -3360,8 +3359,8 @@ def copy_media(
 
 
 def load_palette(assets_dir: Path) -> "gen_assets.Palette":
-    """The colours of the pages (`site_colors_context`) and of the generated
-    images, from the tokens of `app.css`."""
+    """The page colours (`site_colors_context`) and the generated image
+    colours, from the `app.css` tokens."""
     path = Path(assets_dir) / TOKENS_FILE
     if not Path(assets_dir).is_dir():
         raise BuildError(f"assets directory not found: {display_path(assets_dir)}")
@@ -3815,9 +3814,8 @@ def build_site(
     output starts with it.  `allow_paths` are directories of the site that
     the build does not write and that links of the pages may lead to
     (`check_allow_paths`; at the base path `/` none of them may lead into
-    `assets/` or the directory of a page).  `site_name` is the name of the
-    site in link previews (`og:site_name`, see `check_site_name`); "" writes
-    no such tag.
+    `assets/` or a page directory).  `site_name` is the site name in link
+    previews (`og:site_name`, see `check_site_name`); "" writes no such tag.
     `preview` says whether the link preview image is rendered and with which
     browser (`link_preview`).
     """
@@ -4104,7 +4102,7 @@ _PERCENT_CREDENTIALS_RE = re.compile(r"%(?:40|3a)", re.IGNORECASE)
 
 def parse_published_url(value: str) -> str:
     """`links --url`: the http(s) address where the output directory is
-    published (the address of the site and `--base-path` of the build); the
+    published (the site address plus the build's `--base-path`); the
     trailing '/' is dropped."""
     value = value.strip()
     try:

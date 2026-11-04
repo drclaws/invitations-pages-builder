@@ -19,10 +19,10 @@
 Messages never quote the data.  A key is shown only when it looks like a
 field name or an id (`is_plain_key`); in strict mode (`known`), where a key
 may be somebody's name, only when it is one of the known names.  An id is
-shown only when it follows the id rule,
-and the name of an unknown placeholder never, because it is a part of the
-text.  Messages have the form `field '<path>' <problem>`; the caller puts the
-name of the file or the invitation in front.
+shown only when it follows the id rule, and an unknown placeholder's name
+never, because it is part of the text.  Messages have the form
+`field '<path>' <problem>`; the caller puts the file or invitation name in
+front.
 
 Pure functions: no input/output and no printing (the two token generators
 alone read the random source).  Problems are returned as messages or raised as
@@ -256,7 +256,7 @@ class TextError(ValueError):
 
 class Placeholder(NamedTuple):
     name: str
-    #: Position of its `{` in the text: the number of the character, from 1.
+    #: Position of its `{` in the text: the character number, from 1.
     position: int
 
 
@@ -264,12 +264,12 @@ class TextRef(NamedTuple):
     """`{text:<id>}`: a named text of the site (the registry `texts`)."""
 
     id: str
-    #: Position of its `{` in the text: the number of the character, from 1.
+    #: Position of its `{` in the text: the character number, from 1.
     position: int
 
 
-#: `{text:<id>}` inserts a named text; the prefix keeps the names of the
-#: author apart from the built-in placeholders.
+#: `{text:<id>}` inserts a named text; the prefix keeps the author's names
+#: apart from the built-in placeholders.
 TEXT_REF_PREFIX = "text:"
 #: The common form of a named text: the variant for places without a guest
 #: (the link preview).  Allowed in the registry `texts` only.
@@ -289,7 +289,7 @@ def form_problem(form: Any) -> str | None:
 
 
 def text_value_problems(value: Any, path: Sequence[PathPart]) -> list[str]:
-    """Problems of the shape of a text: a string or `{"ty": …, "vy": …}`."""
+    """Problems with a text's shape: a string or `{"ty": …, "vy": …}`."""
     field = format_path(path)
     if isinstance(value, str):
         return []

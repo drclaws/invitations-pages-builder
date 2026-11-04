@@ -1,20 +1,20 @@
-"""The page tree of one invitation: everything the fragments of its page read.
+"""The page tree of one invitation: everything its page's fragments read.
 
 `build_pages` turns data that passed `tools._schema.check_data` into one tree
 per invitation.  What an invitation does not see is cut out while the tree
 is built: a hidden section, widget or event is not in the tree at all, and a
-hidden event is left out of the cards, the dates and the programmes.  The end
-of an event never depends on the other events.  Every field of the tree always exists: an empty
-string, `[]`, `false` or `null` for an object.  Texts come ready: the form of
-address is picked and the placeholders are filled in.  The token of the
-invitation is in its tree only in the `href` of the links of events that are
-switched on for it; a link that is not shown may leave a text in its place
-(`pending`), which holds neither the token nor an address.
+hidden event is left out of the cards, the dates and the programmes.  An
+event's end never depends on the other events.  Every field of the tree
+always exists: an empty string, `[]`, `false` or `null` for an object.  Texts
+come ready: the form of address is picked and the placeholders are filled
+in.  The invitation token appears in its tree only in the `href` of the
+event links switched on for it; a link that is not shown may leave a text in
+its place (`pending`), which holds neither the token nor an address.
 
-Everything outside the data comes in through `PageSettings`: the URL of a
-media file and of the calendar file of an event, the facts of the media files (sizes, durations), the default
-duration of an event, the URL path of the shared files and the fields of the
-site images and colours.  The module reads no files.
+Everything outside the data comes in through `PageSettings`: the URLs of
+media files and of event calendar files, the media facts (sizes, durations),
+the default event duration, the URL path of the shared files and the fields
+of the site images and colours.  The module reads no files.
 
 `Usage` records what the trees show; `warn_unused` reports the parts of
 `site.json` that no page shows (their media files are not published).
@@ -68,9 +68,9 @@ SITE_FIELDS = SITE_IMAGE_FIELDS + SITE_COLOR_FIELDS + SITE_NAME_FIELDS
 #: A link preview description longer than this gets a warning: services show
 #: one or two sentences (WhatsApp: about 80 characters, Telegram: about 170).
 LINK_DESCRIPTION_WARN_LENGTH = 200
-#: Joins the parts of a DOM id.  An id of the data never holds `--`, so the
-#: parts are always told apart: `s-where--w1--e-dinner--l-manor` is the place
-#: `manor` of the event `dinner` in the first widget of the section `where`.
+#: Joins the parts of a DOM id.  A data id never holds `--`, so the parts are
+#: always told apart: `s-where--w1--e-dinner--l-manor` is the venue `manor` of
+#: the event `dinner` in the first widget of the section `where`.
 DOM_SEPARATOR = "--"
 
 
@@ -207,11 +207,11 @@ class _Page:
         return values
 
     def _expand(self, text: str) -> str:
-        """The named texts of a text in the form of the invitation."""
+        """A text with its named texts expanded in the invitation's form."""
         return expand_texts(text, self.form, self.site.get("texts", {}), used=self.usage.texts)
 
     def resolve(self, value: Any, parts: Sequence[Any]) -> str:
-        """A text of `site.json` in the form of the invitation."""
+        """A `site.json` text in the invitation's form."""
         if value is None:
             return ""
         source = self._expand(pick_form(value, self.form))
@@ -219,8 +219,8 @@ class _Page:
         return substitute(source, self.values, PLACEHOLDERS)
 
     def registry_text(self, value: Any, parts: Sequence[Any]) -> str:
-        """A text of a registry that stays on the page of the guest: the form
-        of address, the named texts and the placeholders, as everywhere else;
+        """A registry text that stays on the guest's page: the form of
+        address, the named texts and the placeholders, as everywhere else;
         blank stays "" (the fragment then leaves the field out)."""
         return _text(self.resolve(value, parts))
 
@@ -708,9 +708,9 @@ def site_cover(site: dict, settings: PageSettings) -> dict | None:
 
 def link_description(site: dict, used: set[str] | None = None) -> str:
     """`linkPreview.description` filled in: the named texts in their common
-    form, the placeholders of the site with the `{event…}` of the main event,
-    all white space as single spaces; "" without the field.  The same for
-    every invitation: nothing of a guest is in it."""
+    form, the site placeholders with the main event's `{event…}`, all white
+    space as single spaces; "" without the field.  The same for every
+    invitation: nothing from a guest is in it."""
     preview = site.get("linkPreview")
     text = preview.get("description") if isinstance(preview, dict) else None
     if not _text(text):
