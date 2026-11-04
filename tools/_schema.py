@@ -111,8 +111,8 @@ COVER_FOCUSES = (
     "bottom-left",
     "bottom-right",
 )
-#: A photo behind the cover larger than this gets a warning: it is loaded
-#: first, before anything else of the page.  TEMP: the size is not final.
+#: A photo behind the cover larger than this gets a warning: it loads first,
+#: before anything else on the page.
 COVER_BACKGROUND_WARN_BYTES = 1024 * 1024
 
 WIDGET_BASE_FIELDS = ("type", "id", "visible")

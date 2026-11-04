@@ -45,7 +45,7 @@ class TokenParsingTests(unittest.TestCase):
             "/* :root { --ghost: #000; } */\n"
             ":root {\n"
             "  color-scheme: only light;\n"
-            "  --color-bg: #ffffff;   /* TEMP  page; with a semicolon */\n"
+            "  --color-bg: #ffffff;   /* page; with a semicolon */\n"
             '  --font-body: system-ui, "Segoe UI; x", sans-serif;\n'
             "  --fluid: calc((100vw - var(--vw-min) * 1px)\n"
             "    / (var(--vw-max) - var(--vw-min)));\n"

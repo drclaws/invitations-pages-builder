@@ -1,532 +1,543 @@
 /* =============================================================================
-   Стили сайта приглашений.
+   Invitation page styles.
 
-   Файл разбит на пронумерованные секции; последующие этапы дописывают код
-   каждый в свою секцию, чтобы не конфликтовать между собой:
+   The file is split into numbered sections; every rule lives in the section
+   of its kind:
 
-     1. Tokens              — все дизайн-токены на :root
-     2. Fonts               — образец @font-face для assets/fonts/
-     3. Base                — reset, типографика, доступность
-     4. Layout primitives   — контейнер, сетка, поток, медиа
-     5. Components          — компоненты дизайн-системы
-     6. Page layout         — раскладка блоков страницы
-     7. Motion & reveal     — появление блоков, анимация обложки
-     8. Gallery & lightbox  — лента/сетка галереи и лайтбокс
+     1. Tokens              — every design token, on :root
+     2. Fonts               — a sample @font-face for assets/fonts/
+     3. Base                — reset, typography, accessibility
+     4. Layout primitives   — container, grid, flow, media
+     5. Components          — design system components
+     6. Page layout         — layout of the page blocks
+     7. Motion & reveal     — block reveal, cover animation
+     8. Gallery & lightbox  — gallery ribbon/grid and the lightbox
 
-   Правило: «сырых» значений (цвета, размеры, длительности) в секциях 3–8 нет —
-   только токены из секции 1, calc() над ними и ключевые слова. Единственные
-   исключения: закомментированный @font-face и пороги в условиях @media и
-   @container (в условиях запросов var() не работает).
+   Rule: sections 3–8 have no raw values (colours, sizes, durations) — only
+   tokens from section 1, calc() over them and keywords. The only exceptions
+   are the commented-out @font-face and the thresholds in @media and
+   @container conditions (var() does not work in query conditions).
 
-   Временные значения (стилизация — отдельный этап) помечены пометкой TEMP.
+   The tokens of section 1 are the default theme of the pages: restyling the
+   pages means changing the token values.
    ========================================================================== */
 
 
 /* =============================================================================
    1. Tokens
    -----------------------------------------------------------------------------
-   Имена — по роли, а не по значению.
+   Names describe the role, not the value.
 
-   Два класса устройств. Параметр, который может отличаться между мобильным и
-   десктопом, задан парой токенов `…-mobile` / `…-desktop`; компоненты
-   используют только производный токен без суффикса. Производный токен
-   получается одним из двух способов:
+   Two device classes. A parameter that may differ between mobile and desktop
+   is set by a pair of tokens `…-mobile` / `…-desktop`; components use only
+   the derived token without the suffix. The derived token comes from one of
+   two methods:
 
-     а) плавная интерполяция clamp() между опорными ширинами --vw-min и
-        --vw-max. Значения пары хранятся безразмерными числами, потому что
-        calc() не умеет делить длину на длину; в длину их превращает формула
-        (какой единицей — см. «Единицы» ниже). Порядок значений в паре
-        любой: мобильное может быть и меньше, и больше десктопного —
-        границы clamp() берутся как min()/max() от пары;
-     б) переопределение производного токена в @media на границе раскладки —
-        для величин, которые нельзя интерполировать (число колонок,
-        пропорции изображений).
+     a) a fluid clamp() interpolation between the reference widths --vw-min
+        and --vw-max. The pair holds unitless numbers, because calc() cannot
+        divide a length by a length; the formula turns them into a length
+        (in which unit: see "Units" below). The pair may come in either
+        order: the mobile value may be smaller or larger than the desktop
+        one — the clamp() bounds are the min()/max() of the pair;
+     b) an override of the derived token in @media at the layout
+        breakpoint — for values that cannot be interpolated (column count,
+        image aspect ratios).
 
-   Параметры без пары (длительности, радиусы, тени, интерлиньяж и т.п.) при
-   необходимости переопределяются в том же блоке @media на границе раскладки.
+   Parameters without a pair (durations, radii, shadows, line height and so
+   on) are overridden, when needed, in the same @media block at the layout
+   breakpoint.
 
-   Единицы. Числа в парах — это px при размере шрифта по умолчанию (16px);
-   вопрос к каждому токену один: должно ли значение расти, когда пользователь
-   увеличил шрифт в системе или браузере?
-     rem   — типографическая шкала, ширины контейнеров, размер иконок, предел
-             ширины ячейки таймера: число делится на 16 и умножается на 1rem.
-             Длина строки и пропорции «иконка — подпись» сохраняются при любом
-             размере шрифта.
-     rem с потолком от ширины окна — отступы, поля, зазоры (--space-*,
+   Units. The numbers in pairs are px at the default font size (16px); every
+   token answers one question: should the value grow when the user enlarges
+   the font in the system or the browser?
+     rem   — the type scale, container widths, the icon size, the countdown
+             cell width limit: the number is divided by 16 and multiplied by
+             1rem. Line length and icon-to-label proportions hold at any
+             font size.
+     rem capped by the viewport width — spacing, padding, gaps (--space-*,
              --space-section, --container-gutter, --grid-gap, --countdown-gap):
-             min(<та же формула в rem>, mobile / --vw-min * 100vw). На широком
-             экране отступы растут вместе с текстом, а на телефоне не превышают
-             свою «дизайнерскую» долю ширины экрана — увеличенному тексту
-             остаётся вся колонка. На экранах уже --vw-min отступы
-             пропорционально уменьшаются.
-     px    — волосяные линии и рамки, кольцо фокуса, радиусы, тени, --tap-min
-             (44px — требование к физическому размеру цели нажатия; рост
-             вместе со шрифтом только отнимал бы ширину у текста), амплитуды
-             движения. От шрифта не зависят.
-     em/ch — трекинг и ширины «в знаках»: следуют за шрифтом самого элемента.
-   При размере шрифта по умолчанию и ширине окна от --vw-min все формулы дают
-   ровно числа из пар.
-   Размер шрифта корня страница не задаёт: его определяет пользователь —
-   настройкой браузера, а на телефоне системным размером текста (Android —
-   <meta name="text-scale">, iOS — правило :root в секции 3). На iOS 1rem при
-   стандартной настройке — 17px, в остальных браузерах — 16px.
+             min(<the same formula in rem>, mobile / --vw-min * 100vw). On a
+             wide screen the spacing grows with the text, while on a phone it
+             never exceeds its designed share of the screen width — enlarged
+             text keeps the whole column. On screens narrower than --vw-min
+             the spacing shrinks proportionally.
+     px    — hairlines and borders, the focus ring, radii, shadows, --tap-min
+             (44px is a requirement on the physical size of a tap target;
+             growing with the font would only take width from the text),
+             motion amplitudes. Independent of the font.
+     em/ch — tracking and widths "in characters": they follow the element's
+             own font.
+   At the default font size and a viewport of --vw-min or wider, every
+   formula gives exactly the numbers of the pairs.
+   The page does not set the root font size: the user does — with the browser
+   setting, and on a phone with the system text size (Android —
+   <meta name="text-scale">, iOS — the :root rule in section 3). On iOS 1rem
+   at the standard setting is 17px, in other browsers 16px.
 
-   Ограничения на значения пар (иначе формулы работают не так, как задумано):
-     - типографика: большее значение пары ≤ 2.5 × меньшего — иначе масштаб
-       200 % в браузере не увеличивает текст вдвое (WCAG 1.4.4);
-     - отступы с потолком: мобильное значение > 0 и десктопное ≤ 4 × мобильного
-       — иначе потолок срабатывает и при обычном размере шрифта.
+   Constraints on pair values (otherwise the formulas misbehave):
+     - typography: the larger value of a pair ≤ 2.5 × the smaller one —
+       otherwise 200 % browser zoom does not double the text (WCAG 1.4.4);
+     - capped spacing: the mobile value > 0 and the desktop value ≤ 4 × the
+       mobile one — otherwise the cap applies even at the normal font size.
 
-   Пороги (var() в условиях @media и @container не работает, значения
-   повторяются буквально; токены только документируют их — их читает витрина;
-   менять токен нужно вместе с числом в условии):
-     --bp-layout: 48em — единственная граница раскладки по ширине окна: одна
-                         колонка → две, пропорции изображений. При шрифте по
-                         умолчанию это 768px; при увеличенном шрифте браузера
-                         две колонки включаются позже, когда для них есть место.
+   Thresholds (var() does not work in @media and @container conditions, so
+   the values are repeated literally; the tokens only document them for the
+   styleguide, which reads them; change a token together with the number in
+   its condition):
+     --bp-layout: 48em — the only layout breakpoint by viewport width: one
+                         column → two, image aspect ratios. At the default
+                         font size this is 768px; with an enlarged browser
+                         font the two columns start later, once they fit.
      --countdown-inline-min, --countdown-stack-max, --schedule-inline-min —
-                         пороги по ширине
-                         контейнера (@container) в rem: компонент выбирает
-                         раскладку по месту, которое ему досталось, и по
-                         размеру шрифта. Контейнеры — .container и элементы
-                         .grid (секция 4).
-   Других порогов нет: всё остальное меняется плавно.
+                         container width thresholds (@container) in rem: a
+                         component picks its layout by the room it gets and
+                         by the font size. The containers are .container and
+                         the .grid items (section 4).
+   There are no other thresholds: everything else changes smoothly.
    ========================================================================== */
 
 :root {
-  /* --- Тема ---------------------------------------------------------------
-     Одна фиксированная тема: страница не реагирует на тёмный режим ОС и на
-     принудительное затемнение во встроенных браузерах. Дублируется мета-тегом
-     <meta name="color-scheme" content="only light">. Какая тема окончательная —
-     решает этап стилизации; prefers-color-scheme не используется нигде. */
+  /* --- Theme ---------------------------------------------------------------
+     A single fixed theme: the page ignores the dark mode of the OS and the
+     forced darkening of in-app browsers. The meta tag
+     <meta name="color-scheme" content="only light"> says the same.
+     prefers-color-scheme is not used anywhere. */
   color-scheme: only light;
 
-  /* --- Опорные ширины и множитель интерполяции ---------------------------- */
-  --vw-min: 360;   /* нижняя опорная ширина, px (минимальная поддерживаемая ширина) */
-  --vw-max: 1440;  /* верхняя опорная ширина, px */
-  /* 0 на --vw-min, 1px на --vw-max: умножение безразмерной дельты на этот
-     множитель даёт длину. Используется только внутри токенов. */
+  /* --- Reference widths and the interpolation factor ---------------------- */
+  --vw-min: 360;   /* lower reference width, px (the narrowest supported width) */
+  --vw-max: 1440;  /* upper reference width, px */
+  /* 0 at --vw-min, 1px at --vw-max: a unitless delta multiplied by this
+     factor gives a length. Used only inside tokens. */
   --fluid: calc((100vw - var(--vw-min) * 1px) / (var(--vw-max) - var(--vw-min)));
-  /* Граница раскладки. Только для чтения: в @media var() не работает, поэтому
-     то же значение повторено буквально в блоке @media в конце секции.
-     em в медиазапросе — размер шрифта браузера по умолчанию (48em = 768px
-     при 16px). */
+  /* The layout breakpoint. Read-only: var() does not work in @media, so the
+     same value is repeated literally in the @media block at the end of the
+     section. em in a media query is the browser's default font size
+     (48em = 768px at 16px). */
   --bp-layout: 48em;
 
-  /* --- Цвета (по ролям) --------------------------------------------------- */
-  --color-bg: #ffffff;              /* TEMP  фон страницы */
-  --color-surface: #f1f2f4;         /* TEMP  поверхность: карточка, панель */
-  --color-surface-sunken: #e4e6ea;  /* TEMP  утопленная поверхность: дорожка, плашка */
-  --color-text: #1b1d21;            /* TEMP  основной текст */
-  --color-text-muted: #56595f;      /* TEMP  вторичный текст, подписи */
-  --color-accent: #1f5673;          /* TEMP  акцент: основная кнопка, ссылки */
-  --color-accent-hover: #164257;    /* TEMP  акцент под курсором/нажатием */
-  --color-on-accent: #ffffff;       /* TEMP  текст на акценте */
-  --color-line: #c9ccd2;            /* TEMP  линии: разделители, рамки блоков */
-  --color-line-strong: #6b7078;     /* TEMP  линии интерактивных элементов (≥3:1 к фону) */
-  --color-focus: #8a3d00;           /* TEMP  кольцо фокуса (≥3:1 к фону и к поверхностям) */
-  --color-overlay: rgba(14, 16, 18, 0.78);  /* TEMP  подложка лайтбокса */
-  --color-on-overlay: #ffffff;        /* TEMP  текст, иконки и кнопки поверх оверлея */
-  --color-focus-on-overlay: #ffc46b;  /* TEMP  кольцо фокуса поверх оверлея (≥3:1 к нему) */
-  --color-overlay-control: rgba(14, 16, 18, 0.62);        /* TEMP  подложка кнопки лайтбокса (кнопка может лежать на фото) */
-  --color-overlay-control-hover: rgba(14, 16, 18, 0.92);  /* TEMP  она же под курсором/нажатием */
-  --color-disabled-bg: #e4e6ea;     /* TEMP  фон выключенного элемента */
-  --color-disabled-text: #6b7078;   /* TEMP  текст выключенного элемента */
-  --color-shadow: rgba(14, 16, 18, 0.16);   /* TEMP  цвет теней */
+  /* --- Colours (by role) --------------------------------------------------- */
+  --color-bg: #ffffff;              /* page background */
+  --color-surface: #f1f2f4;         /* surface: card, panel */
+  --color-surface-sunken: #e4e6ea;  /* sunken surface: track, badge */
+  --color-text: #1b1d21;            /* body text */
+  --color-text-muted: #56595f;      /* secondary text, captions */
+  --color-accent: #1f5673;          /* accent: primary button, links */
+  --color-accent-hover: #164257;    /* accent on hover/press */
+  --color-on-accent: #ffffff;       /* text on the accent */
+  --color-line: #c9ccd2;            /* lines: dividers, block borders */
+  --color-line-strong: #6b7078;     /* lines of interactive elements (≥3:1 against the background) */
+  --color-focus: #8a3d00;           /* focus ring (≥3:1 against the background and the surfaces) */
+  --color-overlay: rgba(14, 16, 18, 0.78);  /* lightbox backdrop */
+  --color-on-overlay: #ffffff;        /* text, icons and buttons over the overlay */
+  --color-focus-on-overlay: #ffc46b;  /* focus ring over the overlay (≥3:1 against it) */
+  --color-overlay-control: rgba(14, 16, 18, 0.62);        /* lightbox button backing (the button may sit on a photo) */
+  --color-overlay-control-hover: rgba(14, 16, 18, 0.92);  /* the same on hover/press */
+  --color-disabled-bg: #e4e6ea;     /* disabled element background */
+  --color-disabled-text: #6b7078;   /* disabled element text */
+  --color-shadow: rgba(14, 16, 18, 0.16);   /* shadow colour */
 
-  /* --- Шрифты (по ролям) --------------------------------------------------
-     По умолчанию — системный стек (внешние шрифты запрещены). Как подключить
-     локальные woff2 — секция 2. */
+  /* --- Fonts (by role) -----------------------------------------------------
+     The default is the system stack (external fonts are not allowed). How to
+     add local woff2 files: section 2. */
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, "Noto Sans", sans-serif;        /* TEMP */
-  --font-heading: var(--font-body);        /* TEMP  заголовки = текст, пока нет своего шрифта */
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* TEMP */
+    Arial, "Noto Sans", sans-serif;
+  --font-heading: var(--font-body);        /* headings use the body font */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --font-weight-body: 400;      /* TEMP */
-  --font-weight-medium: 500;    /* TEMP */
-  --font-weight-heading: 600;   /* TEMP */
+  --font-weight-body: 400;
+  --font-weight-medium: 500;
+  --font-weight-heading: 600;
 
-  --line-height-body: 1.6;      /* TEMP */
-  --line-height-tight: 1.3;     /* TEMP */
-  --line-height-heading: 1.15;  /* TEMP */
+  --line-height-body: 1.6;
+  --line-height-tight: 1.3;
+  --line-height-heading: 1.15;
 
-  --tracking-body: 0em;         /* TEMP */
-  --tracking-heading: -0.01em;  /* TEMP */
-  --tracking-caps: 0.08em;      /* TEMP  для мелких подписей в верхнем регистре */
+  --tracking-body: 0em;
+  --tracking-heading: -0.01em;
+  --tracking-caps: 0.08em;      /* for small upper-case captions */
 
-  /* --- Типографическая шкала (пара mobile/desktop) -------------------------
-     Значения пары — числа в px при системном размере шрифта 16px; в формуле
-     они делятся на 16 и умножаются на 1rem, поэтому шкала целиком следует
-     за размером шрифта, выбранным пользователем в браузере. */
-  --text-xs-mobile: 12;     /* TEMP */
-  --text-xs-desktop: 13;    /* TEMP */
+  /* --- Type scale (mobile/desktop pair) -------------------------------------
+     The pair values are px at the system font size of 16px; the formula
+     divides them by 16 and multiplies by 1rem, so the whole scale follows
+     the font size the user picks in the browser. */
+  --text-xs-mobile: 12;
+  --text-xs-desktop: 13;
   --text-xs: clamp(min(var(--text-xs-mobile) / 16 * 1rem, var(--text-xs-desktop) / 16 * 1rem),
     calc(var(--text-xs-mobile) / 16 * 1rem + (var(--text-xs-desktop) - var(--text-xs-mobile)) * var(--fluid)),
     max(var(--text-xs-mobile) / 16 * 1rem, var(--text-xs-desktop) / 16 * 1rem));
 
-  --text-sm-mobile: 14;     /* TEMP */
-  --text-sm-desktop: 15;    /* TEMP */
+  --text-sm-mobile: 14;
+  --text-sm-desktop: 15;
   --text-sm: clamp(min(var(--text-sm-mobile) / 16 * 1rem, var(--text-sm-desktop) / 16 * 1rem),
     calc(var(--text-sm-mobile) / 16 * 1rem + (var(--text-sm-desktop) - var(--text-sm-mobile)) * var(--fluid)),
     max(var(--text-sm-mobile) / 16 * 1rem, var(--text-sm-desktop) / 16 * 1rem));
 
-  --text-base-mobile: 16;   /* TEMP */
-  --text-base-desktop: 17;  /* TEMP */
+  --text-base-mobile: 16;
+  --text-base-desktop: 17;
   --text-base: clamp(min(var(--text-base-mobile) / 16 * 1rem, var(--text-base-desktop) / 16 * 1rem),
     calc(var(--text-base-mobile) / 16 * 1rem + (var(--text-base-desktop) - var(--text-base-mobile)) * var(--fluid)),
     max(var(--text-base-mobile) / 16 * 1rem, var(--text-base-desktop) / 16 * 1rem));
 
-  --text-md-mobile: 18;     /* TEMP */
-  --text-md-desktop: 20;    /* TEMP */
+  --text-md-mobile: 18;
+  --text-md-desktop: 20;
   --text-md: clamp(min(var(--text-md-mobile) / 16 * 1rem, var(--text-md-desktop) / 16 * 1rem),
     calc(var(--text-md-mobile) / 16 * 1rem + (var(--text-md-desktop) - var(--text-md-mobile)) * var(--fluid)),
     max(var(--text-md-mobile) / 16 * 1rem, var(--text-md-desktop) / 16 * 1rem));
 
-  --text-lg-mobile: 21;     /* TEMP */
-  --text-lg-desktop: 25;    /* TEMP */
+  --text-lg-mobile: 21;
+  --text-lg-desktop: 25;
   --text-lg: clamp(min(var(--text-lg-mobile) / 16 * 1rem, var(--text-lg-desktop) / 16 * 1rem),
     calc(var(--text-lg-mobile) / 16 * 1rem + (var(--text-lg-desktop) - var(--text-lg-mobile)) * var(--fluid)),
     max(var(--text-lg-mobile) / 16 * 1rem, var(--text-lg-desktop) / 16 * 1rem));
 
-  --text-xl-mobile: 25;     /* TEMP */
-  --text-xl-desktop: 32;    /* TEMP */
+  --text-xl-mobile: 25;
+  --text-xl-desktop: 32;
   --text-xl: clamp(min(var(--text-xl-mobile) / 16 * 1rem, var(--text-xl-desktop) / 16 * 1rem),
     calc(var(--text-xl-mobile) / 16 * 1rem + (var(--text-xl-desktop) - var(--text-xl-mobile)) * var(--fluid)),
     max(var(--text-xl-mobile) / 16 * 1rem, var(--text-xl-desktop) / 16 * 1rem));
 
-  --text-2xl-mobile: 30;    /* TEMP */
-  --text-2xl-desktop: 42;   /* TEMP */
+  --text-2xl-mobile: 30;
+  --text-2xl-desktop: 42;
   --text-2xl: clamp(min(var(--text-2xl-mobile) / 16 * 1rem, var(--text-2xl-desktop) / 16 * 1rem),
     calc(var(--text-2xl-mobile) / 16 * 1rem + (var(--text-2xl-desktop) - var(--text-2xl-mobile)) * var(--fluid)),
     max(var(--text-2xl-mobile) / 16 * 1rem, var(--text-2xl-desktop) / 16 * 1rem));
 
-  --text-display-mobile: 38;   /* TEMP  «дисплейный» размер обложки */
-  --text-display-desktop: 68;  /* TEMP */
+  --text-display-mobile: 38;   /* display size of the cover */
+  --text-display-desktop: 68;
   --text-display: clamp(min(var(--text-display-mobile) / 16 * 1rem, var(--text-display-desktop) / 16 * 1rem),
     calc(var(--text-display-mobile) / 16 * 1rem + (var(--text-display-desktop) - var(--text-display-mobile)) * var(--fluid)),
     max(var(--text-display-mobile) / 16 * 1rem, var(--text-display-desktop) / 16 * 1rem));
 
-  /* --- Шкала отступов (пара mobile/desktop) ---------------------------------
-     rem с потолком от ширины окна — см. «Единицы» в шапке секции. */
-  --space-3xs-mobile: 4;    /* TEMP */
-  --space-3xs-desktop: 4;   /* TEMP */
+  /* --- Spacing scale (mobile/desktop pair) ---------------------------------
+     rem capped by the viewport width — see "Units" in the section header. */
+  --space-3xs-mobile: 4;
+  --space-3xs-desktop: 4;
   --space-3xs: min(
     clamp(min(var(--space-3xs-mobile) / 16 * 1rem, var(--space-3xs-desktop) / 16 * 1rem),
       calc(var(--space-3xs-mobile) / 16 * 1rem + (var(--space-3xs-desktop) - var(--space-3xs-mobile)) * var(--fluid)),
       max(var(--space-3xs-mobile) / 16 * 1rem, var(--space-3xs-desktop) / 16 * 1rem)),
     calc(var(--space-3xs-mobile) / var(--vw-min) * 100vw));
 
-  --space-2xs-mobile: 8;    /* TEMP */
-  --space-2xs-desktop: 8;   /* TEMP */
+  --space-2xs-mobile: 8;
+  --space-2xs-desktop: 8;
   --space-2xs: min(
     clamp(min(var(--space-2xs-mobile) / 16 * 1rem, var(--space-2xs-desktop) / 16 * 1rem),
       calc(var(--space-2xs-mobile) / 16 * 1rem + (var(--space-2xs-desktop) - var(--space-2xs-mobile)) * var(--fluid)),
       max(var(--space-2xs-mobile) / 16 * 1rem, var(--space-2xs-desktop) / 16 * 1rem)),
     calc(var(--space-2xs-mobile) / var(--vw-min) * 100vw));
 
-  --space-xs-mobile: 12;    /* TEMP */
-  --space-xs-desktop: 14;   /* TEMP */
+  --space-xs-mobile: 12;
+  --space-xs-desktop: 14;
   --space-xs: min(
     clamp(min(var(--space-xs-mobile) / 16 * 1rem, var(--space-xs-desktop) / 16 * 1rem),
       calc(var(--space-xs-mobile) / 16 * 1rem + (var(--space-xs-desktop) - var(--space-xs-mobile)) * var(--fluid)),
       max(var(--space-xs-mobile) / 16 * 1rem, var(--space-xs-desktop) / 16 * 1rem)),
     calc(var(--space-xs-mobile) / var(--vw-min) * 100vw));
 
-  --space-sm-mobile: 16;    /* TEMP */
-  --space-sm-desktop: 18;   /* TEMP */
+  --space-sm-mobile: 16;
+  --space-sm-desktop: 18;
   --space-sm: min(
     clamp(min(var(--space-sm-mobile) / 16 * 1rem, var(--space-sm-desktop) / 16 * 1rem),
       calc(var(--space-sm-mobile) / 16 * 1rem + (var(--space-sm-desktop) - var(--space-sm-mobile)) * var(--fluid)),
       max(var(--space-sm-mobile) / 16 * 1rem, var(--space-sm-desktop) / 16 * 1rem)),
     calc(var(--space-sm-mobile) / var(--vw-min) * 100vw));
 
-  --space-md-mobile: 20;    /* TEMP */
-  --space-md-desktop: 26;   /* TEMP */
+  --space-md-mobile: 20;
+  --space-md-desktop: 26;
   --space-md: min(
     clamp(min(var(--space-md-mobile) / 16 * 1rem, var(--space-md-desktop) / 16 * 1rem),
       calc(var(--space-md-mobile) / 16 * 1rem + (var(--space-md-desktop) - var(--space-md-mobile)) * var(--fluid)),
       max(var(--space-md-mobile) / 16 * 1rem, var(--space-md-desktop) / 16 * 1rem)),
     calc(var(--space-md-mobile) / var(--vw-min) * 100vw));
 
-  --space-lg-mobile: 28;    /* TEMP */
-  --space-lg-desktop: 40;   /* TEMP */
+  --space-lg-mobile: 28;
+  --space-lg-desktop: 40;
   --space-lg: min(
     clamp(min(var(--space-lg-mobile) / 16 * 1rem, var(--space-lg-desktop) / 16 * 1rem),
       calc(var(--space-lg-mobile) / 16 * 1rem + (var(--space-lg-desktop) - var(--space-lg-mobile)) * var(--fluid)),
       max(var(--space-lg-mobile) / 16 * 1rem, var(--space-lg-desktop) / 16 * 1rem)),
     calc(var(--space-lg-mobile) / var(--vw-min) * 100vw));
 
-  --space-xl-mobile: 40;    /* TEMP */
-  --space-xl-desktop: 60;   /* TEMP */
+  --space-xl-mobile: 40;
+  --space-xl-desktop: 60;
   --space-xl: min(
     clamp(min(var(--space-xl-mobile) / 16 * 1rem, var(--space-xl-desktop) / 16 * 1rem),
       calc(var(--space-xl-mobile) / 16 * 1rem + (var(--space-xl-desktop) - var(--space-xl-mobile)) * var(--fluid)),
       max(var(--space-xl-mobile) / 16 * 1rem, var(--space-xl-desktop) / 16 * 1rem)),
     calc(var(--space-xl-mobile) / var(--vw-min) * 100vw));
 
-  --space-2xl-mobile: 56;   /* TEMP */
-  --space-2xl-desktop: 88;  /* TEMP */
+  --space-2xl-mobile: 56;
+  --space-2xl-desktop: 88;
   --space-2xl: min(
     clamp(min(var(--space-2xl-mobile) / 16 * 1rem, var(--space-2xl-desktop) / 16 * 1rem),
       calc(var(--space-2xl-mobile) / 16 * 1rem + (var(--space-2xl-desktop) - var(--space-2xl-mobile)) * var(--fluid)),
       max(var(--space-2xl-mobile) / 16 * 1rem, var(--space-2xl-desktop) / 16 * 1rem)),
     calc(var(--space-2xl-mobile) / var(--vw-min) * 100vw));
 
-  /* Отступ между секциями страницы. */
-  --space-section-mobile: 37;   /* TEMP */
-  --space-section-desktop: 69;  /* TEMP */
+  /* Spacing between the page sections. */
+  --space-section-mobile: 37;
+  --space-section-desktop: 69;
   --space-section: min(
     clamp(min(var(--space-section-mobile) / 16 * 1rem, var(--space-section-desktop) / 16 * 1rem),
       calc(var(--space-section-mobile) / 16 * 1rem + (var(--space-section-desktop) - var(--space-section-mobile)) * var(--fluid)),
       max(var(--space-section-mobile) / 16 * 1rem, var(--space-section-desktop) / 16 * 1rem)),
     calc(var(--space-section-mobile) / var(--vw-min) * 100vw));
 
-  /* Вертикальный ритм внутри блока текста (шаг «стека»). */
+  /* Vertical rhythm inside a block of text (the "stack" step). */
   --flow-space: var(--space-sm);
 
-  /* --- Контейнер -------------------------------------------------------------
-     Ширины — в rem (длина строки не зависит от размера шрифта пользователя),
-     поля — rem с потолком от ширины окна. */
-  --container-text-mobile: 560;    /* TEMP  ширина текстовой колонки */
-  --container-text-desktop: 680;   /* TEMP */
+  /* --- Container -------------------------------------------------------------
+     Widths in rem (the line length does not depend on the user's font size),
+     gutters in rem capped by the viewport width. */
+  --container-text-mobile: 560;    /* text column width */
+  --container-text-desktop: 680;
   --container-text: clamp(min(var(--container-text-mobile) / 16 * 1rem, var(--container-text-desktop) / 16 * 1rem),
     calc(var(--container-text-mobile) / 16 * 1rem + (var(--container-text-desktop) - var(--container-text-mobile)) * var(--fluid)),
     max(var(--container-text-mobile) / 16 * 1rem, var(--container-text-desktop) / 16 * 1rem));
 
-  --container-wide-mobile: 640;    /* TEMP  широкий контейнер: галерея, две колонки */
-  --container-wide-desktop: 1120;  /* TEMP */
+  --container-wide-mobile: 640;    /* wide container: gallery, two columns */
+  --container-wide-desktop: 1120;
   --container-wide: clamp(min(var(--container-wide-mobile) / 16 * 1rem, var(--container-wide-desktop) / 16 * 1rem),
     calc(var(--container-wide-mobile) / 16 * 1rem + (var(--container-wide-desktop) - var(--container-wide-mobile)) * var(--fluid)),
     max(var(--container-wide-mobile) / 16 * 1rem, var(--container-wide-desktop) / 16 * 1rem));
 
-  --container-gutter-mobile: 16;   /* TEMP  боковые поля */
-  --container-gutter-desktop: 32;  /* TEMP */
+  --container-gutter-mobile: 16;   /* side gutters */
+  --container-gutter-desktop: 32;
   --container-gutter: min(
     clamp(min(var(--container-gutter-mobile) / 16 * 1rem, var(--container-gutter-desktop) / 16 * 1rem),
       calc(var(--container-gutter-mobile) / 16 * 1rem + (var(--container-gutter-desktop) - var(--container-gutter-mobile)) * var(--fluid)),
       max(var(--container-gutter-mobile) / 16 * 1rem, var(--container-gutter-desktop) / 16 * 1rem)),
     calc(var(--container-gutter-mobile) / var(--vw-min) * 100vw));
 
-  /* --- Сетка --------------------------------------------------------------- */
-  --grid-columns-mobile: 1;    /* TEMP  переопределяется на --bp-layout */
-  --grid-columns-desktop: 2;   /* TEMP */
+  /* --- Grid -------------------------------------------------------------- */
+  --grid-columns-mobile: 1;    /* overridden at --bp-layout */
+  --grid-columns-desktop: 2;
   --grid-columns: var(--grid-columns-mobile);
 
-  --gallery-columns-mobile: 2;   /* TEMP */
-  --gallery-columns-desktop: 3;  /* TEMP */
+  --gallery-columns-mobile: 2;
+  --gallery-columns-desktop: 3;
   --gallery-columns: var(--gallery-columns-mobile);
 
-  /* Галерея внутри колонки двухколоночной секции «Место»: колонка вдвое уже
-     широкого контейнера, поэтому число колонок у неё своё. */
-  --gallery-columns-venue-mobile: 2;   /* TEMP */
-  --gallery-columns-venue-desktop: 2;  /* TEMP */
+  /* A gallery inside a column of the two-column venue section: the column is
+     half as wide as the wide container, so it has its own column count. */
+  --gallery-columns-venue-mobile: 2;
+  --gallery-columns-venue-desktop: 2;
   --gallery-columns-venue: var(--gallery-columns-venue-mobile);
 
-  /* Лента галереи (мобильный формат): доля ширины ленты, которую занимает
-     один элемент; остаток — видимый край следующего, подсказка прокрутки. */
-  --gallery-ribbon-item-size: 82%;  /* TEMP */
+  /* Gallery ribbon (mobile format): the share of the ribbon width one item
+     takes; the rest is the visible edge of the next one, a scroll hint. */
+  --gallery-ribbon-item-size: 82%;
 
-  --countdown-columns: 4;  /* дни/часы/минуты/секунды — не стиль */
-  /* В узком контейнере (или при крупном шрифте) таймер складывается в 2×2. */
+  --countdown-columns: 4;  /* days/hours/minutes/seconds — not a style */
+  /* In a narrow container (or with a large font) the countdown folds into 2×2. */
   --countdown-columns-narrow: 2;
-  /* Ширина контейнера, с которой четыре ячейки встают в ряд. Только для
-     чтения: то же значение повторено буквально в @container (секция 5).
-     Подобрано по самой длинной подписи («секунды») при --countdown-gap-mobile. */
-  --countdown-inline-min: 19.5rem;  /* TEMP */
-  /* При очень крупном системном шрифте и две ячейки в ряд не вмещают подпись:
-     в контейнере не шире этого порога ячейки встают в одну колонку. Только для
-     чтения: то же значение повторено буквально в @container (секция 5). */
+  /* The container width from which the four cells sit in a row. Read-only:
+     the same value is repeated literally in @container (section 5). Fitted
+     to the longest label (seconds) at --countdown-gap-mobile. */
+  --countdown-inline-min: 19.5rem;
+  /* With a very large system font even two cells in a row cannot fit a
+     label: in a container no wider than this threshold the cells stack in
+     one column. Read-only: the same value is repeated literally in
+     @container (section 5). */
   --countdown-columns-stack: 1;
-  --countdown-stack-max: 9rem;  /* TEMP */
-  --countdown-gap-mobile: 4;    /* TEMP  на 360 px четыре ячейки должны поместиться */
-  --countdown-gap-desktop: 14;  /* TEMP */
+  --countdown-stack-max: 9rem;
+  --countdown-gap-mobile: 4;    /* four cells must fit at 360 px */
+  --countdown-gap-desktop: 14;
   --countdown-gap: min(
     clamp(min(var(--countdown-gap-mobile) / 16 * 1rem, var(--countdown-gap-desktop) / 16 * 1rem),
       calc(var(--countdown-gap-mobile) / 16 * 1rem + (var(--countdown-gap-desktop) - var(--countdown-gap-mobile)) * var(--fluid)),
       max(var(--countdown-gap-mobile) / 16 * 1rem, var(--countdown-gap-desktop) / 16 * 1rem)),
     calc(var(--countdown-gap-mobile) / var(--vw-min) * 100vw));
 
-  --grid-gap-mobile: 16;   /* TEMP */
-  --grid-gap-desktop: 28;  /* TEMP */
+  --grid-gap-mobile: 16;
+  --grid-gap-desktop: 28;
   --grid-gap: min(
     clamp(min(var(--grid-gap-mobile) / 16 * 1rem, var(--grid-gap-desktop) / 16 * 1rem),
       calc(var(--grid-gap-mobile) / 16 * 1rem + (var(--grid-gap-desktop) - var(--grid-gap-mobile)) * var(--fluid)),
       max(var(--grid-gap-mobile) / 16 * 1rem, var(--grid-gap-desktop) / 16 * 1rem)),
     calc(var(--grid-gap-mobile) / var(--vw-min) * 100vw));
 
-  /* --- Радиусы, тени, линии ------------------------------------------------ */
-  --radius-sm: 4px;      /* TEMP */
-  --radius-md: 10px;     /* TEMP */
-  --radius-lg: 18px;     /* TEMP */
-  --radius-pill: 999px;  /* TEMP */
-  --radius-round: 50%;   /* TEMP */
+  /* --- Radii, shadows, lines ------------------------------------------------ */
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
 
-  --shadow-sm: 0 1px 2px var(--color-shadow);                          /* TEMP */
-  --shadow-md: 0 4px 12px var(--color-shadow);                         /* TEMP */
-  --shadow-lg: 0 12px 32px var(--color-shadow);                        /* TEMP */
+  --shadow-sm: 0 1px 2px var(--color-shadow);
+  --shadow-md: 0 4px 12px var(--color-shadow);
+  --shadow-lg: 0 12px 32px var(--color-shadow);
 
-  --line-width-hairline: 1px;  /* TEMP  разделители, рамки блоков */
-  --line-width: 2px;           /* TEMP  рамки интерактивных элементов */
-  --line-width-thick: 3px;     /* TEMP  акцентные линии */
+  --line-width-hairline: 1px;  /* dividers, block borders */
+  --line-width: 2px;           /* borders of interactive elements */
+  --line-width-thick: 3px;     /* accent lines */
 
-  --focus-ring-width: 3px;   /* TEMP  толщина кольца фокуса */
-  --focus-ring-offset: 2px;  /* TEMP */
-  /* Кольцо внутри рамки элемента — там, где внешнее обрезал бы overflow
-     предка (элемент галереи, лента). Поверх изображения кольцу нужен светлый
-     подслой: его ширина — от внешнего края, вдвое шире кольца. */
+  --focus-ring-width: 3px;   /* focus ring thickness */
+  --focus-ring-offset: 2px;
+  /* A ring inside the element's border — where an outer one would be clipped
+     by an ancestor's overflow (a gallery item, the ribbon). Over an image the
+     ring needs a light underlay: its width is measured from the outer edge,
+     twice the ring width. */
   --focus-ring-offset-inset: calc(var(--focus-ring-width) * -1);
   --focus-ring-inset-halo: calc(var(--focus-ring-width) * 2);
 
-  --opacity-disabled: 0.6;  /* TEMP */
+  --opacity-disabled: 0.6;
 
-  /* --- Пропорции изображений ----------------------------------------------
-     Интерполировать нельзя — переопределяются на --bp-layout. */
-  --ratio-photo-mobile: 4 / 3;      /* TEMP  фото площадки */
-  --ratio-photo-desktop: 3 / 2;     /* TEMP */
+  /* --- Image aspect ratios ------------------------------------------------
+     They cannot be interpolated, so they are overridden at --bp-layout. */
+  --ratio-photo-mobile: 4 / 3;      /* venue photo */
+  --ratio-photo-desktop: 3 / 2;
   --ratio-photo: var(--ratio-photo-mobile);
 
-  --ratio-gallery-mobile: 1 / 1;    /* TEMP  элемент галереи */
-  --ratio-gallery-desktop: 4 / 3;   /* TEMP */
+  --ratio-gallery-mobile: 1 / 1;    /* gallery item */
+  --ratio-gallery-desktop: 4 / 3;
   --ratio-gallery: var(--ratio-gallery-mobile);
 
-  --ratio-scheme-mobile: 4 / 3;     /* TEMP  схема проезда */
-  --ratio-scheme-desktop: 16 / 9;   /* TEMP */
+  --ratio-scheme-mobile: 4 / 3;     /* directions map */
+  --ratio-scheme-desktop: 16 / 9;
   --ratio-scheme: var(--ratio-scheme-mobile);
 
-  --ratio-video: 16 / 9;   /* формат видеофайла — не стиль */
-  --ratio-og: 1200 / 630;  /* формат OG-картинки — не стиль */
+  --ratio-video: 16 / 9;   /* video file format — not a style */
+  --ratio-og: 1200 / 630;  /* link-preview image format — not a style */
 
-  /* Точка фокуса кадра по умолчанию. */
-  --image-focus: 50% 50%;  /* TEMP */
+  /* The default focal point of a frame. */
+  --image-focus: 50% 50%;
 
-  /* --- Высота области просмотра, обложка, предел высоты медиа ---------------
-     Фолбэк задан на уровне токенов: 100vh, а где поддерживаются новые единицы —
-     100svh / 100dvh (блок @supports в конце секции). */
-  --viewport-height: 100vh;          /* «малая» высота: не прыгает при скрытии панелей браузера */
-  --viewport-height-dynamic: 100vh;  /* «динамическая» высота: следует за панелями браузера */
+  /* --- Viewport height, cover, media height limit ---------------------------
+     The fallback is set at the token level: 100vh, and where the newer units
+     are supported, 100svh / 100dvh (the @supports block at the end of the
+     section). */
+  --viewport-height: 100vh;          /* "small" height: does not jump when the browser bars hide */
+  --viewport-height-dynamic: 100vh;  /* "dynamic" height: follows the browser bars */
 
-  /* Доля высоты экрана, которую занимает обложка; переопределяется на
-     --bp-layout (долю нельзя интерполировать: множитель --fluid — длина). */
-  --cover-height-ratio-mobile: 1;      /* TEMP */
-  --cover-height-ratio-desktop: 0.9;   /* TEMP */
+  /* The share of the screen height the cover takes; overridden at
+     --bp-layout (a share cannot be interpolated: the --fluid factor is a
+     length). */
+  --cover-height-ratio-mobile: 1;
+  --cover-height-ratio-desktop: 0.9;
   --cover-height-ratio: var(--cover-height-ratio-mobile);
   --cover-min-height: calc(var(--viewport-height) * var(--cover-height-ratio));
 
-  /* Фото на фоне обложки (необязательное): поверх него — вуаль цвета обложки,
-     весь текст обложки на фото — цветом --color-cover-text.
-     Контраст (WCAG): текст на вуали непрозрачности a над пикселем фото P —
-     цвет фона a·veil + (1 − a)·P; худший пиксель — чёрный. С текущей палитрой
-     (текст #1b1d21, вуаль #f1f2f4) на чёрном: a = 0.6 → 5.4:1, минимум для
-     4.5:1 — 0.55; на белом пикселе контраст только выше. Вторичный цвет
-     текста на фото не годится: ему нужна вуаль ≥ 0.86, фото почти пропало бы.
-     При смене палитры минимум пересчитать. */
-  --color-cover-veil: var(--color-surface);  /* TEMP  вуаль поверх фото */
-  --color-cover-text: var(--color-text);     /* TEMP  текст обложки на фото */
-  --cover-veil-opacity: 0.6;                 /* TEMP  см. расчёт выше, не ниже 0.55 */
+  /* A photo behind the cover (optional): over it lies a veil in the cover
+     colour, and all the cover text on the photo is --color-cover-text.
+     Contrast (WCAG): text on a veil of opacity a over a photo pixel P has the
+     background a·veil + (1 − a)·P; the worst pixel is black. With the
+     default palette (text #1b1d21, veil #f1f2f4) on black: a = 0.6 → 5.4:1,
+     the minimum for 4.5:1 is 0.55; on a white pixel the contrast is only
+     higher. The secondary text colour does not work on a photo: it needs a
+     veil ≥ 0.86, and the photo would almost vanish. Recalculate the minimum
+     when the palette changes. */
+  --color-cover-veil: var(--color-surface);  /* veil over the photo */
+  --color-cover-text: var(--color-text);     /* cover text on the photo */
+  --cover-veil-opacity: 0.6;                 /* see the calculation above; at least 0.55 */
 
-  /* Верхняя панель — свёрнутая обложка: одна строка «имена · дата». Высота —
-     строка текста с полями, но не меньше цели нажатия; растёт вместе с
-     системным размером шрифта. Сверху к ней добавляется безопасная зона выреза
-     экрана: --cover-bar-block-size — полная высота панели, на неё же отступает
-     цель перехода по якорю. */
-  --cover-bar-padding-block: var(--space-2xs);  /* TEMP */
+  /* The top bar is the collapsed cover: one line "names · date". Its height
+     is a line of text with padding, but no less than a tap target; it grows
+     with the system font size. The safe area of the screen notch is added on
+     top: --cover-bar-block-size is the full bar height, and an anchor
+     target keeps the same distance from the top. */
+  --cover-bar-padding-block: var(--space-2xs);
   --cover-bar-size: max(var(--tap-min),
     calc(var(--text-base) * var(--line-height-tight) + var(--cover-bar-padding-block) * 2));
   --cover-bar-block-size: calc(var(--cover-bar-size) + var(--safe-inset-top));
-  /* Хореография сворачивания — доли прогресса прокрутки обложки 0…1 (1 — от
-     обложки осталась полоса высотой панели): содержимое обложки гаснет к
-     --cover-fade-end, панель проявляется начиная с --cover-bar-fade-start. */
-  --cover-fade-end: 0.6;         /* TEMP */
-  --cover-bar-fade-start: 0.55;  /* TEMP */
+  /* The collapse choreography, as shares of the cover's scroll progress
+     0…1 (1 — what is left of the cover is a strip as tall as the bar): the
+     cover content fades out by --cover-fade-end, the bar fades in from
+     --cover-bar-fade-start. */
+  --cover-fade-end: 0.6;
+  --cover-bar-fade-start: 0.55;
 
-  /* Медиа и плитка видео не выше этой доли экрана — чтобы в ландшафтной
-     ориентации телефона кадр помещался целиком. */
-  --media-max-height-ratio: 0.8;  /* TEMP */
+  /* Media and the video tile are no taller than this share of the screen, so
+     that a phone in landscape shows the whole frame. */
+  --media-max-height-ratio: 0.8;
   --media-max-height: calc(var(--viewport-height) * var(--media-max-height-ratio));
 
-  /* --- Движение ------------------------------------------------------------ */
-  --duration-fast: 140ms;   /* TEMP  hover, нажатие */
-  --duration-base: 280ms;   /* TEMP  окно просмотра (лайтбокс), увеличение фото */
-  --duration-slow: 600ms;   /* TEMP  появление блоков при прокрутке и обложка */
+  /* --- Motion -------------------------------------------------------------- */
+  --duration-fast: 140ms;   /* hover, press */
+  --duration-base: 280ms;   /* the viewer (lightbox), photo zoom */
+  --duration-slow: 600ms;   /* block reveal on scroll and the cover */
 
-  --ease-out: cubic-bezier(0.2, 0.6, 0.3, 1);      /* TEMP */
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);     /* TEMP */
+  --ease-out: cubic-bezier(0.2, 0.6, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --reveal-distance-mobile: 14;    /* TEMP  сдвиг блока при появлении */
-  --reveal-distance-desktop: 24;   /* TEMP */
+  --reveal-distance-mobile: 14;    /* block shift on reveal */
+  --reveal-distance-desktop: 24;
   --reveal-distance: clamp(min(var(--reveal-distance-mobile) * 1px, var(--reveal-distance-desktop) * 1px),
     calc(var(--reveal-distance-mobile) * 1px + (var(--reveal-distance-desktop) - var(--reveal-distance-mobile)) * var(--fluid)),
     max(var(--reveal-distance-mobile) * 1px, var(--reveal-distance-desktop) * 1px));
 
-  --cover-distance-mobile: 6;    /* TEMP  амплитуда анимации обложки */
-  --cover-distance-desktop: 12;  /* TEMP */
+  --cover-distance-mobile: 6;    /* cover animation amplitude */
+  --cover-distance-desktop: 12;
   --cover-distance: clamp(min(var(--cover-distance-mobile) * 1px, var(--cover-distance-desktop) * 1px),
     calc(var(--cover-distance-mobile) * 1px + (var(--cover-distance-desktop) - var(--cover-distance-mobile)) * var(--fluid)),
     max(var(--cover-distance-mobile) * 1px, var(--cover-distance-desktop) * 1px));
 
-  --reveal-stagger: 70ms;  /* TEMP  задержка между соседними блоками */
-  --hover-scale: 1.03;     /* TEMP  увеличение изображения под курсором */
+  --reveal-stagger: 70ms;  /* delay between neighbouring blocks */
+  --hover-scale: 1.03;     /* image zoom on hover */
 
-  /* --- Доступность и слои --------------------------------------------------
-     44px — требование доступности, а не стилистическое решение: не менять. */
+  /* --- Accessibility and layers --------------------------------------------
+     44px is an accessibility requirement, not a style choice: keep it. */
   --tap-min: 44px;
 
   --z-base: 0;
   --z-raised: 1;
-  --z-sticky: 50;  /* верхняя панель: над содержимым, под окнами */
+  --z-sticky: 50;  /* the top bar: above the content, below the dialogs */
   --z-overlay: 100;
   --z-lightbox: 110;
 
-  /* Безопасные зоны выреза/скруглений экрана (не стиль — платформа). */
+  /* Safe areas of the screen notch/corners (not a style — the platform). */
   --safe-inset-top: env(safe-area-inset-top, 0px);
   --safe-inset-right: env(safe-area-inset-right, 0px);
   --safe-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-inset-left: env(safe-area-inset-left, 0px);
 
-  /* --- Токены компонентов -------------------------------------------------- */
-  /* Плитка видео: круглый значок ▶ поверх постера и треугольник в нём.
-     Нажимается вся плитка, значок только показывает, что это ролик. */
-  --media-play-size: calc(var(--tap-min) + var(--icon-size));  /* TEMP */
-  --media-play-icon-size: calc(var(--icon-size) * 1.5);       /* TEMP */
+  /* --- Component tokens ---------------------------------------------------- */
+  /* Video tile: a round ▶ badge over the poster and the triangle in it. The
+     whole tile is pressable; the badge only shows that it is a video. */
+  --media-play-size: calc(var(--tap-min) + var(--icon-size));
+  --media-play-icon-size: calc(var(--icon-size) * 1.5);
 
-  /* Ширина полосы прокрутки страницы, скрытой на время показа лайтбокса;
-     задаётся скриптом галереи, чтобы раскладка под окном не сдвигалась. */
+  /* The width of the page scrollbar hidden while the lightbox is open; the
+     gallery script sets it so that the layout under the dialog does not
+     shift. */
   --lightbox-scroll-gap: 0px;
 
-  --icon-size-mobile: 20;    /* TEMP  размер иконки в кнопке */
-  --icon-size-desktop: 22;   /* TEMP */
+  --icon-size-mobile: 20;    /* icon size in a button */
+  --icon-size-desktop: 22;
   --icon-size: clamp(min(var(--icon-size-mobile) / 16 * 1rem, var(--icon-size-desktop) / 16 * 1rem),
     calc(var(--icon-size-mobile) / 16 * 1rem + (var(--icon-size-desktop) - var(--icon-size-mobile)) * var(--fluid)),
     max(var(--icon-size-mobile) / 16 * 1rem, var(--icon-size-desktop) / 16 * 1rem));
 
   --countdown-cell-min: var(--tap-min);
-  /* Предел ширины ячейки таймера: на широком экране таймер не растягивается
-     на всю текстовую колонку (ширина таймера = ячейки + зазоры). */
-  --countdown-cell-max-mobile: 96;    /* TEMP */
-  --countdown-cell-max-desktop: 128;  /* TEMP */
+  /* The countdown cell width limit: on a wide screen the countdown does not
+     stretch across the whole text column (countdown width = cells + gaps). */
+  --countdown-cell-max-mobile: 96;
+  --countdown-cell-max-desktop: 128;
   --countdown-cell-max: clamp(min(var(--countdown-cell-max-mobile) / 16 * 1rem, var(--countdown-cell-max-desktop) / 16 * 1rem),
     calc(var(--countdown-cell-max-mobile) / 16 * 1rem + (var(--countdown-cell-max-desktop) - var(--countdown-cell-max-mobile)) * var(--fluid)),
     max(var(--countdown-cell-max-mobile) / 16 * 1rem, var(--countdown-cell-max-desktop) / 16 * 1rem));
-  /* Программа дня: колонка времени не шире этой доли списка (длинная метка
-     переносится); в контейнере уже порога время встаёт над описанием.
-     Порог — только для чтения: повторён буквально в @container (секция 6). */
-  --schedule-time-max: 45%;          /* TEMP */
-  --schedule-inline-min: 18.5rem;    /* TEMP */
-  /* Описанию пункта программы остаётся не меньше этой ширины; остальное
-     может занять метка времени (но не меньше --schedule-time-max). */
-  --schedule-body-min: 16rem;        /* TEMP */
-  /* Переключатель событий: минимальная ширина вкладки. Все вкладки стоят в
-     ряд, пока помещаются при этой ширине, иначе — все столбиком. */
-  --events-tab-min: 11rem;           /* TEMP */
+  /* The day's programme: the time column is no wider than this share of the
+     list (a long label wraps); in a container narrower than the threshold
+     the time sits above the description. The threshold is read-only: it is
+     repeated literally in @container (section 6). */
+  --schedule-time-max: 45%;
+  --schedule-inline-min: 18.5rem;
+  /* A programme item's description keeps at least this width; the time
+     label may take the rest (but no less than --schedule-time-max). */
+  --schedule-body-min: 16rem;
+  /* Event switcher: the minimum tab width. All tabs sit in a row while they
+     fit at this width, otherwise they all stack. */
+  --events-tab-min: 11rem;
   --divider-thickness: var(--line-width-hairline);
   --card-padding: var(--space-md);
   --btn-padding-block: var(--space-xs);
   --btn-padding-inline: var(--space-md);
 }
 
-/* Граница раскладки: переопределяются ТОЛЬКО раскладочные токены,
-   визуальный стиль компонентов не меняется.
-   Значение должно совпадать с --bp-layout = 48em. */
+/* The layout breakpoint: ONLY layout tokens are overridden, the visual style
+   of the components stays the same.
+   The value must match --bp-layout = 48em. */
 @media (min-width: 48em) {
   :root {
     --grid-columns: var(--grid-columns-desktop);
@@ -539,7 +550,7 @@
   }
 }
 
-/* Единицы высоты, учитывающие панели мобильного браузера. */
+/* Height units that take the mobile browser bars into account. */
 @supports (height: 100svh) {
   :root {
     --viewport-height: 100svh;
@@ -547,10 +558,10 @@
   }
 }
 
-/* Уважение к prefers-reduced-motion выполнено на уровне токенов: движение
-   обнуляется один раз здесь, компоненты и будущие этапы ничего не знают об
-   этом медиазапросе. 0.01ms вместо 0s — чтобы события transitionend/animationend
-   всё-таки срабатывали и скрипты не «зависали» в ожидании. */
+/* prefers-reduced-motion is honoured at the token level: motion is zeroed
+   once, here, and the components know nothing about this media query.
+   0.01ms rather than 0s, so that transitionend/animationend events still
+   fire and scripts do not hang waiting for them. */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --duration-fast: 0.01ms;
@@ -567,19 +578,20 @@
 /* =============================================================================
    2. Fonts
    -----------------------------------------------------------------------------
-   Внешние шрифты не используются: со страницы нет запросов на сторонние домены.
-   По умолчанию — системный стек.
+   No external fonts: the page makes no requests to third-party domains. The
+   default is the system stack.
 
-   Чтобы подключить локальный шрифт на этапе стилизации:
-     1) положить woff2-файлы в assets/fonts/ (каталог уже есть);
-     2) раскомментировать и размножить блок ниже по начертаниям; путь в url()
-        относительный — от этого файла, поэтому верен при любом --base-path;
-     3) переключить в секции 1 токены --font-heading и/или --font-body на
-        новое семейство, оставив системный стек последним фолбэком, например:
+   To add a local font:
+     1) put the woff2 files into assets/fonts/ (the directory exists);
+     2) uncomment the block below and repeat it for every weight; the url()
+        path is relative to this file, so it holds for any --base-path;
+     3) in section 1, point --font-heading and/or --font-body at the new
+        family, keeping the system stack as the last fallback, for example:
           --font-heading: "Invitation Display", var(--font-body);
-     4) при необходимости подстроить --font-weight-*, --line-height-* и
-        --tracking-* — размеры шкалы менять не требуется.
-   font-display: swap обязателен: текст виден сразу, без «мигания пустотой».
+     4) if needed, adjust --font-weight-*, --line-height-* and
+        --tracking-* — the scale sizes need no change.
+   font-display: swap is required: the text shows at once, with no blank
+   flash.
 
    @font-face {
      font-family: "Invitation Display";
@@ -602,7 +614,7 @@
 /* =============================================================================
    3. Base
    -----------------------------------------------------------------------------
-   Минимальный reset, типографика по умолчанию, перенос длинных слов, фокус.
+   A minimal reset, default typography, wrapping of long words, focus.
    ========================================================================== */
 
 *,
@@ -616,16 +628,18 @@ html {
   text-size-adjust: 100%;
 }
 
-/* Страница приглашения (класс invitation у <html> в template.html): холст —
-   цвета свёрнутой панели. Его браузер показывает за краями страницы: при
-   перетягивании за верхний и нижний край и в системных областях, где виден
-   холст (WebKit берёт отсюда цвет под страницей, в том числе во встроенных
-   браузерах приложений). Тот же токен сборка подставляет в
-   <meta name="theme-color">. Когда у <html> свой фон, фон body на холст больше
-   не переносится — body закрашивает только себя, поэтому он не ниже окна:
-   на короткой странице под содержимым остаётся фон страницы, а не холст.
-   Витрина класса не имеет: у неё холст по-прежнему цвета body.
-   color-scheme: only light (секция 1) на цвет холста не влияет: он задан явно. */
+/* The invitation page (the invitation class on <html> in template.html): the
+   canvas has the colour of the collapsed bar. The browser shows it beyond
+   the page edges: when the page is pulled past its top and bottom, and in
+   the system areas where the canvas is visible (WebKit takes the colour
+   under the page from here, in-app browsers included). The build puts the
+   same token into <meta name="theme-color">. When <html> has a background
+   of its own, the body background does not propagate to the canvas — body
+   paints only itself, so it is at least as tall as the viewport: on a short
+   page the page background, not the canvas, shows under the content.
+   The styleguide has no such class: its canvas takes the body colour.
+   color-scheme: only light (section 1) does not affect the canvas colour:
+   it is set explicitly. */
 html.invitation {
   background-color: var(--color-cover-veil);
 }
@@ -634,25 +648,25 @@ html.invitation body {
   min-block-size: var(--viewport-height-dynamic);
 }
 
-/* На сенсорном экране страницу приглашения прокручивает не документ, а body
-   размером ровно с окно. Встроенный браузер Telegram на iOS (и Safari на
-   iOS 26) кладёт страницу под свою полупрозрачную шапку: окно раскладки
-   начинается у нижнего
-   края шапки, но прокручиваемое содержимое документа WebKit рисует и выше.
-   Всё прилипающее и фиксированное он при этом обрезает по окну раскладки,
-   поэтому заливкой над панелью (.cover-bar::before, секция 6) эту полосу не
-   закрыть. Содержимое же body обрезается по краю body — выше окна остаётся
-   только холст <html> цвета панели (правило выше). Панель прилипает к верху
-   body, шкала обложки (секция 7) и скрипты (coverBar, reveal) считают
-   прокрутку body.
-   Прокрутка body — значит, отступ под панелью для якорей и фокуса
-   (scroll-padding, секция 6) нужен и ему, а под окном просмотра (секция 8)
-   блокируется и она.
-   Только там, где основное устройство ввода — касание (pointer: coarse):
-   полоса бывает лишь на телефонах и планшетах, а на десктопе прокрутка
-   документа сохраняет клавиатуру сразу после загрузки (без щелчка «Пробел»,
-   PageDown и стрелки прокручивают только документ) и восстановление позиции
-   при перезагрузке. Печать — прежний документ: правила только для экрана. */
+/* On a touch screen the invitation page is scrolled not by the document but
+   by a body exactly as large as the viewport. The Telegram in-app browser on
+   iOS (and Safari on iOS 26) puts the page under its translucent header: the
+   layout viewport starts at the bottom edge of the header, but WebKit paints
+   the scrolled document content above it as well. Everything sticky and
+   fixed is clipped to the layout viewport, so a fill above the bar
+   (.cover-bar::before, section 6) cannot cover that strip. The content of
+   body, though, is clipped at the body edge — above the viewport only the
+   <html> canvas in the bar colour remains (the rule above). The bar sticks
+   to the top of body; the cover timeline (section 7) and the scripts
+   (coverBar, reveal) track the body scroll.
+   Since body scrolls, it also needs the offset under the bar for anchors and
+   focus (scroll-padding, section 6), and its scroll is the one locked under
+   the viewer (section 8).
+   Only where the primary input is touch (pointer: coarse): the strip occurs
+   only on phones and tablets, while on a desktop the document scroll keeps
+   the keyboard working right after loading (without a click, Space,
+   PageDown and the arrows scroll only the document) and keeps the position
+   on reload. Print uses the document scroll: the rules are screen-only. */
 @media screen and (pointer: coarse) {
   html.invitation {
     block-size: 100%;
@@ -674,17 +688,17 @@ html.invitation body {
   }
 }
 
-/* iOS и iPadOS (Safari и встроенные браузеры приложений): размер шрифта корня
-   следует системной настройке «Размер текста» (Dynamic Type). Системный стиль
-   -apple-system-body — единственный способ её получить: мета-тег text-scale
-   действует только в Chromium. При стандартной настройке 1rem здесь — 17px (в
-   остальных браузерах 16px) и растёт вместе с системным размером, вплоть до
-   ~53px в режиме «Увеличенный текст». Порог 48em в @media от этой настройки
-   не зависит: em медиазапроса — исходный размер шрифта браузера.
-   Условие -webkit-touch-callout отсекает Safari на macOS, где тот же стиль
-   дал бы корню 13px. Сокращённое font сбрасывает на :root гарнитуру,
-   насыщенность и интерлиньяж — поэтому все они заданы на body из токенов и
-   от корня не наследуются. */
+/* iOS and iPadOS (Safari and in-app browsers): the root font size follows
+   the system Text Size setting (Dynamic Type). The system style
+   -apple-system-body is the only way to read it: the text-scale meta tag
+   works only in Chromium. At the standard setting 1rem is 17px here (16px in
+   other browsers) and grows with the system size, up to ~53px with Larger
+   Text. The 48em threshold in @media does not depend on this setting: the em
+   of a media query is the browser's initial font size.
+   The -webkit-touch-callout condition rules out Safari on macOS, where the
+   same style would give the root 13px. The font shorthand resets the
+   family, weight and line height on :root — so body sets all of them from
+   tokens and does not inherit them from the root. */
 @supports (font: -apple-system-body) and (-webkit-touch-callout: default) {
   :root {
     font: -apple-system-body;
@@ -742,7 +756,7 @@ ol {
   padding-inline-start: var(--space-md);
 }
 
-/* Длинные слова и ссылки не расширяют раскладку. */
+/* Long words and links do not widen the layout. */
 :where(h1, h2, h3, h4, h5, h6, p, li, dt, dd, figcaption, a, button, label, th, td) {
   overflow-wrap: anywhere;
 }
@@ -796,15 +810,15 @@ textarea {
   letter-spacing: inherit;
 }
 
-/* Атрибут hidden сильнее display компонентов (таймер скрыт, пока его не
-   запустит скрипт). */
+/* The hidden attribute beats the display of components (the countdown stays
+   hidden until the script starts it). */
 [hidden] {
   display: none !important;
 }
 
-/* Фокус с клавиатуры виден всегда и одинаково на обоих форматах.
-   .is-focus — демонстрационный класс витрины: только показывает то же
-   оформление статически, собственных значений не задаёт. */
+/* Keyboard focus is always visible, the same on both formats.
+   .is-focus is a styleguide demo class: it only shows the same look
+   statically and sets no values of its own. */
 :focus-visible,
 .is-focus {
   outline: var(--focus-ring-width) solid var(--color-focus);
@@ -824,9 +838,9 @@ hr {
   border: none;
 }
 
-/* Сокращённое движение: длительности и дистанции уже обнулены на уровне
-   токенов (секция 1). Страховка ниже гасит анимации, заданные в обход токенов
-   (например будущей сторонней библиотекой), и мгновенную прокрутку. */
+/* Reduced motion: durations and distances are already zeroed at the token
+   level (section 1). The safety net below cuts animations set around the
+   tokens (by a third-party library, for instance) and smooth scrolling. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -842,12 +856,13 @@ hr {
 /* =============================================================================
    4. Layout primitives
    -----------------------------------------------------------------------------
-   Один контейнер (две ширины), одна сетка, один вертикальный ритм, одно медиа
-   с фиксированными пропорциями. Раскладка страницы — секция 6.
+   One container (two widths), one grid, one vertical rhythm, one media box
+   with a fixed aspect ratio. The page layout is in section 6.
    ========================================================================== */
 
-/* Контейнер: текстовая колонка ограниченной ширины; модификатор --wide —
-   для галереи и двухколоночных секций. Боковые поля учитывают вырез экрана. */
+/* Container: a text column of limited width; the --wide modifier is for the
+   gallery and two-column sections. The side gutters respect the screen
+   notch. */
 .container {
   width: 100%;
   max-width: calc(var(--container-text) + var(--container-gutter) + var(--container-gutter));
@@ -857,10 +872,10 @@ hr {
     max(var(--container-gutter), var(--safe-inset-right));
 }
 
-/* Контейнер и элементы сетки — контейнеры для @container: вложенные
-   компоненты (таймер, программа дня) выбирают раскладку по ширине места, в
-   котором стоят, а не по ширине окна. Сам контейнер по своему запросу не
-   стилизуется — только его потомки. */
+/* The container and the grid items are @container containers: nested
+   components (the countdown, the day's programme) pick their layout by the
+   width of the place they sit in, not by the viewport width. A container is
+   never styled by its own query — only its descendants are. */
 .container,
 .grid > * {
   container-type: inline-size;
@@ -870,9 +885,9 @@ hr {
   max-width: calc(var(--container-wide) + var(--container-gutter) + var(--container-gutter));
 }
 
-/* Узкий контейнер — та же текстовая колонка, что и .container без
-   модификатора. Нужен каркасу секции: ширину выбирает конфигурация
-   (narrow | wide), и у каждого значения есть свой класс. */
+/* The narrow container is the same text column as .container without a
+   modifier. The section frame needs it: the configuration picks the width
+   (narrow | wide), and every value has a class of its own. */
 .container--narrow {
   max-width: calc(var(--container-text) + var(--container-gutter) + var(--container-gutter));
 }
@@ -881,7 +896,7 @@ hr {
   padding-inline: 0;
 }
 
-/* Сетка: число колонок и зазор — из токенов; на мобильном одна колонка. */
+/* Grid: the column count and the gap come from tokens; one column on mobile. */
 .grid {
   display: grid;
   grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
@@ -893,7 +908,7 @@ hr {
   gap: var(--space-sm);
 }
 
-/* Вертикальный ритм: единый шаг между соседями, переопределяется --flow-space. */
+/* Vertical rhythm: one step between neighbours, overridden by --flow-space. */
 .stack > * + * {
   margin-block-start: var(--flow-space);
 }
@@ -906,10 +921,11 @@ hr {
   --flow-space: var(--space-lg);
 }
 
-/* Медиа с фиксированными пропорциями: рамка задаёт пропорцию, содержимое
-   кадрируется по --image-focus (--media-fit: cover) либо вписывается целиком
-   (contain). Рамкой может быть и ссылка на полный файл. Высота ограничена --media-max-height; чтобы
-   пропорция при этом сохранялась, ограничивается ширина (высота × пропорция). */
+/* Media with a fixed aspect ratio: the frame sets the ratio, the content is
+   cropped around --image-focus (--media-fit: cover) or fits whole
+   (contain). The frame may also be a link to the full file. The height is
+   limited by --media-max-height; to keep the ratio, the width is limited
+   instead (height × ratio). */
 .media {
   --media-ratio: var(--ratio-photo);
   --media-fit: cover;
@@ -932,8 +948,9 @@ hr {
   object-position: var(--image-focus);
 }
 
-/* <picture> — строчный элемент с авто-высотой: без этого правила block-size
-   вложенного <img> не от чего считать, и кадрирование не действует. */
+/* <picture> is an inline element with an auto height: without this rule the
+   block-size of the nested <img> has nothing to resolve against, and the
+   crop does not work. */
 .media > picture,
 .gallery__item > picture,
 .gallery__item > .gallery__link > picture {
@@ -944,15 +961,15 @@ hr {
 
 .media--video { --media-ratio: var(--ratio-video); }
 .media--gallery { --media-ratio: var(--ratio-gallery); }
-/* Схема проезда показывается целиком, без кадрирования: пропорция рамки может
-   не совпадать с пропорцией файла. */
+/* The directions map shows whole, uncropped: the frame ratio may differ from
+   the file's ratio. */
 .media--scheme {
   --media-ratio: var(--ratio-scheme);
   --media-fit: contain;
 }
 
-/* Скрыто визуально, доступно скринридеру (объявления счётчика окна
-   просмотра, подписи кнопок без текста и т.п.). */
+/* Visually hidden, available to screen readers (announcements of the
+   viewer's counter, labels of buttons without text and so on). */
 .visually-hidden {
   position: absolute;
   width: var(--line-width-hairline);
@@ -969,23 +986,24 @@ hr {
 /* =============================================================================
    5. Components
    -----------------------------------------------------------------------------
-   Каждый компонент описан один раз. Классы — только для стилей; скрипты
-   цепляются за data-атрибуты (data-reveal, data-countdown, data-gallery,
+   Every component is described once. Classes are for styles only; scripts
+   hook onto data attributes (data-reveal, data-countdown, data-gallery,
    data-lightbox, data-media).
 
-   Состояния одинаковы на обоих форматах:
-     hover        — только внутри @media (hover: hover);
-     :focus-visible — кольцо фокуса из секции 3, видно всегда;
-     :active      — нажатие;
-     disabled     — :disabled и [aria-disabled="true"].
-   Классы .is-hover / .is-focus / .is-active перечислены рядом с настоящими
-   состояниями (без собственных значений) — чтобы витрина могла показать
-   состояние статически.
+   States are the same on both formats:
+     hover        — only inside @media (hover: hover);
+     :focus-visible — the focus ring of section 3, always visible;
+     :active      — press;
+     disabled     — :disabled and [aria-disabled="true"].
+   The .is-hover / .is-focus / .is-active classes are listed next to the
+   real states (with no values of their own), so that the styleguide can
+   show a state statically.
 
-   Интерактивные элементы — не меньше --tap-min (44px, требование доступности).
+   Interactive elements are at least --tap-min (44px, an accessibility
+   requirement).
    ========================================================================== */
 
-/* --- Секция и её заголовок ------------------------------------------------ */
+/* --- Section and its heading ---------------------------------------------- */
 .section {
   margin-block: var(--space-section);
 }
@@ -1014,7 +1032,7 @@ hr {
   text-align: center;
 }
 
-/* --- Текстовый блок ------------------------------------------------------- */
+/* --- Text block ----------------------------------------------------------- */
 .prose {
   max-width: var(--container-text);
   font-size: var(--text-base);
@@ -1039,7 +1057,7 @@ hr {
   text-align: center;
 }
 
-/* --- Карточка ------------------------------------------------------------- */
+/* --- Card ----------------------------------------------------------------- */
 .card {
   padding: var(--card-padding);
   background-color: var(--color-surface);
@@ -1073,7 +1091,7 @@ hr {
   gap: var(--space-2xs);
 }
 
-/* --- Кнопка (работает и для <a>, и для <button>) -------------------------- */
+/* --- Button (for both <a> and <button>) ----------------------------------- */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -1160,14 +1178,14 @@ hr {
   cursor: not-allowed;
 }
 
-/* Выключенная ссылка-кнопка. CSS блокирует только указатель: с клавиатуры
-   ссылка с href всё равно сработает, поэтому шаблон обязан выводить
-   выключенную ссылку БЕЗ href (role="link" aria-disabled="true"). */
+/* A disabled link button. CSS blocks only the pointer: from the keyboard a
+   link with an href works regardless, so the template must render a
+   disabled link WITHOUT an href (role="link" aria-disabled="true"). */
 a.btn[aria-disabled="true"] {
   pointer-events: none;
 }
 
-/* --- Метка времени -------------------------------------------------------- */
+/* --- Time label ----------------------------------------------------------- */
 .time-label {
   display: inline-block;
   padding: var(--space-3xs) var(--space-2xs);
@@ -1188,7 +1206,7 @@ a.btn[aria-disabled="true"] {
   color: var(--color-on-accent);
 }
 
-/* --- Разделитель ---------------------------------------------------------- */
+/* --- Divider -------------------------------------------------------------- */
 .divider {
   block-size: var(--divider-thickness);
   margin-block: var(--space-lg);
@@ -1204,7 +1222,7 @@ a.btn[aria-disabled="true"] {
   background-color: var(--color-accent);
 }
 
-/* --- Галерея -------------------------------------------------------------- */
+/* --- Gallery -------------------------------------------------------------- */
 .gallery {
   display: grid;
   grid-template-columns: repeat(var(--gallery-columns), minmax(0, 1fr));
@@ -1214,9 +1232,9 @@ a.btn[aria-disabled="true"] {
   list-style: none;
 }
 
-/* Элемент галереи: пропорция и кадрирование из токенов. Класс можно ставить
-   и на само изображение, и на его обёртку (<li>, <a>, <figure>) — во втором
-   случае вложенное изображение заполняет рамку. */
+/* Gallery item: the ratio and the crop come from tokens. The class may go on
+   the image itself or on its wrapper (<li>, <a>, <figure>) — in the latter
+   case the nested image fills the frame. */
 .gallery__item {
   display: block;
   inline-size: 100%;
@@ -1243,7 +1261,7 @@ a.btn[aria-disabled="true"] {
   block-size: 100%;
 }
 
-/* Обёртка, если изображение открывает лайтбокс. */
+/* The wrapper when the image opens the lightbox. */
 .gallery__link {
   position: relative;
   display: block;
@@ -1258,10 +1276,11 @@ a.btn[aria-disabled="true"] {
   padding: 0;
 }
 
-/* Кольцо фокуса — внутри рамки и поверх изображения: внешнее кольцо обрезал
-   бы overflow элемента галереи и ленты. Рисует его псевдоэлемент (обводка
-   самой ссылки оказалась бы под увеличенным изображением); светлый подслой
-   отделяет кольцо от тёмных участков фотографии. */
+/* The focus ring sits inside the frame and over the image: the overflow of
+   the gallery item and the ribbon would clip an outer ring. A pseudo-element
+   draws it (an outline on the link itself would end up under the zoomed
+   image); a light underlay sets the ring apart from dark areas of the
+   photo. */
 .gallery__link:focus-visible,
 .gallery__link.is-focus {
   outline: none;
@@ -1312,16 +1331,18 @@ a.btn[aria-disabled="true"] {
   color: var(--color-text-muted);
 }
 
-/* --- Плитка медиа: фото и видео ---------------------------------------------
-   .media-tile — ссылка-плитка на файл (вместе с .gallery__link: картинка во
-   всю рамку, кольцо фокуса внутри рамки, увеличение под курсором). Плитка —
-   свой слой: значок и кольцо фокуса не поднимаются над соседями.
+/* --- Media tile: photo and video --------------------------------------------
+   .media-tile is a tile link to a file (together with .gallery__link: the
+   picture fills the frame, the focus ring is inside the frame, zoom on
+   hover). The tile is a layer of its own: the badge and the focus ring do
+   not rise above its neighbours.
 
-   .media-tile--video — ролик: постер, круглый значок ▶ по центру
-   (.media-tile__badge, внутри inline-<svg> .media-tile__icon цвета
-   currentColor), длительность в углу (.media-tile__duration). Значок и
-   длительность лежат поверх постера, поэтому их цвета — роли оверлея, как у
-   кнопок окна просмотра. Нажимается вся плитка: значок нажатия не забирает. */
+   .media-tile--video is a video: the poster, a round ▶ badge in the centre
+   (.media-tile__badge, with an inline <svg> .media-tile__icon in
+   currentColor inside), the duration in a corner (.media-tile__duration).
+   The badge and the duration lie over the poster, so their colours are the
+   overlay roles, like the viewer's buttons. The whole tile is pressable:
+   the badge does not take the press. */
 .media-tile {
   isolation: isolate;
 }
@@ -1348,8 +1369,8 @@ a.btn[aria-disabled="true"] {
   fill: currentColor;
 }
 
-/* Длительность ролика; разметка пока её не выводит — длительность появится
-   вместе с чтением её из файла. */
+/* The video duration, read from the file; the markup leaves it out when the
+   duration is unknown. */
 .media-tile__duration {
   position: absolute;
   inset-block-end: var(--space-2xs);
@@ -1377,22 +1398,24 @@ a.btn[aria-disabled="true"] {
   background-color: var(--color-overlay-control-hover);
 }
 
-/* --- Одиночный элемент галереи ----------------------------------------------
-   .gallery--single — одна плитка по центру колонки в пропорции своего кадра,
-   не выше --media-max-height и не шире колонки.
+/* --- Single gallery item ----------------------------------------------------
+   .gallery--single is one tile in the centre of the column at its frame's
+   ratio, no taller than --media-max-height and no wider than the column.
 
-   Размер элемента задаёт невидимый размерник .gallery__sizer перед плиткой,
-   а плитка лежит поверх него (атрибут style в разметке не нужен):
-     - <svg class="gallery__sizer" width height viewBox> с размерами ролика
-       из данных — замещаемый элемент: браузер вписывает его в max-inline-size
-       и max-block-size с сохранением пропорции, по нему сжимается элемент
-       (fit-content). Размеры берутся из атрибутов, поэтому это работает и до
-       загрузки постера, и без скрипта. Размерник не больше своих атрибутов:
-       ролик меньше места под него останется в своём размере;
-     - <span class="gallery__sizer gallery__sizer--default"> — размеров в
-       данных нет: ширина — высота × --ratio-video, пропорция — тот же токен.
-   Собственная пропорция inline-<svg> проверена в Chrome; на реальном iOS
-   Safari её нужно подтвердить руками. */
+   The item size comes from the invisible sizer .gallery__sizer before the
+   tile, and the tile lies over it (no style attribute in the markup):
+     - <svg class="gallery__sizer" width height viewBox> with the video's
+       dimensions from the data is a replaced element: the browser fits it
+       into max-inline-size and max-block-size keeping the ratio, and the
+       item shrinks to it (fit-content). The dimensions come from the
+       attributes, so this works before the poster loads and without the
+       script. The sizer is no larger than its attributes: a video smaller
+       than its room keeps its own size;
+     - <span class="gallery__sizer gallery__sizer--default"> — the data has
+       no dimensions: the width is height × --ratio-video, the ratio is the
+       same token.
+   The intrinsic ratio of an inline <svg> is verified in Chrome; on a real
+   iOS Safari it needs a manual check. */
 .gallery--single {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -1424,12 +1447,12 @@ a.btn[aria-disabled="true"] {
   aspect-ratio: var(--ratio-video);
 }
 
-/* --- Таймер обратного отсчёта ---------------------------------------------
-   Раскладка — по ширине ближайшего контейнера (.container, элемент .grid):
-   2×2, пока четыре ячейки с подписями не помещаются в ряд, иначе 4 в ряд.
-   Порог в rem, поэтому при увеличенном шрифте 2×2 держится дольше; при очень
-   крупном системном шрифте на узком экране ячейки встают в одну колонку.
-   Браузер без @container всегда показывает 2×2. */
+/* --- Countdown --------------------------------------------------------------
+   The layout follows the width of the nearest container (.container, a .grid
+   item): 2×2 while four labelled cells do not fit in a row, otherwise 4 in
+   a row. The threshold is in rem, so with an enlarged font 2×2 holds
+   longer; with a very large system font on a narrow screen the cells stack
+   in one column. A browser without @container always shows 2×2. */
 .countdown {
   --countdown-columns-used: var(--countdown-columns-narrow);
   display: grid;
@@ -1464,22 +1487,22 @@ a.btn[aria-disabled="true"] {
   white-space: nowrap;
 }
 
-/* Значение должно совпадать с --countdown-inline-min = 19.5rem. */
+/* The value must match --countdown-inline-min = 19.5rem. */
 @container (min-width: 19.5rem) {
   .countdown {
     --countdown-columns-used: var(--countdown-columns);
   }
 }
 
-/* Значение должно совпадать с --countdown-stack-max = 9rem. */
+/* The value must match --countdown-stack-max = 9rem. */
 @container (max-width: 9rem) {
   .countdown {
     --countdown-columns-used: var(--countdown-columns-stack);
   }
 }
 
-/* Подписи ячеек — короткие слова: рвать их посреди слова нельзя, иначе на
-   360 px «секунд» разваливается на две строки. */
+/* Cell labels are short words: they must not break mid-word, otherwise at
+   360 px the seconds label falls apart into two lines. */
 .countdown__label {
   font-size: var(--text-xs);
   line-height: var(--line-height-tight);
@@ -1490,12 +1513,12 @@ a.btn[aria-disabled="true"] {
 }
 
 
-/* --- Контекст «поверх оверлея» --------------------------------------------
-   Внутри тёмной подложки (лайтбокс) роли текста и кольца фокуса получают
-   значения для оверлея; компоненты при этом не переписываются.
-   Рассчитан только на элементы без собственной светлой подложки: текст,
-   ссылки, кнопки-иконки. Компоненты со своим фоном (карточка, .btn--secondary,
-   метка времени) внутрь оверлея не помещаются. */
+/* --- The "over the overlay" context ----------------------------------------
+   Inside a dark backdrop (the lightbox) the text and focus ring roles take
+   the overlay values; the components themselves are not rewritten.
+   Meant only for elements without a light backing of their own: text,
+   links, icon buttons. Components with their own background (the card,
+   .btn--secondary, the time label) do not go inside the overlay. */
 .on-overlay {
   --color-text: var(--color-on-overlay);
   --color-text-muted: var(--color-on-overlay);
@@ -1511,26 +1534,30 @@ a.btn[aria-disabled="true"] {
 /* =============================================================================
    6. Page layout
    -----------------------------------------------------------------------------
-   Раскладка блоков страницы приглашения. Здесь только расположение:
-   внешний вид элементов задают компоненты секции 5, размеры — токены секции 1.
+   Layout of the invitation page blocks. Only placement lives here: the
+   components of section 5 set the look of the elements, the tokens of
+   section 1 the sizes.
 
-   Раскладка «внутренняя»: блоки сами переносятся и сжимаются (flex-wrap,
-   minmax(), max-content), новых брейкпоинтов нет. Две колонки на десктопе
-   дают примитив .grid и токен --grid-columns (граница --bp-layout).
+   The layout is intrinsic: blocks wrap and shrink on their own (flex-wrap,
+   minmax(), max-content), with no extra breakpoints. The two desktop
+   columns come from the .grid primitive and the --grid-columns token (the
+   --bp-layout breakpoint).
 
-   Высота обложки — min-block-size: в ландшафтной ориентации
-   телефона блок растёт вместе с содержимым, ничего не обрезается.
+   The cover height is a min-block-size: on a phone in landscape the block
+   grows with its content, nothing is clipped.
    ========================================================================== */
 
-/* --- Страница ------------------------------------------------------------- */
-/* flow-root: отступы первой и последней секции остаются внутри страницы. */
+/* --- Page ----------------------------------------------------------------- */
+/* flow-root: the margins of the first and the last section stay inside the
+   page. */
 .page {
   display: flow-root;
   padding-block-end: var(--safe-inset-bottom);
 }
 
-/* --- 1. Обложка -------------------------------------------------------------
-   Боковые безопасные зоны учитывает .container, верхнюю и нижнюю — обложка. */
+/* --- 1. Cover ---------------------------------------------------------------
+   .container respects the side safe areas, the cover the top and bottom
+   ones. */
 .cover {
   display: flex;
   flex-direction: column;
@@ -1542,8 +1569,8 @@ a.btn[aria-disabled="true"] {
     calc(var(--space-xl) + var(--safe-inset-bottom));
   background-color: var(--color-surface);
   text-align: center;
-  /* Для фото на фоне: подложка лежит под содержимым, но над фоном обложки,
-     и не выходит за её границы. */
+  /* For a background photo: the backdrop lies under the content but above
+     the cover background, and does not leave the cover's bounds. */
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -1559,19 +1586,20 @@ a.btn[aria-disabled="true"] {
   color: var(--color-text-muted);
 }
 
-/* Фото на фоне обложки. Заполняет обложку при любой пропорции экрана
-   (object-fit: cover): лишнее обрезается, полос нет. Какая часть кадра
-   остаётся видна — модификатор из перечисления backgroundFocus (ключевые
-   слова object-position, без JS и без inline-стилей). Поверх фото —
-   вуаль цвета обложки (::after) непрозрачностью --cover-veil-opacity. */
+/* The photo behind the cover. It fills the cover at any screen ratio
+   (object-fit: cover): the excess is cropped, with no bars. Which part of
+   the frame stays visible is a modifier from the backgroundFocus
+   enumeration (object-position keywords, no JS and no inline styles). Over
+   the photo lies a veil in the cover colour (::after) at
+   --cover-veil-opacity. */
 .cover__backdrop {
   position: absolute;
   inset: 0;
   z-index: var(--z-base);
 }
 
-/* Содержимое идёт в разметке после подложки и тоже позиционировано —
-   поэтому рисуется поверх неё. */
+/* The content follows the backdrop in the markup and is positioned too, so
+   it paints over it. */
 .cover__backdrop ~ .cover__inner {
   position: relative;
 }
@@ -1601,33 +1629,37 @@ a.btn[aria-disabled="true"] {
 .cover__photo--bottom-left { object-position: left bottom; }
 .cover__photo--bottom-right { object-position: right bottom; }
 
-/* На фото весь текст обложки — основным цветом: вторичный не держит
-   контраст на тёмном кадре (расчёт — у --cover-veil-opacity). */
+/* On a photo all the cover text uses the main colour: the secondary one
+   loses contrast on a dark frame (the calculation is at
+   --cover-veil-opacity). */
 .cover__backdrop ~ .cover__inner .cover__eyebrow,
 .cover__backdrop ~ .cover__inner .cover__title,
 .cover__backdrop ~ .cover__inner .cover__date {
   color: var(--color-cover-text);
 }
 
-/* Печать: фото не нужно — обложка как без него. */
+/* Print: no photo — the cover prints as one without it. */
 @media print {
   .cover__backdrop {
     display: none;
   }
 }
 
-/* --- Верхняя панель — свёрнутая обложка ------------------------------------
-   Стоит в разметке сразу за обложкой. Отрицательным отступом на свою высоту
-   ложится на нижнюю полосу обложки и места в потоке не занимает: ни её
-   появление, ни скрытие раскладку не сдвигают. position: sticky — панель
-   прилипает к верху окна ровно тогда, когда от обложки остаётся полоса её
-   высоты, и дальше едет с окном до конца страницы. Прозрачность панели и
-   гашение обложки — секция 7.
-   Панель на странице ([data-cover-bar]) видна только под маркером
-   cover-bar-on, который ставит скрипт: без скрипта её нет. Вид самой панели
-   (.cover-bar) от маркера не зависит — так она показана в витрине.
-   Фон — цвет вуали: к моменту, когда панель проявилась, вуаль над фото уже
-   сплошная, и панель продолжает свёрнутую обложку тем же цветом. */
+/* --- Top bar: the collapsed cover ------------------------------------------
+   It follows the cover in the markup. A negative margin of its own height
+   lays it over the bottom strip of the cover, so it takes no room in the
+   flow: neither showing nor hiding it shifts the layout. position: sticky —
+   the bar sticks to the top of the viewport exactly when what is left of
+   the cover is a strip of its height, and then rides with the viewport to
+   the end of the page. The bar's opacity and the cover fade-out are in
+   section 7.
+   The bar on the page ([data-cover-bar]) is visible only under the
+   cover-bar-on marker that the script sets: without the script there is no
+   bar. The look of the bar itself (.cover-bar) does not depend on the
+   marker — that is how the styleguide shows it.
+   The background is the veil colour: by the time the bar appears, the veil
+   over the photo is solid, and the bar continues the collapsed cover in the
+   same colour. */
 .cover-bar {
   position: relative;
   block-size: var(--cover-bar-block-size);
@@ -1636,18 +1668,19 @@ a.btn[aria-disabled="true"] {
   box-shadow: var(--shadow-sm);
 }
 
-/* Заливка над панелью. Safari на iOS 26 рисует страницу и выше окна
-   раскладки — под прозрачной строкой состояния, а прилипшая панель стоит у
-   верха окна раскладки, то есть ниже этой полосы: без заливки в полосе видно
-   прокручиваемое содержимое. Псевдоэлемент продолжает панель вверх её же
-   цветом на высоту экрана — с запасом на любую системную область. Он часть
-   панели: виден и гаснет вместе с ней (её opacity, «уменьшение движения» —
-   та же ступенька), без маркера и при печати его нет вместе с панелью. В
-   потоке не участвует (раскладка не сдвигается), нажатий не ловит. Пока
-   панель не прилипла, над ней обложка — к этому моменту почти того же цвета.
-   Полосу под шапкой встроенного браузера Telegram на iOS заливка не
-   закрывает: WebKit обрезает прилипшую панель вместе с ней по окну
-   раскладки. Там полосу убирает прокрутка body (секция 3). */
+/* The fill above the bar. Safari on iOS 26 paints the page above the layout
+   viewport too — under the transparent status bar, while the stuck bar sits
+   at the top of the layout viewport, that is below this strip: without the
+   fill the scrolled content shows in the strip. The pseudo-element extends
+   the bar upwards in its own colour by the screen height — enough for any
+   system area. It is part of the bar: it shows and fades with it (its
+   opacity; under reduced motion the same step), and without the marker or
+   in print it is gone together with the bar. It takes no part in the flow
+   (the layout does not shift) and catches no taps. Until the bar sticks,
+   the cover is above it — by then almost the same colour.
+   The fill does not cover the strip under the header of the Telegram in-app
+   browser on iOS: WebKit clips the stuck bar, fill included, to the layout
+   viewport. There the body scroll removes the strip (section 3). */
 .cover-bar::before {
   content: "";
   position: absolute;
@@ -1670,9 +1703,9 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
   margin-block-start: calc(var(--cover-bar-block-size) * -1);
 }
 
-/* Одна строка: высота панели постоянна, на ней держатся отступ и
-   scroll-padding. Не помещается — имена обрезаются многоточием, дата и
-   разделитель не сжимаются. */
+/* One line: the bar height is constant, and the margin and scroll-padding
+   rely on it. When it does not fit, the names are cut with an ellipsis;
+   the date and the separator do not shrink. */
 .cover-bar__inner {
   display: flex;
   align-items: center;
@@ -1709,14 +1742,15 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
   color: var(--color-text-muted);
 }
 
-/* Дату обрезает только крайний случай: строка шире колонки сама по себе. */
+/* Only an extreme case cuts the date: a line wider than the column on its
+   own. */
 .cover-bar__date {
   max-inline-size: 100%;
 }
 
-/* Переход по якорю и фокус с клавиатуры не прячут цель под панелью. На
-   сенсорном экране страницу приглашения прокручивает body — там тот же
-   отступ у него (секция 3). */
+/* Anchor jumps and keyboard focus do not hide the target under the bar. On a
+   touch screen body scrolls the invitation page, so body has the same
+   offset there (section 3). */
 html.js.cover-bar-on {
   scroll-padding-block-start: var(--cover-bar-block-size);
 }
@@ -1728,13 +1762,14 @@ html.js.cover-bar-on {
   }
 }
 
-/* --- 2. Официальное приглашение --------------------------------------------- */
+/* --- 2. Formal invitation ---------------------------------------------------- */
 .invite__greeting {
   font-size: var(--text-2xl);
 }
 
-/* --- 5. Дата и время ---------------------------------------------------------
-   Дата текстом видна всегда; таймер появляется только вместе со скриптом. */
+/* --- 5. Date and time --------------------------------------------------------
+   The date as text is always visible; the countdown appears only with the
+   script. */
 .date__inner {
   text-align: center;
 }
@@ -1748,8 +1783,9 @@ html.js.cover-bar-on {
   text-wrap: balance;
 }
 
-/* Таймер не шире своих ячеек предельной ширины (четырёх в ряд, двух при
-   раскладке 2×2 или одной); на узком экране — во всю ширину колонки. */
+/* The countdown is no wider than its cells at their width limit (four in a
+   row, two in the 2×2 layout, or one); on a narrow screen it spans the
+   whole column. */
 .date__countdown {
   max-inline-size: calc(
     var(--countdown-cell-max) * var(--countdown-columns-used)
@@ -1763,9 +1799,10 @@ html.js.cover-bar-on {
   margin-block-start: var(--space-lg);
 }
 
-/* --- 6. Место ----------------------------------------------------------------
-   .grid: на десктопе описание и галерея стоят в две колонки. Если галереи
-   нет, описание занимает всю ширину (текст внутри ограничен .prose). */
+/* --- 6. Venue ----------------------------------------------------------------
+   .grid: on a desktop the description and the gallery sit in two columns.
+   Without a gallery the description takes the full width (the text inside
+   is limited by .prose). */
 .venue__layout > :only-child {
   grid-column: 1 / -1;
 }
@@ -1778,8 +1815,8 @@ html.js.cover-bar-on {
   color: var(--color-text-muted);
 }
 
-/* Кнопки карт — в ряд с переносом. Вертикальный шаг несут сами элементы, а
-   не список: если ссылок нет, пустой список не оставляет лишнего отступа. */
+/* Map buttons sit in a wrapping row. The items carry the vertical step, not
+   the list: without links an empty list leaves no extra gap. */
 .venue__maps {
   display: flex;
   flex-wrap: wrap;
@@ -1793,24 +1830,26 @@ html.js.cover-bar-on {
   margin-block-start: var(--flow-space);
 }
 
-/* Галерея стоит в одной из двух колонок — число её колонок своё. */
+/* The gallery sits in one of two columns, so it has its own column count. */
 .venue__gallery {
   --gallery-columns: var(--gallery-columns-venue);
 }
 
-/* Пока место не объявлено: короткая карточка шириной с текстовую колонку. */
+/* While the venue is not announced: a short card as wide as the text column. */
 .venue__pending {
   max-inline-size: var(--container-text);
 }
 
-/* --- 6. Программа дня --------------------------------------------------------
-   На десктопе заголовок и список стоят в две колонки (.grid). Внутри пункта
-   время и описание — тоже две колонки: ширину первой задаёт самая длинная
-   метка времени. Метка может занять всё, кроме --schedule-body-min для
-   описания, и в любом случае не меньше --schedule-time-max: в широком
-   списке длинная метка («15:30–16:45 (ориентировочно)») стоит в одну
-   строку, в узком — переносится, а не сжимает описание.
-   В узком контейнере и при крупном шрифте время встаёт над описанием. */
+/* --- 6. Day programme --------------------------------------------------------
+   On a desktop the heading and the list sit in two columns (.grid). Inside
+   an item the time and the description are two columns as well: the
+   longest time label sets the width of the first. The label may take
+   everything except --schedule-body-min for the description, and in any
+   case no less than --schedule-time-max: in a wide list a long label
+   ("15:30–16:45 (approximately)") stays on one line, in a narrow one it
+   wraps rather than squeezing the description.
+   In a narrow container and with a large font the time sits above the
+   description. */
 .schedule__title {
   margin-block-end: 0;
 }
@@ -1831,8 +1870,8 @@ html.js.cover-bar-on {
   align-items: baseline;
 }
 
-/* В списке метка времени переносится по словам, а в крайнем случае — в любом
-   месте: её минимальная ширина не распирает колонку. */
+/* In the list the time label wraps between words, and as a last resort
+   anywhere: its minimum width does not push the column wider. */
 .schedule__time {
   grid-column: 1;
   justify-self: start;
@@ -1851,8 +1890,8 @@ html.js.cover-bar-on {
   color: var(--color-text);
 }
 
-/* Где есть subgrid, колонка времени общая на весь список и пункты выровнены
-   между собой; без него каждый пункт выравнивается сам по себе. */
+/* Where subgrid exists, the time column is shared by the whole list and the
+   items align with each other; without it every item aligns on its own. */
 @supports (grid-template-columns: subgrid) {
   .schedule__list {
     grid-template-columns: fit-content(max(var(--schedule-time-max), 100% - var(--schedule-body-min))) minmax(0, 1fr);
@@ -1865,8 +1904,8 @@ html.js.cover-bar-on {
   }
 }
 
-/* Узкий список (он сам контейнер — элемент .grid): время над описанием, оба
-   во всю ширину пункта. Значение должно совпадать с
+/* A narrow list (it is a container itself — a .grid item): the time above
+   the description, both across the full item width. The value must match
    --schedule-inline-min = 18.5rem. */
 @container (max-width: 18.5rem) {
   .schedule__time,
@@ -1875,12 +1914,12 @@ html.js.cover-bar-on {
   }
 }
 
-/* --- 7. Для иногородних ------------------------------------------------------ */
+/* --- 7. Travel ---------------------------------------------------------------- */
 .travel__note {
   margin-block-start: var(--space-md);
 }
 
-/* --- 9. Подтверждение -------------------------------------------------------- */
+/* --- 9. RSVP ------------------------------------------------------------------ */
 .rsvp__inner {
   text-align: center;
 }
@@ -1893,19 +1932,20 @@ html.js.cover-bar-on {
   line-height: var(--line-height-heading);
 }
 
-/* --- Каркас секции из виджетов ---------------------------------------------
-   Секция: заголовок h2 (может быть скрыт визуально) и тело — виджеты подряд,
-   в конце приписка гостя. Ширина — .container--narrow | --wide (секция 4),
-   выравнивание — .section--start | --center. Шаг между виджетами задан
-   прямо детям тела, а не через --flow-space: переменная наследуется и
-   поменяла бы шаг абзацев внутри .prose. */
+/* --- Frame of a widget section ---------------------------------------------
+   A section: an h2 heading (may be visually hidden) and the body — widgets
+   one after another, with the guest's note at the end. The width is
+   .container--narrow | --wide (section 4), the alignment .section--start |
+   --center. The step between widgets is set on the body's children
+   directly, not through --flow-space: the variable is inherited and would
+   change the paragraph step inside .prose. */
 .section__body > * + * {
   margin-block-start: var(--space-lg);
 }
 
-/* Соседние вводные тексты читаются как один текст: между ними шаг абзаца,
-   а не шаг между виджетами. Только lead + lead: текст и подпись
-   (.text-widget--signature) остаются разнесены. */
+/* Neighbouring lead texts read as one text: a paragraph step between them,
+   not the widget step. Only lead + lead: a text and a signature
+   (.text-widget--signature) stay apart. */
 .section__body > .text-widget--lead + .text-widget--lead {
   margin-block-start: var(--flow-space);
 }
@@ -1920,20 +1960,22 @@ html.js.cover-bar-on {
   margin-inline: auto;
 }
 
-/* Приписка гостя не шире текстовой колонки и в широкой секции. */
+/* The guest's note is no wider than the text column, even in a wide
+   section. */
 .section__note {
   max-inline-size: var(--container-text);
 }
 
-/* --- Плитки медиа из фрагментов ----------------------------------------------
-   Плитка не знает, в какой раскладке стоит, поэтому размерник .gallery__sizer
-   (секция 5) есть в каждой; нужен он только одиночной плитке. В сетке и
-   ленте пропорцию задаёт сам элемент галереи — там размерник не выводится. */
+/* --- Media tiles from fragments ----------------------------------------------
+   A tile does not know which layout it sits in, so every tile has the sizer
+   .gallery__sizer (section 5); only a single tile needs it. In the grid and
+   the ribbon the gallery item sets the ratio itself — there the sizer is
+   not displayed. */
 .gallery:not(.gallery--single) .gallery__sizer {
   display: none;
 }
 
-/* --- Виджет: текст ------------------------------------------------------------ */
+/* --- Widget: text ------------------------------------------------------------- */
 .text-widget--lead {
   font-size: var(--text-md);
 }
@@ -1945,21 +1987,22 @@ html.js.cover-bar-on {
   line-height: var(--line-height-heading);
 }
 
-/* --- Виджет: программа -------------------------------------------------------
-   Список — сам контейнер: узкий список ставит время над описанием по своей
-   ширине (@container программы дня выше). */
+/* --- Widget: programme -------------------------------------------------------
+   The list is a container itself: a narrow list puts the time above the
+   description by its own width (the day programme's @container above). */
 .schedule-widget {
   container-type: inline-size;
 }
 
-/* --- Карточка места: компактная и отложенная ------------------------------ */
+/* --- Venue card: compact and pending -------------------------------------- */
 .location-card--compact {
   max-inline-size: var(--container-text);
 }
 
-/* --- Виджет: события (вид без скрипта) ---------------------------------------
-   Карточки идут подряд с зазором; первостепенная — в рамке акцентом. Вид
-   вкладок и пометок «прошло» / «идёт сейчас» — отдельный блок. */
+/* --- Widget: events (the look without the script) ----------------------------
+   The cards follow one another with a gap; the primary one has an accent
+   border. The tabs and the "past" / "happening now" marks are styled in a
+   block of their own. */
 .events__panel + .events__panel {
   margin-block-start: var(--space-lg);
 }
@@ -1977,8 +2020,8 @@ html.js.cover-bar-on {
   margin-block-start: var(--space-2xs);
 }
 
-/* Размеры следуют уровням заголовков: событие (h3) крупнее своего места
-   (h4) — в отдельном виджете место само h3 и остаётся крупным. */
+/* Sizes follow the heading levels: an event (h3) is larger than its venue
+   (h4) — in a widget of its own the venue is an h3 itself and stays large. */
 .events__title {
   margin-block-end: 0;
   font-size: var(--text-lg);
@@ -1996,13 +2039,13 @@ html.js.cover-bar-on {
   margin-block-start: var(--space-sm);
 }
 
-/* Приписка гостя внутри карточки события — светлая плашка без тени. */
+/* The guest's note inside an event card is a light panel without a shadow. */
 .events__note {
   background-color: var(--color-bg);
   box-shadow: none;
 }
 
-/* Программа в карточке — сама контейнер (как .schedule-widget). */
+/* The programme in a card is a container itself (like .schedule-widget). */
 .events__program {
   container-type: inline-size;
 }
@@ -2011,20 +2054,22 @@ html.js.cover-bar-on {
   margin-block-end: var(--space-sm);
 }
 
-/* --- Виджет: события ---------------------------------------------------------
-   Со скриптом (модуль events): список вкладок над карточками, видна одна
-   карточка. Скрытые атрибутом hidden карточки места не занимают, отступ до
-   видимой одинаков для любой из них. Рамка первостепенной карточки нужна
-   только списку без скрипта; со скриптом её заменяет выбор вкладки.
-   Своей анимации переключения у карточек нет, метки data-reveal в них не
-   ставятся.
+/* --- Widget: events ----------------------------------------------------------
+   With the script (the events module): a tab list above the cards, one card
+   visible. Cards hidden with the hidden attribute take no room, and the gap
+   to the visible one is the same for any of them. The primary card's
+   border is needed only by the list without the script; with the script
+   the tab selection replaces it.
+   The cards have no switching animation of their own and carry no
+   data-reveal marks.
 
-   Вкладки — приём «переключатель»: все стоят в ряд, если помещаются при
-   ширине --events-tab-min, иначе все столбиком (без «хвоста» из одной
-   вкладки во втором ряду). Порог — число вкладок × --events-tab-min плюс
-   зазоры; число вкладок скрипт кладёт в --events-count через CSSOM (в
-   разметке атрибута style нет). Порогов @media и @container нет.
-   В вкладке — название, время и пометки «прошло» / «идёт сейчас». */
+   The tabs use the "switcher" technique: all sit in a row if they fit at
+   --events-tab-min each, otherwise all stack (no "tail" of a single tab in
+   the second row). The threshold is the tab count × --events-tab-min plus
+   the gaps; the script puts the tab count into --events-count through
+   CSSOM (the markup has no style attribute). No @media or @container
+   thresholds.
+   A tab holds the title, the time and the "past" / "happening now" marks. */
 .events__tabs {
   --events-row-min: calc(
     var(--events-tab-min) * var(--events-count, 1)
@@ -2100,24 +2145,26 @@ html.js.cover-bar-on {
   background-color: var(--color-surface-sunken);
 }
 
-/* Кольцо фокуса — общее (секция 3); выбранная вкладка под ним остаётся
-   различимой по рамке и полосе снизу. */
+/* The focus ring is the shared one (section 3); under it the selected tab
+   stays recognisable by its border and the bottom stripe. */
 .events__tab:focus-visible,
 .events__tab.is-focus {
   border-color: var(--color-accent);
 }
 
-/* Событие прошло: название и время приглушены, пометка «прошло» видна. */
+/* A past event: the title and the time are muted, the "past" mark shows. */
 .events__tab.is-past .events__tab-title {
   color: var(--color-text-muted);
 }
 
-/* Событие идёт: время в полный цвет рядом с пометкой «идёт сейчас». */
+/* An event in progress: the time in full colour next to the "happening now"
+   mark. */
 .events__tab.is-now .events__tab-time {
   color: var(--color-text);
 }
 
-/* Печать: вместо вкладок — все карточки подряд, как без скрипта. */
+/* Print: all the cards one after another instead of the tabs, as without
+   the script. */
 @media print {
   .events__tabs {
     display: none;
@@ -2136,30 +2183,34 @@ html.js.cover-bar-on {
 /* =============================================================================
    7. Motion & reveal
    -----------------------------------------------------------------------------
-   Появление блоков при прокрутке ([data-reveal]) и анимация обложки.
-   Скрытые начальные состояния — только под html.js: без скрипта всё видно сразу.
-   Токены движения уже есть в секции 1 и обнулены под prefers-reduced-motion.
+   Block reveal on scroll ([data-reveal]) and the cover animation.
+   Hidden initial states apply only under html.js: without the script
+   everything is visible at once. The motion tokens live in section 1 and
+   are zeroed under prefers-reduced-motion.
 
-   Оба эффекта включает скрипт — классом-маркером на <html>, который ставится
-   только после успешного запуска соответствующего модуля:
-     html.js.reveal-on      — действует скрытое состояние блоков;
-     html.js.cover-animate  — проигрывается анимация обложки.
-   Меняются только opacity и transform (сдвиг по вертикали): раскладка не
-   «прыгает», горизонтальная прокрутка не появляется.
+   The script switches both effects on with a marker class on <html>, set
+   only after the matching module has started successfully:
+     html.js.reveal-on      — the hidden state of blocks applies;
+     html.js.cover-animate  — the cover animation plays.
+   Only opacity and transform (a vertical shift) change: the layout does not
+   jump and no horizontal scroll appears.
    ========================================================================== */
 
-/* --- Появление блоков -------------------------------------------------------
-   --reveal-index — место блока в группе появившихся одновременно; выставляет
-   скрипт, задержка каскада = индекс × --reveal-stagger.
-   Переход и задержка действуют только на время появления — от is-revealed
-   до is-settled (скрипт ставит его и снимает --reveal-index):
-   - скрытие при установке маркера происходит без перехода;
-   - после появления собственные переходы элемента — hover карточки, лента
-     галереи — работают без чужой задержки.
-   Прозрачность набирается плавно с самого начала (--ease-in-out), иначе
-   крупный блок «вспыхивает» за несколько кадров; сдвиг идёт с торможением
-   (--ease-out). Блок, показанный без перехода (уже был на экране, остался
-   выше экрана, получил фокус с клавиатуры), получает is-settled сразу. */
+/* --- Block reveal -----------------------------------------------------------
+   --reveal-index is the block's place in the group revealed at the same
+   time; the script sets it, and the cascade delay = index ×
+   --reveal-stagger.
+   The transition and the delay apply only while a block is revealed — from
+   is-revealed to is-settled (the script sets it and removes
+   --reveal-index):
+   - hiding when the marker is set happens without a transition;
+   - after the reveal the element's own transitions — a card's hover, the
+     gallery ribbon — run without someone else's delay.
+   Opacity builds up smoothly from the very start (--ease-in-out), otherwise
+   a large block "flashes" within a few frames; the shift decelerates
+   (--ease-out). A block shown without a transition (it was on screen
+   already, stayed above the screen, got keyboard focus) gets is-settled at
+   once. */
 html.js.reveal-on [data-reveal].is-revealed:not(.is-settled) {
   transition:
     opacity var(--duration-slow) var(--ease-in-out),
@@ -2172,12 +2223,12 @@ html.js.reveal-on [data-reveal]:not(.is-revealed) {
   transform: translateY(var(--reveal-distance));
 }
 
-/* --- Обложка ------------------------------------------------------------ */
-/* Кадра to нет: анимация приходит к собственным значениям элемента и после
-   окончания ничего не удерживает (fill-mode backwards — только скрытое
-   состояние на время задержки), так что opacity и transform детей обложки
-   остаются свободными для других правил.
-   --cover-index — порядковый номер строки обложки в каскаде. */
+/* --- Cover -------------------------------------------------------------- */
+/* There is no `to` keyframe: the animation arrives at the element's own
+   values and holds nothing after it ends (fill-mode backwards — only the
+   hidden state during the delay), so the opacity and transform of the
+   cover's children stay free for other rules.
+   --cover-index is the cover line's position in the cascade. */
 @keyframes cover-in {
   from {
     opacity: 0;
@@ -2194,33 +2245,37 @@ html.js.cover-animate .cover__inner > :nth-child(2) { --cover-index: 1; }
 html.js.cover-animate .cover__inner > :nth-child(3) { --cover-index: 2; }
 html.js.cover-animate .cover__inner > :nth-child(4) { --cover-index: 3; }
 
-/* --- Сворачивание обложки в верхнюю панель ---------------------------------
-   Прогресс сворачивания: 0 — обложка на месте, 1 — от неё осталась полоса
-   высотой панели. По нему вуаль фото на обложке сгущается до полной,
-   содержимое обложки гаснет к доле --cover-fade-end, панель проявляется
-   начиная с доли --cover-bar-fade-start. Меняется только opacity, раскладка
-   стоит на месте.
-   Прогресс задаёт один из двух «приводов» с одинаковым результатом:
-     - CSS — там, где есть временные шкалы прокрутки: три анимации opacity
-       прямо по шкале обложки (view-timeline; панели, соседке обложки, шкала
-       видна через timeline-scope). Каждая идёт на своём отрезке шкалы, а не
-       через общее наследуемое свойство — так браузеру не нужно каждый кадр
-       пересчитывать стили всего поддерева обложки;
-     - скрипт (модуль coverBar) — там, где таких шкал нет: считает прогресс по
-       положению обложки раз в кадр и пишет --cover-progress через CSSOM на
-       обложку и панель (не на <html>: иначе каждый кадр пересчитывались бы
-       стили всей страницы); его читают три правила ниже.
-   Всё — под маркером cover-bar-on: его ставит модуль coverBar, без скрипта
-   обложка неподвижна, панели нет. Анимация cover-in (дети .cover__inner) и
-   гашение самого .cover__inner перемножаются и не спорят. */
+/* --- Collapsing the cover into the top bar ---------------------------------
+   The collapse progress: 0 — the cover is in place, 1 — what is left of it
+   is a strip as tall as the bar. With it the photo veil on the cover
+   thickens to solid, the cover content fades out by the --cover-fade-end
+   share, and the bar fades in from the --cover-bar-fade-start share. Only
+   opacity changes; the layout stays put.
+   One of two "drivers" sets the progress, with the same result:
+     - CSS — where scroll timelines exist: three opacity animations run
+       right on the cover's timeline (view-timeline; the bar, the cover's
+       sibling, sees the timeline through timeline-scope). Each runs on its
+       own range of the timeline rather than through a shared inherited
+       property — so the browser does not restyle the whole cover subtree
+       every frame;
+     - the script (the coverBar module) — where there are no such
+       timelines: it computes the progress from the cover position once a
+       frame and writes --cover-progress through CSSOM on the cover and the
+       bar (not on <html>: that would restyle the whole page every frame);
+       the three rules below read it.
+   Everything is under the cover-bar-on marker: the coverBar module sets it;
+   without the script the cover stays still and there is no bar. The
+   cover-in animation (the children of .cover__inner) and the fade-out of
+   .cover__inner itself multiply and do not conflict. */
 @property --cover-progress {
   syntax: "<number>";
   inherits: true;
   initial-value: 0;
 }
 
-/* Привод «скрипт»: прозрачность из --cover-progress. На пути CSS свойство
-   остаётся 0, а значения задают анимации ниже (анимация сильнее правила). */
+/* The script driver: opacity from --cover-progress. On the CSS path the
+   property stays 0 and the animations below set the values (an animation
+   beats a rule). */
 html.js.cover-bar-on .cover__backdrop::after {
   opacity: calc(var(--cover-veil-opacity) + (1 - var(--cover-veil-opacity)) * var(--cover-progress));
 }
@@ -2248,18 +2303,22 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
   to { opacity: 1; }
 }
 
-/* Привод CSS. Весь ход — от «верх обложки у верха окна» до «от обложки
-   осталась полоса высотой панели» (--cover-span): exit-crossing меряет высоту
-   самой обложки, а не окна, поэтому верен и для обложки выше окна (ландшафт,
-   крупный шрифт). Доли хореографии — отрезки этого хода.
-   То же условие @supports повторено в модуле coverBar: он выбирает привод. */
+/* The CSS driver. The full travel runs from "the cover top at the viewport
+   top" to "what is left of the cover is a strip as tall as the bar"
+   (--cover-span): exit-crossing measures the height of the cover itself,
+   not of the viewport, so it holds for a cover taller than the viewport
+   too (landscape, a large font). The choreography shares are ranges of
+   this travel.
+   The coverBar module repeats the same @supports condition: it picks the
+   driver. */
 @supports (animation-timeline: --a) and (timeline-scope: --a) {
   html.js.cover-bar-on .page {
     timeline-scope: --cover;
   }
 
-  /* Вставка 0 обязательна: по умолчанию шкала сужает окно на scroll-padding,
-     то есть на высоту панели, и прогресс сдвигался бы на неё. */
+  /* The 0 inset is required: by default the timeline narrows the viewport by
+     the scroll-padding, that is by the bar height, and the progress would
+     shift by it. */
   html.js.cover-bar-on .cover {
     view-timeline-name: --cover;
     view-timeline-inset: 0;
@@ -2290,7 +2349,7 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
   }
 }
 
-/* --- Страховки: сокращённое движение и печать — всё видно сразу ----------- */
+/* --- Safety nets: reduced motion and print show everything at once -------- */
 @media (prefers-reduced-motion: reduce) {
   html.js.reveal-on [data-reveal],
   html.js.reveal-on [data-reveal]:not(.is-revealed) {
@@ -2303,9 +2362,10 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
     animation: none;
   }
 
-  /* Сворачивание — ступенькой: фото и текст обложки от прокрутки не меняются,
-     панель появляется сразу, когда обложка ушла. Все три анимации — на весь
-     ход, со ступенькой в конце (в скрипте — прогресс 0 или 1). */
+  /* The collapse is a single step: the cover photo and text do not change
+     with scrolling, and the bar appears at once when the cover is gone. All
+     three animations span the full travel with a step at the end (in the
+     script, the progress is 0 or 1). */
   html.js.cover-bar-on .cover__backdrop::after,
   html.js.cover-bar-on .cover__inner,
   html.js.cover-bar-on .cover-bar[data-cover-bar] {
@@ -2326,7 +2386,8 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
     animation: none;
   }
 
-  /* Печать с середины страницы: обложка — как без скрипта, не свёрнутая. */
+  /* Printing from the middle of the page: the cover prints as without the
+     script, not collapsed. */
   html.js.cover-bar-on .cover__backdrop::after,
   html.js.cover-bar-on .cover__inner,
   html.js.cover-bar-on .cover-bar[data-cover-bar] {
@@ -2342,26 +2403,27 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
 /* =============================================================================
    8. Gallery & lightbox
    -----------------------------------------------------------------------------
-   Лента со scroll-snap на мобильном, сетка на десктопе, лайтбокс — окно
-   просмотра фото и видео ([data-gallery], [data-lightbox], [data-media]).
+   A scroll-snap ribbon on mobile, a grid on desktop, and the lightbox — the
+   photo and video viewer ([data-gallery], [data-lightbox], [data-media]).
 
-   Лайтбокс — <dialog>, который скрипт создаёт прямым потомком <body> и
-   открывает через showModal(): окно живёт в верхнем слое браузера и не
-   зависит ни от z-index, ни от container-type/transform предков (в старых
-   движках элемент с container-type становится containing block для
-   fixed-потомков — оверлей внутри него растянулся бы на контейнер, а не на
-   окно).
+   The lightbox is a <dialog> that the script creates as a direct child of
+   <body> and opens with showModal(): the dialog lives in the browser's top
+   layer and depends on neither z-index nor the container-type/transform of
+   its ancestors (in older engines an element with container-type becomes
+   the containing block of fixed descendants — an overlay inside it would
+   stretch over the container, not the viewport).
    ========================================================================== */
 
-/* --- Лента -------------------------------------------------------------------
-   .gallery--ribbon: до границы раскладки — горизонтальная лента, от неё —
-   обычная сетка .gallery (секция 5). Лента — чистый CSS, но включается только
-   под html.js: без скрипта галерея остаётся сеткой, где все фотографии видны
-   сразу, а ссылки открывают файлы. Прокручивается только сама лента: у
-   страницы горизонтальной прокрутки нет. Фокус с клавиатуры прокручивает
-   ленту; частично видимый элемент доводит до края скрипт галереи (браузер
-   его не трогает). Кольцо фокуса — внутри рамки (секция 5).
-   Значение порога должно совпадать с --bp-layout = 48em. */
+/* --- Ribbon ------------------------------------------------------------------
+   .gallery--ribbon: below the layout breakpoint a horizontal ribbon, from
+   it on the plain .gallery grid (section 5). The ribbon is pure CSS but
+   switches on only under html.js: without the script the gallery stays a
+   grid where all the photos are visible at once and the links open the
+   files. Only the ribbon itself scrolls: the page has no horizontal
+   scroll. Keyboard focus scrolls the ribbon; the gallery script brings a
+   partly visible item to the edge (the browser leaves it). The focus ring
+   is inside the frame (section 5).
+   The threshold value must match --bp-layout = 48em. */
 @media not all and (min-width: 48em) {
   html.js .gallery--ribbon {
     display: flex;
@@ -2370,8 +2432,8 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
     scroll-snap-type: inline mandatory;
   }
 
-  /* Элемент не выше --media-max-height (ландшафтная ориентация телефона):
-     как и у .media, ограничивается ширина — высота × пропорция. */
+  /* An item is no taller than --media-max-height (a phone in landscape): as
+     with .media, the width is limited — height × ratio. */
   html.js .gallery--ribbon > * {
     --gallery-ribbon-item-used: var(--gallery-ribbon-item-size);
     flex: none;
@@ -2382,17 +2444,16 @@ html.js.cover-bar-on .cover-bar[data-cover-bar] {
     scroll-snap-align: start;
   }
 
-  /* Единственной фотографии подсказка прокрутки не нужна. */
+  /* A single photo needs no scroll hint. */
   html.js .gallery--ribbon > :only-child {
     --gallery-ribbon-item-used: 100%;
   }
 }
 
-/* --- Лайтбокс: страница под окном ---------------------------------------------
-   Прокрутка фона заблокирована; место исчезнувшей полосы прокрутки занимает
-   отступ (--lightbox-scroll-gap выставляет скрипт). Там, где страницу
-   приглашения прокручивает body (сенсорный экран), его блокирует правило
-   секции 3. */
+/* --- Lightbox: the page under the dialog --------------------------------------
+   The background scroll is locked; padding takes the place of the vanished
+   scrollbar (the script sets --lightbox-scroll-gap). Where body scrolls the
+   invitation page (a touch screen), the rule of section 3 locks it. */
 html.is-lightbox-open {
   overflow: hidden;
 }
@@ -2401,13 +2462,15 @@ html.is-lightbox-open body {
   padding-inline-end: var(--lightbox-scroll-gap);
 }
 
-/* --- Лайтбокс: окно -------------------------------------------------------------
-   Окно занимает весь экран и само несёт цвет подложки: ::backdrop в движках
-   прошлых лет не наследует переменные :root и остался бы прозрачным. Клик по
-   свободному месту окна закрывает его. Цвета текста и фокуса — контекст
-   .on-overlay (секция 5).
-   Жесты: прокрутки внутри окна нет, листание — скриптом; щипок браузера
-   разрешён, а пока страница увеличена (is-zoomed) — и сдвиг. */
+/* --- Lightbox: the dialog -------------------------------------------------------
+   The dialog fills the whole screen and carries the backdrop colour itself:
+   ::backdrop in older engines does not inherit the :root variables and
+   would stay transparent. A click on an empty area of the dialog closes
+   it. The text and focus colours come from the .on-overlay context
+   (section 5).
+   Gestures: no scrolling inside the dialog, the script handles swiping;
+   the browser's pinch zoom is allowed, and while the page is zoomed
+   (is-zoomed) so is panning. */
 .lightbox {
   position: fixed;
   inset: 0;
@@ -2465,9 +2528,9 @@ html.is-lightbox-open body {
   white-space: nowrap;
 }
 
-/* Сцена: одна ячейка, в которую изображение вписывается целиком (размеры
-   ячейки заданы окном, поэтому проценты max-* у изображения определены).
-   Стрелки лежат поверх сцены по её краям, по центру высоты. */
+/* The stage: one cell that the image fits into whole (the dialog sets the
+   cell size, so the image's max-* percentages resolve). The arrows lie
+   over the stage at its edges, centred vertically. */
 .lightbox__stage {
   position: relative;
   display: grid;
@@ -2490,8 +2553,9 @@ html.is-lightbox-open body {
   user-select: none;
 }
 
-/* Пока файл грузится, прежнее изображение не показывается (и исчезает без
-   перехода); не загрузился — вместо значка «битой картинки» сообщение. */
+/* While a file loads, the previous image is not shown (and vanishes without
+   a transition); if it fails to load, a message replaces the broken image
+   icon. */
 .lightbox.is-loading .lightbox__image {
   opacity: 0;
   transition: none;
@@ -2528,7 +2592,7 @@ html.is-lightbox-open body {
   transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-/* «Закрыть» остаётся справа и тогда, когда счётчик скрыт. */
+/* The close button stays on the right even when the counter is hidden. */
 .lightbox__button--close {
   margin-inline-start: auto;
 }
@@ -2571,23 +2635,26 @@ html.is-lightbox-open body {
   background-color: var(--color-overlay-control-hover);
 }
 
-/* На краях галереи стрелка выключена через aria-disabled, а не disabled:
-   кнопка не теряет фокус, клавиатура в окне продолжает работать. */
+/* At the ends of the gallery an arrow is disabled with aria-disabled, not
+   disabled: the button keeps focus and the keyboard keeps working in the
+   dialog. */
 .lightbox__button[aria-disabled="true"] {
   opacity: var(--opacity-disabled);
   cursor: default;
 }
 
-/* --- Лайтбокс: ролик ----------------------------------------------------------
-   В окне один <video controls> — его создаёт скрипт; панель управления —
-   нативная панель браузера, своих стилей у неё нет. .is-video на окне
-   показывает ролик вместо изображения; .is-error — сообщение вместо кадра.
+/* --- Lightbox: video ----------------------------------------------------------
+   The dialog holds one <video controls>, created by the script; the
+   controls are the browser's native panel, with no styles of their own.
+   .is-video on the dialog shows the video instead of the image; .is-error
+   shows a message instead of the frame.
 
-   Кадр вписан в сцену целиком в пропорции ролика: --lightbox-ratio («w / h»
-   с плитки) ставит скрипт, без неё — --ratio-video. Сцена — контейнер
-   размера, поэтому ширина кадра = min(ширина сцены, высота сцены ×
-   пропорция). Движок без единиц контейнера растягивает <video> на всю сцену,
-   и ролик вписывается в неё сам (полосы по краям). */
+   The frame fits the stage whole at the video's ratio: the script sets
+   --lightbox-ratio ("w / h" from the tile), and without it --ratio-video
+   applies. The stage is a size container, so the frame width =
+   min(stage width, stage height × ratio). An engine without container
+   units stretches the <video> over the whole stage, and the video fits
+   itself into it (bars at the edges). */
 .lightbox__stage {
   container-type: size;
 }
@@ -2610,7 +2677,7 @@ html.is-lightbox-open body {
   }
 }
 
-/* Кольцо фокуса — в контексте .on-overlay, как у кнопок окна. */
+/* The focus ring is in the .on-overlay context, like the dialog's buttons. */
 .lightbox__video:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: var(--focus-ring-offset);
@@ -2622,8 +2689,8 @@ html.is-lightbox-open body {
   display: none;
 }
 
-/* Сокращённое движение: длительности уже обнулены токенами; здесь анимация
-   открытия и переход изображения сняты явно. */
+/* Reduced motion: the tokens already zero the durations; here the opening
+   animation and the image transition are removed explicitly. */
 @media (prefers-reduced-motion: reduce) {
   .lightbox[open] {
     animation: none;
@@ -2634,9 +2701,10 @@ html.is-lightbox-open body {
   }
 }
 
-/* Печать: на бумагу идёт приглашение, а не открытая поверх него фотография.
-   Окно скрывается целиком, странице возвращаются прокрутка и отступ на месте
-   полосы прокрутки — иначе печать с открытым лайтбоксом дала бы лист с фото. */
+/* Print: the invitation goes on paper, not the photo open over it. The
+   dialog is hidden entirely, and the page gets back its scroll and drops
+   the padding in place of the scrollbar — otherwise printing with the
+   lightbox open would give a sheet with the photo. */
 @media print {
   .lightbox[open] {
     display: none;
