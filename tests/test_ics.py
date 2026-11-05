@@ -79,8 +79,8 @@ class CalendarFileTests(unittest.TestCase):
         self.assertEqual(properties(changed.content)["UID"], dinner()["UID"])
         # the notes and the greetings of the invitations change nothing
         invitations = invitations_data()
-        invitations[1]["events"]["dinner"]["note"] = "Другая приписка."
-        invitations[0]["greeting"] = "Привет!"
+        invitations[1]["events"]["dinner"]["note"] = "Another note."
+        invitations[0]["greeting"] = "Hello!"
         self.assertEqual(support.fixture_calendars(invitations=invitations), found)
 
     def test_the_name_depends_on_every_token(self):
@@ -96,7 +96,7 @@ class CalendarFileTests(unittest.TestCase):
                 self.assertNotEqual(other["dinner"].name, found["dinner"].name)
         # a new invitation renames every file, the contents stay
         invitations = invitations_data()
-        invitations.append({"token": "NewGuestToken-0123456789", "greeting": "Привет!", "form": "ty"})
+        invitations.append({"token": "NewGuestToken-0123456789", "greeting": "Hello!", "form": "ty"})
         other = support.fixture_calendars(invitations=invitations)
         for event_id in found:
             self.assertEqual(other[event_id].content, found[event_id].content)
@@ -223,17 +223,17 @@ class CalendarFileTests(unittest.TestCase):
 
     def test_summary_is_the_couple_and_the_title_of_the_event(self):
         self.assertEqual(build.ICS_SUMMARY_SEPARATOR, " · ")
-        self.assertEqual(dinner()["SUMMARY"], "Алиса и Боб · Праздничный ужин")
+        self.assertEqual(dinner()["SUMMARY"], "Alice and Bob · Wedding dinner")
         self.assertEqual(
             properties(calendars()["brunch"])["SUMMARY"],
-            f"Алиса и Боб · {support.HIDDEN_EVENT_TITLE}",
+            f"Alice and Bob · {support.HIDDEN_EVENT_TITLE}",
         )
         # the names come from the site, whoever sees the event
-        site = site_data(coupleNames="Ева и Дан")
-        self.assertEqual(dinner(site)["SUMMARY"], "Ева и Дан · Праздничный ужин")
+        site = site_data(coupleNames="Eve and Dan")
+        self.assertEqual(dinner(site)["SUMMARY"], "Eve and Dan · Wedding dinner")
         # the separator is the constant, and only it
         with unittest.mock.patch.object(build, "ICS_SUMMARY_SEPARATOR", ". "):
-            self.assertEqual(dinner()["SUMMARY"], "Алиса и Боб. Праздничный ужин")
+            self.assertEqual(dinner()["SUMMARY"], "Alice and Bob. Wedding dinner")
 
     def test_summary_names_the_couple_but_no_guest(self):
         for invitations in (invitations_data(), invitations_data()[1:]):
@@ -254,7 +254,7 @@ class CalendarFileTests(unittest.TestCase):
 
     def test_new_names_rename_the_file_and_keep_the_uid(self):
         found = support.fixture_calendars()
-        renamed = support.fixture_calendars(site_data(coupleNames="Ева и Дан"))
+        renamed = support.fixture_calendars(site_data(coupleNames="Eve and Dan"))
         for event_id in found:
             with self.subTest(event=event_id):
                 self.assertNotEqual(renamed[event_id].content, found[event_id].content)
@@ -276,7 +276,8 @@ class CalendarFileTests(unittest.TestCase):
 
     def test_location_only_when_the_place_is_announced(self):
         self.assertEqual(
-            dinner()["LOCATION"], "Усадьба в Энске\\, Энск\\, Вымышленная улица\\, 1"
+            dinner()["LOCATION"],
+            "The manor in Exampleton\\, 1 Fictional Street\\, Exampleton\\, Fictional County",
         )
         site = site_data()
         site["locations"]["manor"] = {"ready": False}
@@ -284,7 +285,7 @@ class CalendarFileTests(unittest.TestCase):
         site["sections"] = [section for section in site["sections"] if section["id"] != "video"]
         payload = calendars(site)["dinner"]
         self.assertNotIn("LOCATION", properties(payload))
-        self.assertNotIn("Энск", payload.decode("utf-8"))
+        self.assertNotIn("Exampleton", payload.decode("utf-8"))
 
     def test_sequence_grows_when_the_location_is_announced(self):
         # importing the file again then updates an event saved without a place
@@ -299,7 +300,7 @@ class CalendarFileTests(unittest.TestCase):
     def test_location_without_an_address(self):
         site = site_data()
         del site["locations"]["manor"]["address"]
-        self.assertEqual(dinner(site)["LOCATION"], "Усадьба в Энске")
+        self.assertEqual(dinner(site)["LOCATION"], "The manor in Exampleton")
 
     def test_text_escaping(self):
         self.assertEqual(
@@ -307,18 +308,19 @@ class CalendarFileTests(unittest.TestCase):
         )
         self.assertEqual(build.ics_escape("tab\tand\x00bell\x07"), "tab\tand bell ")
         site = site_data()
-        site["locations"]["manor"]["name"] = "Зал; второй, этаж"
-        site["locations"]["manor"]["address"] = "Энск, вход со двора \\ арка"
-        site["events"]["dinner"]["title"] = "Ужин; танцы, салют"
+        site["locations"]["manor"]["name"] = "Hall; second, floor"
+        site["locations"]["manor"]["address"] = "Exampleton, entrance from the yard \\ arch"
+        site["events"]["dinner"]["title"] = "Dinner; dancing, fireworks"
         found = dinner(site)
         self.assertEqual(
-            found["LOCATION"], "Зал\\; второй\\, этаж\\, Энск\\, вход со двора \\\\ арка"
+            found["LOCATION"],
+            "Hall\\; second\\, floor\\, Exampleton\\, entrance from the yard \\\\ arch",
         )
-        self.assertEqual(found["SUMMARY"], "Алиса и Боб · Ужин\\; танцы\\, салют")
+        self.assertEqual(found["SUMMARY"], "Alice and Bob · Dinner\\; dancing\\, fireworks")
         # the names are escaped the same way
-        site = site_data(coupleNames="Алиса, Боб; и \\ друзья")
-        site["events"]["dinner"]["title"] = "Ужин"
-        self.assertEqual(dinner(site)["SUMMARY"], "Алиса\\, Боб\\; и \\\\ друзья · Ужин")
+        site = site_data(coupleNames="Alice, Bob; and \\ friends")
+        site["events"]["dinner"]["title"] = "Dinner"
+        self.assertEqual(dinner(site)["SUMMARY"], "Alice\\, Bob\\; and \\\\ friends · Dinner")
 
     def test_uid_is_stable_and_not_personal(self):
         first = dinner()["UID"]
@@ -338,8 +340,8 @@ class CalendarFileTests(unittest.TestCase):
         self.assertNotEqual(first, properties(calendars()["brunch"])["UID"])
         # nothing else takes part: names, titles and ends may change without a
         # new entry
-        site = site_data(coupleNames="Кто-то ещё")
-        site["events"]["dinner"]["title"] = "Ужин"
+        site = site_data(coupleNames="Somebody else")
+        site["events"]["dinner"]["title"] = "Dinner"
         site["events"]["dinner"]["end"] = "2030-06-01T20:00:00+03:00"
         self.assertEqual(first, dinner(site)["UID"])
 
@@ -372,10 +374,10 @@ class FoldingTests(unittest.TestCase):
         self.assertEqual(len(physical[0]), 75)
         self.assertEqual(len(physical[1]), 75)  # the leading space is counted
 
-    def test_cyrillic_is_folded_on_character_boundaries(self):
+    def test_two_octet_letters_are_folded_on_character_boundaries(self):
         # two octets per letter and an odd offset: a naive split at octet 75
         # would cut a letter in half
-        physical = self.assertFolded("LOCATION:" + "Ж" * 120)
+        physical = self.assertFolded("LOCATION:" + "ž" * 120)
         self.assertGreater(len(physical), 3)
         self.assertEqual(len(physical[0]), 75)  # 9 + 33 * 2
         self.assertEqual(len(physical[1]), 75)  # 1 + 37 * 2
@@ -383,13 +385,13 @@ class FoldingTests(unittest.TestCase):
     def test_wide_characters(self):
         self.assertFolded("LOCATION:" + "语" * 60 + "🎉" * 40 + "é" * 50)
 
-    def test_long_cyrillic_location_in_the_file(self):
+    def test_long_location_with_accents_in_the_file(self):
         site = site_data()
         site["locations"]["manor"]["name"] = (
-            "Очень длинное название вымышленной усадьбы на берегу пруда"
+            "Château Exemplaire, a very long name of a fictional manor by the pond"
         )
         site["locations"]["manor"]["address"] = (
-            "Вымышленная область, Энский район, посёлок Примерный, улица Образцовая, 1"
+            "Région Fictive, Exampleton district, Village Échantillon, Rue Modèle, 1"
         )
         payload = calendars(site)["dinner"]
         for chunk in payload.split(b"\r\n"):
@@ -398,16 +400,16 @@ class FoldingTests(unittest.TestCase):
         self.assertRegex(payload.decode("utf-8"), re.compile(r"\r\n [^\r]", re.S))
         self.assertEqual(
             properties(payload)["LOCATION"],
-            "Очень длинное название вымышленной усадьбы на берегу пруда\\, "
-            "Вымышленная область\\, Энский район\\, посёлок Примерный\\, "
-            "улица Образцовая\\, 1",
+            "Château Exemplaire\\, a very long name of a fictional manor by the pond\\, "
+            "Région Fictive\\, Exampleton district\\, Village Échantillon\\, "
+            "Rue Modèle\\, 1",
         )
 
     def test_long_summary_in_the_file(self):
         # the names and the title together pass 75 octets: the line is folded
         # on character boundaries, the separator included
-        site = site_data(coupleNames="Александра Вымышленная, и Бенедикт Примерный")
-        site["events"]["dinner"]["title"] = "Праздничный ужин; танцы до утра"
+        site = site_data(coupleNames="Alexandra Fictional, and Benedict Example")
+        site["events"]["dinner"]["title"] = "Wedding dinner; dancing till dawn"
         payload = calendars(site)["dinner"]
         physical = payload.split(b"\r\n")
         start = next(i for i, line in enumerate(physical) if line.startswith(b"SUMMARY:"))
@@ -417,8 +419,8 @@ class FoldingTests(unittest.TestCase):
             chunk.decode("utf-8")
         self.assertEqual(
             properties(payload)["SUMMARY"],
-            "Александра Вымышленная\\, и Бенедикт Примерный · "
-            "Праздничный ужин\\; танцы до утра",
+            "Alexandra Fictional\\, and Benedict Example · "
+            "Wedding dinner\\; dancing till dawn",
         )
 
 
@@ -437,9 +439,9 @@ class SingleEventCalendarTests(unittest.TestCase):
         "DTSTART:20300601T130000Z\r\n"
         "DTEND:20300601T190000Z\r\n"
         "SEQUENCE:1\r\n"
-        "SUMMARY:Алиса и Боб · Праздничный ужин\r\n"
-        "LOCATION:Усадьба в Энске\\, Энск\\, Вымышленная \r\n"
-        " улица\\, 1\r\n"
+        "SUMMARY:Alice and Bob · Wedding dinner\r\n"
+        "LOCATION:The manor in Exampleton\\, 1 Fictional Street\\, Exampleton\\, Fictio\r\n"
+        " nal County\r\n"
         "END:VEVENT\r\n"
         "END:VCALENDAR\r\n"
     )
@@ -449,7 +451,7 @@ class SingleEventCalendarTests(unittest.TestCase):
             "uid": "0123456789abcdef",
             "start": build.parse_date_iso("2030-06-15T16:00+03:00"),
             "end": build.parse_date_iso("2030-06-15T23:30+03:00"),
-            "summary": "Праздничный ужин",
+            "summary": "Wedding dinner",
             "location": "",
         }
         arguments.update(overrides)
@@ -467,7 +469,7 @@ class SingleEventCalendarTests(unittest.TestCase):
                 uid=uid,
                 start=build.parse_date_iso("2030-06-01T16:00:00+03:00"),
                 end=build.parse_date_iso("2030-06-01T22:00:00+03:00"),
-                summary=f"{support.COUPLE_NAMES} · Праздничный ужин",
+                summary=f"{support.COUPLE_NAMES} · Wedding dinner",
                 location=f"{support.PLACE_NAME}, {support.PLACE_ADDRESS}",
             ),
             expected,
@@ -479,7 +481,11 @@ class SingleEventCalendarTests(unittest.TestCase):
         pending = (
             expected.decode("utf-8")
             .replace("SEQUENCE:1", "SEQUENCE:0")
-            .replace("LOCATION:Усадьба в Энске\\, Энск\\, Вымышленная \r\n улица\\, 1\r\n", "")
+            .replace(
+                "LOCATION:The manor in Exampleton\\, 1 Fictional Street\\, Exampleton\\, Fictio\r\n"
+                " nal County\r\n",
+                "",
+            )
         )
         self.assertEqual(calendars(site)["dinner"], pending.encode("utf-8"))
 
@@ -509,14 +515,14 @@ class SingleEventCalendarTests(unittest.TestCase):
         self.assertEqual(found["DTSTART"], "20300615T130000Z")
         # the end comes from the argument, not from the default duration
         self.assertEqual(found["DTEND"], "20300615T203000Z")
-        self.assertEqual(found["SUMMARY"], "Праздничный ужин")
+        self.assertEqual(found["SUMMARY"], "Wedding dinner")
         found = properties(self.event_ics(end=build.parse_date_iso("2030-06-16T02:00+05:00")))
         self.assertEqual(found["DTEND"], "20300615T210000Z")
 
     def test_summary_is_escaped_and_folded(self):
-        found = properties(self.event_ics(summary="Ужин; танцы, салют \\ фейерверк"))
-        self.assertEqual(found["SUMMARY"], "Ужин\\; танцы\\, салют \\\\ фейерверк")
-        summary = "Очень длинное название вымышленного праздничного вечера на берегу пруда"
+        found = properties(self.event_ics(summary="Dinner; dancing, fireworks \\ display"))
+        self.assertEqual(found["SUMMARY"], "Dinner\\; dancing\\, fireworks \\\\ display")
+        summary = "A very long name of a fictional wedding evening by the pond with dancing"
         payload = self.event_ics(summary=summary)
         physical = payload.split(b"\r\n")
         self.assertTrue(any(line.startswith(b"SUMMARY:") for line in physical))
@@ -530,18 +536,18 @@ class SingleEventCalendarTests(unittest.TestCase):
         found = properties(self.event_ics())
         self.assertNotIn("LOCATION", found)
         self.assertEqual(found["SEQUENCE"], "0")
-        found = properties(self.event_ics(location="Терраса, Энск, ул. Примерная; вход"))
-        self.assertEqual(found["LOCATION"], "Терраса\\, Энск\\, ул. Примерная\\; вход")
+        found = properties(self.event_ics(location="Terrace, Exampleton, Example Street; entrance"))
+        self.assertEqual(found["LOCATION"], "Terrace\\, Exampleton\\, Example Street\\; entrance")
         self.assertEqual(found["SEQUENCE"], "1")
         self.assertEqual(
-            properties(self.event_ics(location="Терраса"))["UID"],
+            properties(self.event_ics(location="Terrace"))["UID"],
             properties(self.event_ics())["UID"],
         )
 
     def test_output_is_deterministic(self):
         self.assertEqual(self.event_ics(), self.event_ics())
         self.assertEqual(
-            self.event_ics(location="Терраса"), self.event_ics(location="Терраса")
+            self.event_ics(location="Terrace"), self.event_ics(location="Terrace")
         )
 
     def test_no_line_breaks_or_control_characters_from_the_arguments(self):
@@ -560,7 +566,7 @@ class SingleEventCalendarTests(unittest.TestCase):
         )
 
     def test_invalid_arguments(self):
-        for uid in ("", "abc\r\nX-INJECTED:1", "a@b", "a b", "Ёж", None):
+        for uid in ("", "abc\r\nX-INJECTED:1", "a@b", "a b", "éa", None):
             with self.subTest(uid=uid):
                 with self.assertRaises(ValueError):
                     self.event_ics(uid=uid)

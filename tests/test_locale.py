@@ -694,7 +694,7 @@ class CountdownInBrowserTests(support.TempDirTestCase):
 
     def test_english(self):
         site = support.site_data()
-        site.pop("lang")
+        self.assertNotIn("lang", site)
         found = self.countdown(site)
         self.assertEqual(found["lang"], "en")
         # 1 day, 2 hours, 5 minutes and about 21 seconds

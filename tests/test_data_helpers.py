@@ -16,7 +16,7 @@ from tests.support import CliTestCase, TempDirTestCase, build, invitations_data,
 from tools import _data as data_tools
 
 #: A fictional value that stands for personal data in keys, ids and texts.
-SECRET = "Секрет-Метка"
+SECRET = "Secret Mark"
 DUPLICATE_TAIL = "(JSON keeps only the last one; merge or rename them)"
 KNOWN = ("coupleNames", "greeting", "rsvpDeadline")
 AVAILABLE = "available: {coupleNames}, {greeting}, {rsvpDeadline} (write '{{' for a literal brace)"
@@ -34,7 +34,7 @@ class DuplicateKeyTests(unittest.TestCase):
             {
                 "a": {"id": 1, "b": [{"id": 2}, {"id": 3, "c": {"id": 4}}]},
                 "list": [[{"x": 1}], []],
-                "text": "Ёж",
+                "text": "Éa",
                 "id": None,
             },
             ensure_ascii=False,
@@ -169,7 +169,7 @@ class KeyAndPathTests(unittest.TestCase):
     def test_any_other_key_is_hidden(self):
         for key in (
             SECRET,
-            "Анна",
+            "Ánna",
             "two words",
             "it's",
             'say "hi"',
@@ -254,7 +254,7 @@ class IdentifierTests(unittest.TestCase):
             "hotel_booked",
             "hotel booked",
             "hotel\n",
-            "отель",
+            "hôtel",
             "a" * 33,
             "",
             5,
@@ -422,18 +422,18 @@ class PlaceholderSyntaxTests(unittest.TestCase):
     def test_parts(self):
         Placeholder = data_tools.Placeholder
         self.assertEqual(
-            data_tools.parse_text("Ждём {greeting}!"),
-            ["Ждём ", Placeholder("greeting", 6), "!"],
+            data_tools.parse_text("Wait {greeting}!"),
+            ["Wait ", Placeholder("greeting", 6), "!"],
         )
         self.assertEqual(
             data_tools.parse_text("{coupleNames}{greeting}"),
             [Placeholder("coupleNames", 1), Placeholder("greeting", 14)],
         )
         self.assertEqual(data_tools.parse_text(""), [])
-        self.assertEqual(data_tools.parse_text("Просто текст"), ["Просто текст"])
+        self.assertEqual(data_tools.parse_text("Just text"), ["Just text"])
 
     def test_literal_braces(self):
-        self.assertEqual(data_tools.parse_text("{{a}} и {{"), ["{a} и {"])
+        self.assertEqual(data_tools.parse_text("{{a}} & {{"), ["{a} & {"])
         self.assertEqual(
             data_tools.parse_text("{{{greeting}}}"),
             ["{", data_tools.Placeholder("greeting", 3), "}"],
@@ -441,13 +441,13 @@ class PlaceholderSyntaxTests(unittest.TestCase):
 
     def test_unclosed_brace(self):
         self.assertTextError(
-            "Ждём вас в 16:00 {и",
+            "See you at 16:00 {a",
             "has an unclosed '{' at character 18 (write '{{' for a literal brace)",
         )
 
     def test_unmatched_closing_brace(self):
         self.assertTextError(
-            "Смайлик :} тут",
+            "Smiley! :} here",
             "has an unmatched '}' at character 10 (write '}}' for a literal brace)",
         )
         self.assertTextError(
@@ -456,11 +456,11 @@ class PlaceholderSyntaxTests(unittest.TestCase):
 
     def test_empty_placeholder(self):
         self.assertTextError(
-            "Текст {}", "has an empty placeholder at character 7 (write '{{}}' for literal braces)"
+            "Texts {}", "has an empty placeholder at character 7 (write '{{}}' for literal braces)"
         )
 
     def test_malformed_placeholder(self):
-        for text in ("{ greeting}", "{greeting }", "{имя}", "{1st}", "{a-b}", "{a\nb}", "{a{b}"):
+        for text in ("{ greeting}", "{greeting }", "{näme}", "{1st}", "{a-b}", "{a\nb}", "{a{b}"):
             with self.subTest(text=text):
                 self.assertTextError(
                     text,
@@ -477,16 +477,17 @@ class PlaceholderSyntaxTests(unittest.TestCase):
 
     def test_positions_count_characters_not_bytes(self):
         self.assertEqual(
-            data_tools.parse_text("Привет, {greeting}")[1], data_tools.Placeholder("greeting", 9)
+            # "ü" and "ß" take two octets each
+            data_tools.parse_text("Grüß dich, {greeting}")[1], data_tools.Placeholder("greeting", 12)
         )
         self.assertTextError(
-            "Ёлка\n{", "has an unclosed '{' at character 6 (write '{{' for a literal brace)"
+            "Ölka\n{", "has an unclosed '{' at character 6 (write '{{' for a literal brace)"
         )
 
 
 class PlaceholderCheckTests(unittest.TestCase):
     def test_an_unknown_placeholder_is_reported_by_position(self):
-        problems = data_tools.placeholder_problems("Привет, {coupleName}!", KNOWN)
+        problems = data_tools.placeholder_problems("Dearest {coupleName}!", KNOWN)
         self.assertEqual(
             problems,
             [
@@ -518,7 +519,7 @@ class PlaceholderCheckTests(unittest.TestCase):
         )
 
     def test_a_known_name_without_a_value(self):
-        text = "До {rsvpDeadline}, то есть {rsvpDeadline}, {greeting}"
+        text = "By {rsvpDeadline}, that is {rsvpDeadline}, {greeting}"
         self.assertEqual(
             data_tools.placeholder_problems(text, KNOWN, available={"greeting"}),
             ["uses {rsvpDeadline}, but 'rsvpDeadline' is not set"],
@@ -533,7 +534,7 @@ class PlaceholderCheckTests(unittest.TestCase):
 
     def test_check_text_of_a_field_with_two_forms(self):
         path = ("sections", 1, "widgets", 0, "text")
-        value = {"ty": "Привет, {coupleName}!", "vy": "До {rsvpDeadline} {"}
+        value = {"ty": "Dearest {coupleName}!", "vy": "By {rsvpDeadline} {"}
         self.assertEqual(
             data_tools.check_text(value, path, KNOWN, available={"coupleNames"}),
             [
@@ -575,16 +576,16 @@ class PlaceholderCheckTests(unittest.TestCase):
 
 
 class SubstitutionTests(unittest.TestCase):
-    values = {"coupleNames": "Алиса и Боб", "greeting": "Дорогая Ева!"}
+    values = {"coupleNames": "Alice and Bob", "greeting": "Dear Eve,"}
 
     def test_values_are_inserted(self):
         self.assertEqual(
-            data_tools.substitute("{greeting} Ждём тебя. {coupleNames}", self.values, KNOWN),
-            "Дорогая Ева! Ждём тебя. Алиса и Боб",
+            data_tools.substitute("{greeting} See you. {coupleNames}", self.values, KNOWN),
+            "Dear Eve, See you. Alice and Bob",
         )
         self.assertEqual(
             data_tools.substitute("{{greeting}} {greeting}", self.values, KNOWN),
-            "{greeting} Дорогая Ева!",
+            "{greeting} Dear Eve,",
         )
 
     def test_values_are_not_parsed_again(self):
@@ -594,10 +595,10 @@ class SubstitutionTests(unittest.TestCase):
         )
 
     def test_line_breaks_are_kept(self):
-        values = {"greeting": "две\nстроки"}
+        values = {"greeting": "two\nlines"}
         self.assertEqual(
-            data_tools.substitute("Абзац\n\n{greeting}\r\nконец", values, KNOWN),
-            "Абзац\n\nдве\nстроки\r\nконец",
+            data_tools.substitute("Paragraph\n\n{greeting}\r\nend", values, KNOWN),
+            "Paragraph\n\ntwo\nlines\r\nend",
         )
 
     def test_an_empty_string_is_a_value(self):
@@ -605,7 +606,7 @@ class SubstitutionTests(unittest.TestCase):
 
     def test_a_placeholder_without_a_value(self):
         with self.assertRaises(data_tools.TextError) as caught:
-            data_tools.substitute("До {rsvpDeadline}", self.values, KNOWN)
+            data_tools.substitute("By {rsvpDeadline}", self.values, KNOWN)
         self.assertEqual(
             str(caught.exception), "uses {rsvpDeadline}, but 'rsvpDeadline' is not set"
         )
@@ -622,10 +623,10 @@ class SubstitutionTests(unittest.TestCase):
             data_tools.substitute("{greeting", self.values, KNOWN)
 
     def test_resolve_text(self):
-        value = {"ty": "Приходи, {greeting}", "vy": "Приходите, {greeting}"}
+        value = {"ty": "Come, {greeting}", "vy": "Please come, {greeting}"}
         self.assertEqual(
             data_tools.resolve_text(value, "formal", self.values, KNOWN),
-            "Приходите, Дорогая Ева!",
+            "Please come, Dear Eve,",
         )
         self.assertEqual(
             data_tools.resolve_text("{coupleNames}", "informal", self.values, KNOWN),
@@ -639,13 +640,13 @@ class NamedTextTests(unittest.TestCase):
     """`{text:<id>}`: named texts of the registry `texts`."""
 
     texts = {
-        "announce": "Мы, {coupleNames}, женимся!",
+        "announce": "{coupleNames} are getting married!",
         "invite": {
-            "ty": "Ждём тебя. {text:sign}",
-            "vy": "Ждём вас. {text:sign}",
-            "all": "Ждём вас.",
+            "ty": "See you. {text:sign}",
+            "vy": "We look forward to seeing you. {text:sign}",
+            "all": "We look forward to seeing you.",
         },
-        "sign": "{{с любовью}}",
+        "sign": "{{with love}}",
         "both": "{text:announce} {text:invite}",
     }
 
@@ -659,8 +660,8 @@ class NamedTextTests(unittest.TestCase):
 
     def test_parts(self):
         self.assertEqual(
-            data_tools.parse_text("А {text:announce} {greeting}"),
-            ["А ", data_tools.TextRef("announce", 3), " ", data_tools.Placeholder("greeting", 19)],
+            data_tools.parse_text("A {text:announce} {greeting}"),
+            ["A ", data_tools.TextRef("announce", 3), " ", data_tools.Placeholder("greeting", 19)],
         )
         self.assertEqual(data_tools.text_refs("{text:a}{text:b-1}"), [
             data_tools.TextRef("a", 1), data_tools.TextRef("b-1", 9)
@@ -684,8 +685,8 @@ class NamedTextTests(unittest.TestCase):
         self.assertEqual(data_tools.parse_text("{text}"), [data_tools.Placeholder("text", 1)])
 
     def test_expansion_keeps_the_source_of_the_rest(self):
-        self.assertEqual(self.expand("{text:announce}"), "Мы, {coupleNames}, женимся!")
-        self.assertEqual(self.expand("{text:sign} {{x}}"), "{{с любовью}} {{x}}")
+        self.assertEqual(self.expand("{text:announce}"), "{coupleNames} are getting married!")
+        self.assertEqual(self.expand("{text:sign} {{x}}"), "{{with love}} {{x}}")
 
     def test_the_form_of_the_field_picks_the_variant(self):
         # the named texts give the forms under the aliases
@@ -693,18 +694,18 @@ class NamedTextTests(unittest.TestCase):
             with self.subTest(form=form):
                 expected = self.texts["invite"][key].replace("{text:sign}", self.texts["sign"])
                 self.assertEqual(self.expand("{text:invite}", form), expected)
-        self.assertEqual(self.expand("{text:invite}", "all"), "Ждём вас.")
+        self.assertEqual(self.expand("{text:invite}", "all"), "We look forward to seeing you.")
 
     def test_nested_texts(self):
         used = set()
         self.assertEqual(
             self.expand("{text:both}", "formal", used=used),
-            "Мы, {coupleNames}, женимся! Ждём вас. {{с любовью}}",
+            "{coupleNames} are getting married! We look forward to seeing you. {{with love}}",
         )
         self.assertEqual(used, {"both", "announce", "invite", "sign"})
 
     def test_a_string_serves_every_form(self):
-        self.assertEqual(self.expand("{text:announce}", "all"), "Мы, {coupleNames}, женимся!")
+        self.assertEqual(self.expand("{text:announce}", "all"), "{coupleNames} are getting married!")
 
     def test_a_text_without_the_common_form(self):
         texts = {"a": {"ty": "x", "vy": "y"}, "outer": "{text:a}"}
@@ -718,7 +719,7 @@ class NamedTextTests(unittest.TestCase):
 
     def test_unknown_text(self):
         self.assertExpandError(
-            "Привет {text:anounce}",
+            "Hello, {text:anounce}",
             "refers to an unknown text 'anounce' at character 8 (did you mean 'announce'?); "
             "known: announce, invite, sign, both",
         )
@@ -749,9 +750,9 @@ class NamedTextTests(unittest.TestCase):
 
     def test_depth(self):
         chain = {f"t{n}": f"{{text:t{n + 1}}}" for n in range(1, 9)}
-        chain["t9"] = "конец"
+        chain["t9"] = "the end"
         # t1 ... t8 are 8 levels of nesting below the field
-        self.assertEqual(self.expand("{text:t2}", texts=chain), "конец")
+        self.assertEqual(self.expand("{text:t2}", texts=chain), "the end")
         with self.assertRaises(data_tools.TextError) as caught:
             self.expand("{text:t1}", texts=chain)
         self.assertTrue(str(caught.exception).startswith("nests texts deeper than 8 levels: 't1'"))
@@ -761,7 +762,7 @@ class NamedTextTests(unittest.TestCase):
 
         # eight levels of ten references each: 10**8 insertions without a limit
         texts = {f"t{n}": f"{{text:t{n + 1}}}" * 10 for n in range(1, 8)}
-        texts["t8"] = "слово "
+        texts["t8"] = "words "
         started = time.monotonic()
         with self.assertRaises(data_tools.TextError) as caught:
             self.expand("{text:t1}", texts=texts)
@@ -783,17 +784,17 @@ class NamedTextTests(unittest.TestCase):
 
     def test_a_reused_text_still_counts_its_depth(self):
         chain = {f"t{n}": f"{{text:t{n + 1}}}" for n in range(1, 9)}
-        chain["t9"] = "конец"
+        chain["t9"] = "the end"
         # t2 first (8 levels, fine), then t1 reaches the cached t2 one level deeper
         with self.assertRaises(data_tools.TextError) as caught:
             self.expand("{text:t2} {text:t1}", texts=chain)
         self.assertTrue(str(caught.exception).startswith("nests texts deeper than 8 levels"))
 
     def test_values_of_placeholders_are_not_parsed_for_texts(self):
-        values = {"greeting": "{text:announce}", "coupleNames": "Алиса и Боб"}
+        values = {"greeting": "{text:announce}", "coupleNames": "Alice and Bob"}
         self.assertEqual(
             data_tools.resolve_text("{greeting} {text:announce}", "informal", values, KNOWN, self.texts),
-            "{text:announce} Мы, Алиса и Боб, женимся!",
+            "{text:announce} Alice and Bob are getting married!",
         )
 
     def test_substitute_refuses_a_reference_that_was_not_expanded(self):

@@ -108,7 +108,7 @@ class ValidateCommandTests(CliTestCase):
         result = self.run_validate()
         self.assertEqual(result.returncode, 0, result.stderr)
         # the language, then the summary
-        self.assertTrue(result.stdout.startswith("validate: language: ru\nvalidate: OK - "))
+        self.assertTrue(result.stdout.startswith("validate: language: en (default)\nvalidate: OK - "))
         self.assertIn(
             f"validate: OK - 3 invitation(s), 2 event(s), 8 section(s), "
             f"{len(support.MEDIA_FILES)} media file(s)",
@@ -175,7 +175,7 @@ class ValidateCommandTests(CliTestCase):
 
     def test_media_that_no_page_shows_is_not_looked_at(self):
         site = site_data()
-        site["media"]["spare"] = {"type": "image", "file": "spare.png", "alt": "Запасное"}
+        site["media"]["spare"] = {"type": "image", "file": "spare.png", "alt": "Spare"}
         write_data(self.data, site=site)
         result = self.run_validate()
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -245,7 +245,7 @@ class ValidateCommandTests(CliTestCase):
         # a safeguard: the ids are unique by construction, unless joined ambiguously
         site = site_data()
         site["sections"].append(
-            {"id": "invite-w1", "title": "Ещё", "widgets": [{"type": "text", "text": "x"}]}
+            {"id": "invite-w1", "title": "More", "widgets": [{"type": "text", "text": "x"}]}
         )
         write_data(self.data, site=site)
         with mock.patch.object(build.page_tools, "DOM_SEPARATOR", "-"):
@@ -317,7 +317,7 @@ class BuildCommandTests(CliTestCase):
         self.assertIn(support.GREETING_TY, page)
         self.assertIn(support.NOTE, page)
         self.assertNotIn(support.GREETING_VY, page)
-        self.assertIn("Приходи", page)
+        self.assertIn("Come on ", page)
         self.assertNotIn("{{", page)
 
         self.assertTrue((self.out / "assets" / "app.css").is_file())
@@ -543,15 +543,15 @@ class BuildCommandTests(CliTestCase):
     def test_allow_path_may_be_repeated(self):
         site = site_data()
         site["events"]["dinner"]["links"] = {
-            "photos": {"text": "Фотографии", "href": "/zphotos/{token}/", "visible": True},
-            "seating": {"text": "Рассадка", "href": "/zseating/", "visible": True},
+            "photos": {"text": "Photos", "href": "/zphotos/{token}/", "visible": True},
+            "seating": {"text": "Seating chart", "href": "/zseating/", "visible": True},
         }
         write_data(self.data, site=site)
         result = self.run_build("--allow-path", "/zphotos", "--allow-path", "/zseating/")
         self.assertEqual(result.returncode, 0, result.stderr)
         page = (self.out / support.TOKEN_A / "index.html").read_text(encoding="utf-8")
-        self.assertIn(f'href="/zphotos/{support.TOKEN_A}/">Фотографии</a>', page)
-        self.assertIn('href="/zseating/">Рассадка</a>', page)
+        self.assertIn(f'href="/zphotos/{support.TOKEN_A}/">Photos</a>', page)
+        self.assertIn('href="/zseating/">Seating chart</a>', page)
         # the log is the same as without it: no counter of its own
         self.assertNotIn("zphotos", result.stdout + result.stderr)
         self.assertNoPrivateData(result.stdout, result.stderr)
@@ -1032,7 +1032,7 @@ class NoPersonalDataInLogsTests(CliTestCase):
         self.assertIn("'mailto:…'", result.stderr)
         self.assertIn("relative path '….png'", result.stderr)
         self.assertNoPrivateData(result.stdout, result.stderr)
-        for fragment in ("%D0%", "Ева", "Алиса"):
+        for fragment in ("Dear%20", "Eve", "Alice"):
             self.assertNotIn(fragment, result.stderr)
         self.assertFalse(self.out.exists())
 

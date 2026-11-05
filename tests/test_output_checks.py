@@ -448,7 +448,7 @@ class LocalPathTests(FailingBuildTestCase):
             '<link rel="icon" href="data:,">\n'
             '<svg><use href="#icon"></use></svg>\n'
             '<meta property="og:image" content="/assets/app.css">\n'
-            '<meta name="description" content="Приглашение">'
+            '<meta name="description" content="Invitation">'
         )
         self.assertBuildPasses()
 
@@ -1434,7 +1434,7 @@ class HtmlCheckUnitTests(unittest.TestCase):
                     problems,
                 )
         self.assertEqual(
-            html_problems("<title>Приглашение</title><p>1 < 2, a &lt;b&gt; &amp; <3</p>"), []
+            html_problems("<title>Invitation</title><p>1 < 2, a &lt;b&gt; &amp; <3</p>"), []
         )
 
     def test_unknown_schemes_are_not_echoed(self):
@@ -1573,10 +1573,10 @@ class CommentStrippingTests(unittest.TestCase):
         )
         self.assertEqual(build.strip_html_comments(document), document[: -len("<!-- removed -->")])
 
-    def test_cyrillic_offsets(self):
+    def test_non_ascii_offsets(self):
         self.assertEqual(
-            build.strip_html_comments("<p>Привет</p>\n<!-- заметка -->\n<p>мир</p><!-- ещё -->"),
-            "<p>Привет</p>\n\n<p>мир</p>",
+            build.strip_html_comments("<p>Grüße</p>\n<!-- Notiz für mich -->\n<p>Welt</p><!-- noch -->"),
+            "<p>Grüße</p>\n\n<p>Welt</p>",
         )
 
     def test_nothing_to_do(self):

@@ -117,7 +117,7 @@ class OutputContentsTests(FullBuildTestCase):
             ),
         )
         page = self.page(support.TOKEN_A)
-        self.assertIn("Подробности появятся на этой странице позже", page)
+        self.assertIn("Details will appear on this page later", page)
         self.assertNotIn("<video", page)
         self.assertNotIn("<img", page)
         self.assertNotIn("maps", page)
@@ -270,7 +270,7 @@ class OutputContentsTests(FullBuildTestCase):
 
     def test_media_shown_on_no_page_is_not_published(self):
         site = site_data()
-        site["media"]["spare"] = {"type": "image", "file": "spare.png", "alt": "Запасное"}
+        site["media"]["spare"] = {"type": "image", "file": "spare.png", "alt": "Spare"}
         write_data(self.data, site=site)
         support.write_media(self.media, ["spare.png"])
         result = self.build()
@@ -298,11 +298,11 @@ class OutputContentsTests(FullBuildTestCase):
             f'href="https://yandex.ru/maps/?text={query}&amp;ll=20.25,10.5&amp;z=16"',
             'href="https://maps.apple.com/place?place-id=IEXAMPLE0000001'
             f'&amp;coordinate=10.5,20.25&amp;name={quote(support.PLACE_NAME, safe="")}"',
-            '<h1 class="cover__title" id="s-cover--title">Алиса и Боб</h1>',
-            "Приходи 1 июня 2030.",
+            '<h1 class="cover__title" id="s-cover--title">Alice and Bob</h1>',
+            "Come on 1 June 2030.",
         ):
             self.assertIn(fragment, page)
-        self.assertIn("Приходите 1 июня 2030.", self.page(support.TOKEN_B))
+        self.assertIn("Please come on 1 June 2030.", self.page(support.TOKEN_B))
 
     def test_comment_markers_in_guest_text_are_just_text(self):
         invitations = invitations_data()
@@ -465,7 +465,7 @@ class PrivacyTests(FullBuildTestCase):
             if name.startswith(f"{MEDIA}/") and name.endswith(".ics"):
                 self.assertIn(support.COUPLE_NAMES.encode(), content, name)
                 continue
-            for secret in (support.COUPLE_NAMES, "Алиса", "Боб"):
+            for secret in (support.COUPLE_NAMES, "Alice", "Bob"):
                 self.assertNotIn(secret.encode(), content, f"{secret!r} in {name}")
 
     def test_no_data_files_in_the_output(self):
