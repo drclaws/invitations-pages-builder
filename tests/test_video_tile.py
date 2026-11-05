@@ -41,6 +41,7 @@ SOURCES = (
     "assets/styleguide.css",
     "build.py",
     "README.md",
+    "docs/video.md",
     ".github/workflows/ci.yml",
 )
 
@@ -291,10 +292,10 @@ class BuiltPageTests(TempDirTestCase):
 
     def test_pages_have_no_inline_styles(self):
         """The pages work under a style-src without 'unsafe-inline' (the
-        policy the README asks of the site): they have no style attributes and
-        no <style> elements."""
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        policy = re.search(r"Content-Security-Policy: (.*)", readme).group(1)
+        policy the deployment docs ask of the site): they have no style
+        attributes and no <style> elements."""
+        deploying = (ROOT / "docs" / "deploying.md").read_text(encoding="utf-8")
+        policy = re.search(r"Content-Security-Policy: (.*)", deploying).group(1)
         self.assertIn("style-src 'self';", policy)
         self.assertNotIn("unsafe-inline", policy)
         style_attribute = re.compile(r"<[a-zA-Z][^>]*\sstyle\s*=", re.S)
