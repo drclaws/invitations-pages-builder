@@ -396,7 +396,7 @@ class PageTreeTests(unittest.TestCase):
 
     def test_english_by_default(self):
         site = F.site()
-        site.pop("lang")
+        self.assertNotIn("lang", site)
         tree = self.tree(site)
         self.assertEqual((tree["lang"], tree["ogLocale"]), ("en", "en_GB"))
         self.assertEqual(tree["ui"], _locale.ui_labels(_locale.pack("en")))
@@ -421,11 +421,11 @@ class PageTreeTests(unittest.TestCase):
         site["media"]["story-1"].pop("alt")
         site["media"]["proposal"].pop("alt")
         tree = self.tree(site)
-        story = next(
-            widget for section in tree["sections"] if section["id"] == "story"
+        items = {
+            item["id"]: item for section in tree["sections"] if section["id"] == "story"
             for widget in section["widgets"] if widget["type"] == "media"
-        )  # fmt: skip
-        items = {item["id"]: item for item in story["items"]}
+            for item in widget["items"]
+        }  # fmt: skip
         self.assertEqual((items["story-1"]["alt"], items["story-1"]["label"]), ("Photo", "Photo"))
         self.assertEqual((items["proposal"]["alt"], items["proposal"]["label"]), ("Video", "Video, 0:20"))
         site["media"]["proposal"]["alt"] = "The proposal"

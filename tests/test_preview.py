@@ -25,7 +25,7 @@ from tools import _page, _png, _preview
 
 REAL = fake_preview.REAL_LINK_PREVIEW_IMAGE
 CHROME = _preview.find_chrome()
-LONG_NAMES = "Анастасия-Александра и Константин"
+LONG_NAMES = "Anastasia-Alexandra and Constantine"
 
 
 def preview_html(site: dict, assets_path: str = "/assets") -> str:
@@ -41,10 +41,10 @@ def preview_html(site: dict, assets_path: str = "/assets") -> str:
 class PreviewPageTests(unittest.TestCase):
     def test_the_cover_of_the_site(self):
         page = preview_html(F.site())
-        self.assertIn('<html lang="ru" class="invitation link-preview">', page)
-        self.assertIn('<h1 class="cover__title" id="s-cover--title">Алиса и Боб</h1>', page)
+        self.assertIn('<html lang="en" class="invitation link-preview">', page)
+        self.assertIn('<h1 class="cover__title" id="s-cover--title">Alice &amp; Bob</h1>', page)
         # the main event, whatever the primary event of a guest
-        self.assertIn('<time datetime="2030-06-15T16:00:00+03:00">15 июня 2030</time>', page)
+        self.assertIn('<time datetime="2030-06-15T16:00:00+03:00">15 June 2030</time>', page)
         self.assertIn('class="cover__photo cover__photo--center" src="/assets/', page)
         self.assertIn('href="/assets/preview.css"', page)
         self.assertNotIn("<script", page)
@@ -60,34 +60,38 @@ class PreviewPageTests(unittest.TestCase):
 
     def test_nothing_of_a_guest(self):
         site = F.site()
-        site["sections"][0]["eyebrow"] = {"ty": "Тебя ждём", "vy": "Вас ждём"}
+        site["sections"][0]["eyebrow"] = {"ty": "We await you", "vy": "We look forward to you"}
         page = preview_html(site)
         for invitation in F.INVITATIONS:
             self.assertNotIn(invitation["greeting"], page)
             self.assertNotIn(invitation["token"], page)
-        for text in ("Тебя ждём", "Вас ждём", "Второй день", "Регистрация", "11:00"):
+        for text in ("We await you", "We look forward", "The day after", "Civil ceremony", "11:00"):
             self.assertNotIn(text, page)
 
     def test_the_eyebrow_only_when_it_is_the_same_for_everybody(self):
         cases = {
-            "Приглашение на свадьбу": "Приглашение на свадьбу",
-            "{coupleNames} · {eventDate}": "Алиса и Боб · 15 июня 2030",
-            "{text:announce}": "Мы, Алиса и Боб, женимся!",
+            "Wedding invitation": "Wedding invitation",
+            "{coupleNames} · {eventDate}": "Alice &amp; Bob · 15 June 2030",
+            "{text:announce}": "Alice &amp; Bob are getting married!",
             "{greeting}": None,
-            "{text:invite}": "Ждём вас 15 июня 2030 в 16:00.",
+            "{text:invite}": "We look forward to seeing you on 15 June 2030 at 16:00.",
         }
         for eyebrow, expected in cases.items():
             with self.subTest(eyebrow=eyebrow):
                 site = F.site()
                 site["sections"][0]["eyebrow"] = eyebrow
-                self.assertEqual(_page.site_eyebrow(site, eyebrow), expected)
+                self.assertEqual(
+                    _page.site_eyebrow(site, eyebrow),
+                    None if expected is None else expected.replace("&amp;", "&"),
+                )
                 page = preview_html(site)
                 if expected is None:
                     self.assertNotIn("cover__eyebrow", page)
                 else:
                     self.assertIn(f'cover__eyebrow">{expected}</p>', page)
+        # a text with forms of address, but without the common form
         site = F.site()
-        site["texts"]["invite"].pop("all")
+        site["texts"]["invite"] = {"ty": "See you.", "vy": "We look forward to seeing you."}
         self.assertIsNone(_page.site_eyebrow(site, "{text:invite}"))
         self.assertIsNone(_page.site_eyebrow(site, {"ty": "a", "vy": "b"}))
         self.assertEqual(_page.site_eyebrow(site, None), "")

@@ -224,10 +224,13 @@ class LinkDescriptionTreeTests(support.unittest.TestCase):
         pages, _usage = _page.build_pages(site, invitations, F.settings(), report)
         return pages, report
 
-    def test_the_main_event_and_the_common_form(self):
+    def test_the_main_event(self):
         pages, report = self.build()
-        expected = "Мы, Алиса и Боб, женимся! Ждём вас 15 июня 2030 в 16:00."
-        # invitation #3 and #5 have the registration as their primary event
+        expected = (
+            "Alice & Bob are getting married! We look forward to seeing you on 15 June 2030 at 16:00."
+        )
+        # invitation #3 and #5 have the ceremony as their primary event; the
+        # common form of a text with forms: `tests/test_link_preview_ru.py`
         self.assertEqual({page["linkDescription"] for page in pages}, {expected})
         self.assertEqual(pages[2]["primaryEvent"]["id"], "ceremony")
         self.assertEqual(report.messages, [])
@@ -237,19 +240,20 @@ class LinkDescriptionTreeTests(support.unittest.TestCase):
         site["linkPreview"]["description"] = " {text:announce}\n\n  {text:invite} "
         pages, _report = self.build(site)
         self.assertEqual(
-            pages[0]["linkDescription"], "Мы, Алиса и Боб, женимся! Ждём вас 15 июня 2030 в 16:00."
+            pages[0]["linkDescription"],
+            "Alice & Bob are getting married! We look forward to seeing you on 15 June 2030 at 16:00.",
         )
 
     def test_a_long_description_is_a_warning(self):
         site = F.site()
-        site["texts"]["long"] = "Очень длинный текст. " * 10
+        site["texts"]["long"] = "A rather long text. " * 10
         site["linkPreview"]["description"] = "{text:announce} {text:long}"
         pages, report = self.build(site)
-        self.assertEqual(len(pages[0]["linkDescription"]), 235)
+        self.assertEqual(len(pages[0]["linkDescription"]), 232)
         self.assertEqual(
             report.warnings,
             [
-                "site.json: field 'linkPreview.description' is 235 characters long once filled "
+                "site.json: field 'linkPreview.description' is 232 characters long once filled "
                 "in (more than 200); link previews show one or two sentences - put the main "
                 "thing into the first 80 characters"
             ],
@@ -257,7 +261,7 @@ class LinkDescriptionTreeTests(support.unittest.TestCase):
 
     def test_a_text_used_only_in_the_description_is_used(self):
         site = F.site()
-        site["texts"]["tail"] = "Приходите!"
+        site["texts"]["tail"] = "Do come!"
         site["linkPreview"]["description"] = "{text:announce} {text:tail}"
         site["sections"][1]["widgets"][2]["text"] = "{text:invite}"
         _pages, report = self.build(site)

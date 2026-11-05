@@ -1,8 +1,7 @@
 {
   "schemaVersion": 2,
-  "lang": "ru",
-  "coupleNames": "Алиса и Боб",
-  "rsvpDeadline": "1 июля 2030",
+  "coupleNames": "Alice & Bob",
+  "rsvpDeadline": "1 July 2030",
   "mediaDir": "MR7IwBP4RVsVlBUFCeyEqQ",
   "mainEvent": "celebration",
   "sections": [
@@ -18,39 +17,30 @@
         {
           "type": "text",
           "variant": "lead",
-          "text": {
-            "ty": "Мы, {coupleNames}, приглашаем тебя на наш праздник.",
-            "vy": "Мы, {coupleNames}, приглашаем вас на наш праздник."
-          }
+          "text": "{coupleNames} invite you to their celebration."
         },
         {
           "id": "plus-one",
           "type": "text",
           "variant": "lead",
           "visible": false,
-          "text": {
-            "ty": "Ты можешь прийти со спутником или спутницей.",
-            "vy": "Вы можете прийти со спутником или спутницей."
-          }
+          "text": "You are welcome to bring a partner or a friend."
         },
         {
           "type": "text",
           "variant": "lead",
-          "text": {
-            "ty": "Ждём тебя {eventDate} в {eventTime}.",
-            "vy": "Ждём вас {eventDate} в {eventTime}."
-          }
+          "text": "We look forward to seeing you on {eventDate} at {eventTime}."
         }
       ]
     },
     {
       "id": "personal",
-      "title": "Несколько слов лично",
+      "title": "A few personal words",
       "widgets": []
     },
     {
       "id": "when",
-      "title": "Дата и время",
+      "title": "Date and time",
       "align": "center",
       "widgets": [
         {
@@ -60,7 +50,7 @@
     },
     {
       "id": "where",
-      "title": "Где и когда",
+      "title": "Where and when",
       "width": "wide",
       "widgets": [
         {
@@ -70,26 +60,23 @@
     },
     {
       "id": "travel",
-      "title": "Гостям из других городов",
+      "title": "For guests from out of town",
       "visible": false,
       "widgets": [
         {
           "type": "text",
-          "text": "Подробности о дороге и размещении сообщим вместе с адресом."
+          "text": "We will send the details of travel and accommodation together with the address."
         }
       ]
     },
     {
       "id": "rsvp",
-      "title": "Подтверждение",
+      "title": "Reply",
       "align": "center",
       "widgets": [
         {
           "type": "text",
-          "text": {
-            "ty": "Пожалуйста, ответь нам до {rsvpDeadline} — там же, где тебе пришла эта ссылка.",
-            "vy": "Пожалуйста, ответьте нам до {rsvpDeadline} — там же, где вы получили эту ссылку."
-          }
+          "text": "Please reply by {rsvpDeadline}, wherever this link reached you."
         },
         {
           "type": "text",
@@ -101,7 +88,7 @@
   ],
   "events": {
     "celebration": {
-      "title": "Праздник",
+      "title": "Celebration",
       "location": "venue",
       "start": "2030-08-10T15:00:00+05:00",
       "end": "2030-08-10T22:00:00+05:00",
@@ -117,12 +104,12 @@
     "day": [
       {
         "time": "15:00",
-        "title": "Церемония"
+        "title": "Ceremony"
       },
       {
         "time": "16:30",
-        "title": "Праздничный ужин",
-        "text": "Место уточняется."
+        "title": "Wedding dinner",
+        "text": "The venue is still to be confirmed."
       }
     ]
   }

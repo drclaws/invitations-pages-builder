@@ -1,6 +1,6 @@
 """The finished pages of the example data sets: privacy, ids and reveal marks.
 
-Both example sets are built with the real template, fragments and assets
+The example sets are built with the real template, fragments and assets
 into a temporary directory (the media files are placeholders made from the
 media registry).  The checks look at the published files only: what a guest
 does not see must be absent from the HTML of the page, which links the
@@ -24,9 +24,11 @@ from tests import support
 from tests.support import build
 
 ROOT = support.ROOT
-DATA_SETS = ("data", "data-venue-pending")
-#: The main set links to a directory of its fictional site that is not built.
+DATA_SETS = ("data", "data-ru", "data-venue-pending")
+#: The main sets link to a directory of their fictional site that is not built.
 ALLOW_PATHS = ("/photos",)
+#: The sets with places and media: the same guests, in English and in Russian.
+MAIN_SETS = ("data", "data-ru")
 
 #: Script hooks whose elements never carry the reveal mark.
 NO_REVEAL_HOOKS = ("data-gallery", "data-lightbox", "data-countdown")
@@ -95,6 +97,18 @@ def token_links(site: dict, invitation: dict) -> list[str]:
     return hrefs
 
 
+def guest_text(text, invitation: dict) -> str:
+    """A text as the guest reads it: one string, or the variant of their form."""
+    return text if isinstance(text, str) else text[invitation["form"]]
+
+
+def other_forms(text, invitation: dict) -> list[str]:
+    """The variants of a text that the guest never reads (none for one string)."""
+    if isinstance(text, str):
+        return []
+    return [value for form, value in text.items() if form != invitation["form"]]
+
+
 def notes(invitation: dict) -> list[str]:
     return [
         override["note"]
@@ -151,6 +165,8 @@ class Page(HTMLParser):
 
 
 class ExamplePagesTestCase(unittest.TestCase):
+    #: The example sets the tests of the class build.
+    DATA_SETS = DATA_SETS
     #: data set -> (site, invitations, {relative path: text})
     built: dict[str, tuple[dict, list, dict[str, str]]]
 
@@ -158,7 +174,7 @@ class ExamplePagesTestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp = Path(tempfile.mkdtemp(prefix="invite-example-pages-"))
         cls.built = {}
-        for name in DATA_SETS:
+        for name in cls.DATA_SETS:
             site, invitations = load(name)
             names = sorted(
                 {item[key] for item in site.get("media", {}).values()
@@ -227,8 +243,8 @@ class PrivacyTests(ExamplePagesTestCase):
                             found = [path for path, content in files.items() if html_line in content]
                             self.assertEqual(found, [page], line)
                         checked += 1
-        # 8 + 3 greetings; notes: 9 in the main set, 2 in the other
-        self.assertEqual(checked, 11 + 11)
+        # 8 + 8 + 3 greetings; notes: 9 in each main set, 2 in the other
+        self.assertEqual(checked, 19 + 20)
 
     def test_hidden_events_leave_no_trace(self):
         checked = 0
@@ -274,20 +290,24 @@ class PrivacyTests(ExamplePagesTestCase):
                     self.assertNotEqual(name_hash, hashlib.sha256(files[path].encode()).hexdigest()[:16])
 
     def test_hidden_events_are_where_they_are_shown(self):
-        site, invitations, files = self.built["data"]
-        title = site["events"]["brunch"]["title"]
-        guests = [invitation for invitation in invitations if "brunch" in visible_events(site, invitation)]
-        self.assertEqual(len(guests), 2)
-        brunch = self.calendars(site, files)["brunch"]
-        pages = sorted(f"{invitation['token']}/index.html" for invitation in guests)
-        self.assertEqual(
-            sorted(path for path, content in files.items() if title in content),
-            sorted([*pages, brunch]),
-        )
-        # its calendar file is linked from these pages only, not from the pages
-        # of the other guests
-        file_name = brunch.rsplit("/", 1)[1]
-        self.assertEqual(sorted(path for path, content in files.items() if file_name in content), pages)
+        for name in MAIN_SETS:
+            site, invitations, files = self.built[name]
+            title = site["events"]["brunch"]["title"]
+            guests = [invitation for invitation in invitations if "brunch" in visible_events(site, invitation)]
+            with self.subTest(data=name):
+                self.assertEqual(len(guests), 2)
+                brunch = self.calendars(site, files)["brunch"]
+                pages = sorted(f"{invitation['token']}/index.html" for invitation in guests)
+                self.assertEqual(
+                    sorted(path for path, content in files.items() if title in content),
+                    sorted([*pages, brunch]),
+                )
+                # its calendar file is linked from these pages only, not from the
+                # pages of the other guests
+                file_name = brunch.rsplit("/", 1)[1]
+                self.assertEqual(
+                    sorted(path for path, content in files.items() if file_name in content), pages
+                )
 
     def test_hidden_sections_and_widgets_are_not_on_the_page(self):
         checked = 0
@@ -301,14 +321,17 @@ class PrivacyTests(ExamplePagesTestCase):
                         checked += 1
         self.assertGreater(checked, 0)
         # the widget "hotel-booked" is switched on for one guest only
-        site, invitations, files = self.built["data"]
-        travel = next(section for section in site["sections"] if section["id"] == "travel")
-        text = travel["widgets"][2]["text"]
-        pages = [
-            path for path, content in files.items()
-            if text["ty"] in content or text["vy"] in content
-        ]  # fmt: skip
-        self.assertEqual(pages, ["IBAhKaLEOj1DHuOUdUMzQA/index.html"])
+        for name in MAIN_SETS:
+            site, invitations, files = self.built[name]
+            travel = next(section for section in site["sections"] if section["id"] == "travel")
+            text = travel["widgets"][2]["text"]
+            variants = [text] if isinstance(text, str) else list(text.values())
+            pages = [
+                path for path, content in files.items()
+                if any(variant in content for variant in variants)
+            ]  # fmt: skip
+            with self.subTest(data=name):
+                self.assertEqual(pages, ["IBAhKaLEOj1DHuOUdUMzQA/index.html"])
 
     def test_calendar_files_carry_nothing_of_the_invitation(self):
         for name, _site, invitations, files in self.sets():
@@ -349,37 +372,41 @@ class PrivacyTests(ExamplePagesTestCase):
                             self.assertNotIn(token.lower(), content.lower(), path)
                     self.assertEqual([path for path in files if token in path], [page])
                 linked += len(hrefs)
-        # the link to the photos is switched on for two guests of the main set
-        self.assertEqual(linked, 2)
+        # the link to the photos is switched on for two guests of each main set
+        self.assertEqual(linked, 2 + 2)
 
     def test_the_button_or_the_text_in_its_place(self):
-        site, invitations, files = self.built["data"]
-        photos = site["events"]["dinner"]["links"]["photos"]
-        with_button = []
-        for number, invitation in enumerate(invitations, start=1):
-            page = files[f"{invitation['token']}/index.html"]
-            button = f'<a class="btn btn--secondary" href="/photos/{invitation["token"]}/">{photos["text"]}</a>'
-            text = build.text_to_html(photos["pending"][invitation["form"]])
-            other = build.text_to_html(photos["pending"]["vy" if invitation["form"] == "ty" else "ty"])
-            with self.subTest(invitation=number):
-                self.assertNotIn(other, page)
-                if button in page:
-                    with_button.append(number)
-                    self.assertEqual(page.count(button), 1)
-                    self.assertNotIn(text, page)
-                else:
-                    # in place of the button, once: in the card of the dinner
-                    self.assertEqual(page.count(f'<p class="events__actions card__text">{text}</p>'), 1)
-                    self.assertEqual(page.count(text), 1)
-                    self.assertNotIn(f'>{photos["text"]}</a>', page)
-                    self.assertNotIn("/photos/", page)
-        # one switch per guest: the second and the eighth see the button
-        self.assertEqual(with_button, [2, 8])
-        # the text is on the pages of the guests only
-        for path, content in files.items():
-            if not path.endswith("/index.html"):
-                for form in ("ty", "vy"):
-                    self.assertNotIn(build.text_to_html(photos["pending"][form]), content, path)
+        for name in MAIN_SETS:
+            site, invitations, files = self.built[name]
+            photos = site["events"]["dinner"]["links"]["photos"]
+            pending = photos["pending"]
+            with_button = []
+            for number, invitation in enumerate(invitations, start=1):
+                page = files[f"{invitation['token']}/index.html"]
+                button = f'<a class="btn btn--secondary" href="/photos/{invitation["token"]}/">{photos["text"]}</a>'
+                text = build.text_to_html(guest_text(pending, invitation))
+                with self.subTest(data=name, invitation=number):
+                    # the guest reads the text in their form only
+                    for other in other_forms(pending, invitation):
+                        self.assertNotIn(build.text_to_html(other), page)
+                    if button in page:
+                        with_button.append(number)
+                        self.assertEqual(page.count(button), 1)
+                        self.assertNotIn(text, page)
+                    else:
+                        # in place of the button, once: in the card of the dinner
+                        self.assertEqual(page.count(f'<p class="events__actions card__text">{text}</p>'), 1)
+                        self.assertEqual(page.count(text), 1)
+                        self.assertNotIn(f'>{photos["text"]}</a>', page)
+                        self.assertNotIn("/photos/", page)
+            # one switch per guest: the second and the eighth see the button
+            self.assertEqual(with_button, [2, 8], name)
+            # the text is on the pages of the guests only
+            variants = [pending] if isinstance(pending, str) else list(pending.values())
+            for path, content in files.items():
+                if not path.endswith("/index.html"):
+                    for variant in variants:
+                        self.assertNotIn(build.text_to_html(variant), content, path)
         # the set without places has no links
         for path, content in self.built["data-venue-pending"][2].items():
             self.assertNotIn("events__actions card__text", content, path)
@@ -421,6 +448,15 @@ def has_companion(invitation: dict) -> bool:
 class CompanionTests(ExamplePagesTestCase):
     """The companion text is a paragraph of the invitation, only where switched on."""
 
+    DATA_SETS = ("data", "data-venue-pending")
+    #: How the first and the last paragraph of the invitation start.
+    OPENINGS = ("Alice &amp; Bob ", "We look forward ")
+    #: A word of the companion text: nowhere on a page without it.
+    COMPANION_WORD = "partner"
+    #: Guests with and without a companion: four of eight in the main set,
+    #: one of three in the other.
+    COMPANIONS = {True: 5, False: 6}
+
     TEXT_WIDGET_RE = re.compile(r'<div class="widget text-widget[^"]*">\s*<p>(.*?)</p>\s*</div>', re.S)
 
     @staticmethod
@@ -440,20 +476,20 @@ class CompanionTests(ExamplePagesTestCase):
                 page = files[f"{invitation['token']}/index.html"]
                 texts = self.invite_texts(page)
                 with self.subTest(data=name, token=invitation["token"][:4]):
-                    self.assertTrue(texts[0].startswith("Мы, "), texts[0])
-                    self.assertTrue(texts[-1].startswith("Ждём "), texts[-1])
+                    self.assertTrue(texts[0].startswith(self.OPENINGS[0]), texts[0])
+                    self.assertTrue(texts[-1].startswith(self.OPENINGS[1]), texts[-1])
                     if has_companion(invitation):
-                        self.assertEqual(texts[1:-1], [build.text_to_html(text[invitation["form"]])])
+                        self.assertEqual(texts[1:-1], [build.text_to_html(guest_text(text, invitation))])
                     else:
                         self.assertEqual(len(texts), 2)
                     counts[has_companion(invitation)] += 1
-        # four of eight guests in the main set, one of three in the other
-        self.assertEqual(counts, {True: 5, False: 6})
+        self.assertEqual(counts, self.COMPANIONS)
 
     def test_without_a_companion_the_text_is_nowhere_on_the_page(self):
         for name, site, invitations, files in self.sets():
             text = self.companion_text(site)
-            lines = {line for form in ("ty", "vy") for line in text[form].split("\n")}
+            variants = [text] if isinstance(text, str) else list(text.values())
+            lines = {line for variant in variants for line in variant.split("\n")}
             for invitation in invitations:
                 if has_companion(invitation):
                     continue
@@ -462,7 +498,7 @@ class CompanionTests(ExamplePagesTestCase):
                     for path, content in own.items():
                         for line in lines:
                             self.assertNotIn(build.text_to_html(line), content, path)
-                        self.assertNotIn("спутни", content, path)
+                        self.assertNotIn(self.COMPANION_WORD, content, path)
 
     def test_there_is_no_companion_section(self):
         for name, _site, _invitations, files in self.sets():

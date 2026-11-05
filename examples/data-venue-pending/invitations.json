@@ -1,29 +1,26 @@
 [
   {
     "token": "heron-4tx9",
-    "greeting": "Дорогая Сибил!",
-    "form": "ty",
+    "greeting": "Dear Sybil,",
     "sections": {
       "travel": {
         "visible": true,
-        "note": "Как только станет известно место, пришлём подробности о дороге."
+        "note": "As soon as we know the venue, we will send you the travel details."
       }
     }
   },
   {
     "token": "quokka",
-    "greeting": "Дорогие Уолтер и Венди!",
-    "form": "vy",
+    "greeting": "Dear Walter and Wendy,",
     "sections": {
       "personal": {
-        "note": "Очень ждём вас!"
+        "note": "We can't wait to see you!"
       }
     }
   },
   {
     "token": "JhlkiN2-7agdX9Fl6D_Z6Q",
-    "greeting": "Уважаемая Джуди Сергеевна!",
-    "form": "vy",
+    "greeting": "Dear Mrs Grey,",
     "sections": {
       "invite": {
         "widgets": {

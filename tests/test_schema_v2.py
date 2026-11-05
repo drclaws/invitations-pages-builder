@@ -29,8 +29,9 @@ PRIVATE = tuple(
 )
 #: Keys an invitation might hold that are somebody's name.
 NAME_KEYS = ("IvanPetrov", "ivan-petrov", "ivan")
-#: A value that stands for personal data inside the data.
-SECRET = "Секрет-Метка"
+#: A value that stands for personal data inside the data (as a key it does
+#: not look like an id: it has a space).
+SECRET = "Secret Mark"
 
 GUEST_1 = "invitation #1"
 GUEST_2 = "invitation #2"
@@ -105,22 +106,22 @@ class FixtureTests(SchemaTestCase):
 
 #: Data in the old format (fictional): the build reads none of it.
 OLD_SITE = {
-    "coupleNames": "Алиса и Боб",
+    "coupleNames": "Alice & Bob",
     "dateISO": "2030-06-01T16:00:00+03:00",
-    "dateText": "1 июня 2030 года",
-    "rsvpDeadline": "1 мая 2030 года",
+    "dateText": "1 June 2030",
+    "rsvpDeadline": "1 May 2030",
     "mediaDir": "m3d1a-f1xtur3-dir",
-    "outOfTownText": "Из Энска ходит автобус.",
-    "venue": {"ready": True, "name": "Усадьба в Энске", "address": "Энск, Вымышленная улица, 1"},
-    "schedule": [{"time": "16:00", "title": "Сбор гостей"}],
+    "outOfTownText": "A bus runs from Exampleton.",
+    "venue": {"ready": True, "name": "The manor in Exampleton", "address": "1 Fictional Street, Exampleton"},
+    "schedule": [{"time": "16:00", "title": "Guests arrive"}],
 }
 OLD_INVITATIONS = [
-    {"token": "EveToken-0123456789abcdefg", "greeting": "Дорогая Ева!", "ty": True, "vy": False,
-     "plusOne": False, "outOfTown": False, "note": "Личная приписка для Евы."},
-    {"token": "KarlKlaraToken-zyxwvutsrq98", "greeting": "Дорогие Карл и Клара!", "ty": False,
+    {"token": "EveToken-0123456789abcdefg", "greeting": "Dear Eve,", "ty": True, "vy": False,
+     "plusOne": False, "outOfTown": False, "note": "A personal note for Eve."},
+    {"token": "KarlKlaraToken-zyxwvutsrq98", "greeting": "Dear Karl and Klara,", "ty": False,
      "vy": True, "plusOne": True, "outOfTown": False},
-    {"token": "GoshaToken-qwertyuiop12345", "greeting": "Дорогой Гоша!", "ty": True,
-     "vy": False, "plusOne": False, "outOfTown": True, "travelNote": "Встретим Гошу."},
+    {"token": "GoshaToken-qwertyuiop12345", "greeting": "Dear Gosha,", "ty": True,
+     "vy": False, "plusOne": False, "outOfTown": True, "travelNote": "We will meet Gosha."},
 ]  # fmt: skip
 
 
@@ -237,7 +238,7 @@ class FieldTests(SchemaTestCase):
         self.assertNoPrivateData(report, SECRET)
 
     def test_single_line(self):
-        report = run(lambda s, i: s.update(coupleNames="Алиса\nБоб"))
+        report = run(lambda s, i: s.update(coupleNames="Alice\nBob"))
         self.assertOneError(report, "site.json: field 'coupleNames' must be a single line (no line breaks)")
 
     def test_required_and_empty(self):
@@ -364,7 +365,7 @@ class SectionTests(SchemaTestCase):
         )
 
     def test_cover_fields(self):
-        report = run(lambda s, i: s["sections"][0].update(title="Обложка"))
+        report = run(lambda s, i: s["sections"][0].update(title="Cover"))
         self.assertOneError(report, "site.json: unknown field 'sections[0].title'")
 
     def test_background_is_only_for_the_cover(self):
@@ -523,7 +524,14 @@ class ReferenceTests(SchemaTestCase):
         self.assertOneError(report, "site.json: field 'sections[6].widgets[0].items' must list at least one media item")
 
     def test_single_layout_takes_one_item(self):
-        report = run(lambda s, i: s["sections"][6]["widgets"][0].update(layout="single"))
+        # the ribbon of photos lists two
+        report = run(lambda s, i: s["sections"][6]["widgets"][1].update(layout="single"))
+        self.assertOneError(
+            report,
+            "site.json: field 'sections[6].widgets[1].items' must list exactly one media item "
+            "for the 'single' layout",
+        )
+        report = run(lambda s, i: s["sections"][6]["widgets"][0]["items"].append("story-1"))
         self.assertOneError(
             report,
             "site.json: field 'sections[6].widgets[0].items' must list exactly one media item "
@@ -701,11 +709,11 @@ class LocationTests(SchemaTestCase):
     def test_every_map_field_is_accepted(self):
         report = self.maps_report(
             googlePlaceId="EXAMPLE_place-id",
-            googleQuery="Гостевой вход, Энск",
+            googleQuery="Guest entrance, Exampleton",
             yandexGeoId="1234567890",
-            yandexQuery="Гостевой вход, Энск",
+            yandexQuery="Guest entrance, Exampleton",
             applePlaceId="IEXAMPLE0000001",
-            appleQuery="Гостевой вход, Энск",
+            appleQuery="Guest entrance, Exampleton",
         )
         self.assertEqual(report.errors, [])
 
@@ -736,12 +744,13 @@ class LocationTests(SchemaTestCase):
         cases = {
             "": "must not be empty (remove the field instead)",
             "   ": "must not be empty (remove the field instead)",
-            "Вход\nЭнск": "must be a single line (no line breaks)",
-            "Вход\rЭнск": "must be a single line (no line breaks)",
-            "Вход\tЭнск": "must not contain control characters",
-            "Вход\x00": "must not contain control characters",
-            "Вход\x7f": "must not contain control characters",
-            "я" * 201: "is longer than 200 characters",
+            "Entrance\nExampleton": "must be a single line (no line breaks)",
+            "Entrance\rExampleton": "must be a single line (no line breaks)",
+            "Entrance\tExampleton": "must not contain control characters",
+            "Entrance\x00": "must not contain control characters",
+            "Entrance\x7f": "must not contain control characters",
+            # characters, not bytes: two bytes each in UTF-8
+            "é" * 201: "is longer than 200 characters",
         }
         for key in ("googleQuery", "yandexQuery", "appleQuery"):
             for value, problem in cases.items():
@@ -751,7 +760,7 @@ class LocationTests(SchemaTestCase):
                         f"site.json: field 'locations.hotel.maps.{key}' {problem}",
                     )
             with self.subTest(key=key, value="200 characters"):
-                self.assertEqual(self.maps_report(**{key: "я" * 200}).errors, [])
+                self.assertEqual(self.maps_report(**{key: "é" * 200}).errors, [])
             with self.subTest(key=key, value="not a string"):
                 self.assertOneError(
                     self.maps_report(**{key: 5}),
@@ -759,9 +768,9 @@ class LocationTests(SchemaTestCase):
                 )
 
     def test_map_queries_are_not_quoted_in_messages(self):
-        report = self.maps_report(googleQuery="Секретный вход\nЭнск")
+        report = self.maps_report(googleQuery="Secret entrance\nExampleton")
         self.assertTrue(report.errors)
-        self.assertNotIn("Секретный", " ".join(report.errors))
+        self.assertNotIn("Secret", " ".join(report.errors))
 
     def test_unknown_map_fields(self):
         self.assertOneError(
@@ -770,12 +779,12 @@ class LocationTests(SchemaTestCase):
             "(did you mean 'yandexGeoId'?)",
         )
         self.assertOneError(
-            self.maps_report(appleQueri="Энск"),
+            self.maps_report(appleQueri="Exampleton"),
             "site.json: unknown field 'locations.hotel.maps.appleQueri' "
             "(did you mean 'appleQuery'?)",
         )
         self.assertOneError(
-            self.maps_report(query="Энск"),
+            self.maps_report(query="Exampleton"),
             "site.json: field 'locations.hotel.maps.query' is not supported: a text query "
             "belongs to one map service, use 'googleQuery', 'yandexQuery' or 'appleQuery'",
         )
@@ -794,8 +803,8 @@ class LocationTests(SchemaTestCase):
     def test_credit_of_the_directions(self):
         # any line, written as it is: braces are text, not a placeholder, and a
         # no-break space is not a control character
-        for value in ("© Картографическая служба Энска", "© Картографическая служба Энска",
-                      "Схема: {coupleNames} & <Ко>"):
+        for value in ("© Exampleton Mapping Service", "© Exampleton Mapping Service",
+                      "Map: {coupleNames} & <Co>"):
             with self.subTest(value=value):
                 self.assertMessages(self.credit_report(value))
 
@@ -804,11 +813,11 @@ class LocationTests(SchemaTestCase):
         cases = {
             "": "must not be empty (remove the field instead)",
             "   ": "must not be empty (remove the field instead)",
-            "© Энск\nКарты": "must be a single line (no line breaks)",
-            "© Энск\rКарты": "must be a single line (no line breaks)",
-            "© Энск\tКарты": "must not contain control characters",
-            "© Энск\x00": "must not contain control characters",
-            "© Энск\x7f": "must not contain control characters",
+            "© Exampleton\nMaps": "must be a single line (no line breaks)",
+            "© Exampleton\rMaps": "must be a single line (no line breaks)",
+            "© Exampleton\tMaps": "must not contain control characters",
+            "© Exampleton\x00": "must not contain control characters",
+            "© Exampleton\x7f": "must not contain control characters",
             5: "must be a string, got a number",
             None: "must be a string, got null",
             True: "must be a string, got a boolean",
@@ -819,18 +828,18 @@ class LocationTests(SchemaTestCase):
         # a plain line: no forms of address
         with self.subTest(value="forms"):
             self.assertOneError(
-                self.credit_report({"ty": "© Энск", "vy": "© Энск"}),
+                self.credit_report({"informal": "© Exampleton", "formal": "© Exampleton"}),
                 f"{where} must be a string, got an object",
             )
 
     def test_credits_are_not_quoted_in_messages(self):
-        report = self.credit_report(f"{SECRET}\n© Энск")
+        report = self.credit_report(f"{SECRET}\n© Exampleton")
         self.assertTrue(report.errors)
         self.assertNoPrivateData(report, SECRET)
 
     def test_a_credit_without_directions_is_a_warning(self):
         def change(site, invitations):
-            site["locations"]["hotel"]["directionsCredit"] = "© Картографическая служба Энска"
+            site["locations"]["hotel"]["directionsCredit"] = "© Exampleton Mapping Service"
 
         self.assertMessages(
             run(change),
@@ -855,7 +864,7 @@ class LocationTests(SchemaTestCase):
     def test_credit_is_spelt_out(self):
         for typo in ("directionCredit", "directionsCredits", "directionscredit"):
             with self.subTest(typo=typo):
-                report = run(lambda s, i: s["locations"]["manor"].update({typo: "© Энск"}))
+                report = run(lambda s, i: s["locations"]["manor"].update({typo: "© Exampleton"}))
                 self.assertOneError(
                     report,
                     f"site.json: unknown field 'locations.manor.{typo}' "
@@ -883,19 +892,19 @@ class RegistryTextTests(SchemaTestCase):
 
     def test_forms_and_named_texts_are_accepted(self):
         def mutate(site, _invitations):
-            site["texts"]["wait"] = {"ty": "Подожди у входа.", "vy": "Подождите у входа."}
-            site["events"]["ceremony"]["description"] = "Зал небольшой. {text:wait}"
+            site["texts"]["wait"] = {"ty": "Wait at the door.", "vy": "Kindly wait at the door."}
+            site["events"]["ceremony"]["description"] = "The hall is small. {text:wait}"
             site["locations"]["manor"]["description"] = {
-                "ty": "Тебя встретят, {greeting}",
-                "vy": "Вас встретят, {greeting}",
+                "ty": "We will meet you, {greeting}",
+                "vy": "You will be met, {greeting}",
             }
-            site["schedules"]["dinner"][0]["title"] = {"ty": "Ждём тебя", "vy": "Ждём вас"}
-            site["schedules"]["dinner"][0]["text"] = "Сбор к {eventTime}."
+            site["schedules"]["dinner"][0]["title"] = {"ty": "See you", "vy": "We look forward"}
+            site["schedules"]["dinner"][0]["text"] = "Gathering at {eventTime}."
 
         self.assertMessages(run(mutate))
 
     def test_unknown_placeholder_in_an_event_description(self):
-        report = run(lambda s, i: s["events"]["ceremony"].update(description="Ждём {coupleName}."))
+        report = run(lambda s, i: s["events"]["ceremony"].update(description="Wait {coupleName}."))
         self.assertEqual(len(report.errors), 1)
         self.assertTrue(
             report.errors[0].startswith(
@@ -914,7 +923,7 @@ class RegistryTextTests(SchemaTestCase):
         )
 
     def test_a_programme_title_stays_one_line(self):
-        report = run(lambda s, i: s["schedules"]["dinner"][0].update(title="Сбор\nгостей"))
+        report = run(lambda s, i: s["schedules"]["dinner"][0].update(title="Guests\narrive"))
         self.assertOneError(
             report,
             "site.json: field 'schedules.dinner[0].title' must be a single line (no line breaks)",
@@ -922,7 +931,7 @@ class RegistryTextTests(SchemaTestCase):
 
     def test_an_event_title_is_not_a_text(self):
         """It goes into the calendar file, the same for everybody."""
-        report = run(lambda s, i: s["events"]["ceremony"].update(title={"ty": "Роспись", "vy": "Роспись"}))
+        report = run(lambda s, i: s["events"]["ceremony"].update(title={"informal": "Ceremony", "formal": "Ceremony"}))
         self.assertOneError(
             report, "site.json: field 'events.ceremony.title' must be a string, got an object"
         )
@@ -955,7 +964,7 @@ class MediaDataTests(SchemaTestCase):
     def test_a_tile_has_no_caption(self):
         for media_id in ("story-1", "proposal"):
             with self.subTest(media_id):
-                report = run(lambda s, i: s["media"][media_id].update(caption="Энск, 2024"))
+                report = run(lambda s, i: s["media"][media_id].update(caption="Exampleton, 2024"))
                 self.assertOneError(
                     report,
                     f"site.json: field 'media.{media_id}.caption' is not supported: a tile "
@@ -1035,13 +1044,14 @@ class TextTests(SchemaTestCase):
             "site.json: field 'sections[1].widgets[0].text' gives the informal form twice ('ty' "
             "and 'informal')",
         )
+        invite = {"ty": "Come", "vy": "Please come", "all": "Please come", "formal": "Do come"}
         self.assertOneError(
-            run(lambda s, i: s["texts"]["invite"].update(formal="Please come")),
+            run(lambda s, i: s["texts"].update(invite=invite)),
             "site.json: field 'texts.invite' gives the formal form twice ('vy' and 'formal')",
         )
 
     def test_unknown_placeholder_is_not_quoted(self):
-        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text="Привет, {coupleName}!"))
+        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text="Dearest {coupleName}!"))
         self.assertEqual(len(report.errors), 1)
         self.assertTrue(
             report.errors[0].startswith(
@@ -1054,7 +1064,8 @@ class TextTests(SchemaTestCase):
         self.assertNotIn("Masha", report.errors[0])
 
     def test_unclosed_brace(self):
-        report = run(lambda s, i: s["sections"][1]["widgets"][1]["text"].update(vy="Вы можете {со"))
+        text = {"ty": "You may come", "vy": "Please do {co"}
+        report = run(lambda s, i: s["sections"][1]["widgets"][1].update(text=text))
         self.assertOneError(
             report,
             "site.json: field 'sections[1].widgets[1].text.vy' has an unclosed '{' at character "
@@ -1066,6 +1077,22 @@ class TextTests(SchemaTestCase):
         self.assertEqual(
             report.errors,
             [
+                "site.json: field 'sections[7].widgets[0].text' uses {rsvpDeadline}, but "
+                "'rsvpDeadline' is not set",
+            ],
+        )
+
+        # once for every form that uses it
+        def with_forms(site, invitations):
+            site.pop("rsvpDeadline")
+            site["sections"][7]["widgets"][0]["text"] = {
+                "ty": "Reply by {rsvpDeadline}.",
+                "vy": "Kindly reply by {rsvpDeadline}.",
+            }
+
+        self.assertEqual(
+            run(with_forms).errors,
+            [
                 "site.json: field 'sections[7].widgets[0].text.ty' uses {rsvpDeadline}, but "
                 "'rsvpDeadline' is not set",
                 "site.json: field 'sections[7].widgets[0].text.vy' uses {rsvpDeadline}, but "
@@ -1074,11 +1101,11 @@ class TextTests(SchemaTestCase):
         )
 
     def test_title_is_one_line(self):
-        report = run(lambda s, i: s["sections"][3].update(title={"ty": "Дата\nи время", "vy": "Дата"}))
+        report = run(lambda s, i: s["sections"][3].update(title={"ty": "Date\nand time", "vy": "Date"}))
         self.assertOneError(report, "site.json: field 'sections[3].title.ty' must be a single line (no line breaks)")
 
     def test_literal_braces(self):
-        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text="{{скобки}} {greeting}"))
+        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text="{{braces}} {greeting}"))
         self.assertMessages(report)
 
     def test_text_is_required(self):
@@ -1091,11 +1118,11 @@ def with_texts(site: dict, **texts) -> None:
     `invite`; the link preview of the fixture is removed."""
     site.pop("linkPreview", None)
     site["texts"] = texts or {
-        "announce": "Мы, {coupleNames}, женимся!",
+        "announce": "{coupleNames} are getting married!",
         "invite": {
-            "ty": "Ждём тебя {eventDate}.",
-            "vy": "Ждём вас {eventDate}.",
-            "all": "Ждём вас {eventDate}.",
+            "ty": "See you on {eventDate}.",
+            "vy": "We look forward to seeing you on {eventDate}.",
+            "all": "We look forward to seeing you on {eventDate}.",
         },
     }
     widgets = site["sections"][1]["widgets"]
@@ -1125,12 +1152,12 @@ class NamedTextTests(SchemaTestCase):
         )
 
     def test_a_reference_with_a_bad_id(self):
-        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text="{text:Анна}"))
+        report = run(lambda s, i: s["sections"][1]["widgets"][0].update(text="{text:Ánna}"))
         self.assertEqual(len(report.errors), 1)
         self.assertTrue(
             report.errors[0].startswith(f"{self.WIDGET} has a malformed text reference at character 1")
         )
-        self.assertNotIn("Анна", report.errors[0])
+        self.assertNotIn("Ánna", report.errors[0])
 
     def test_a_cycle_and_its_chain(self):
         def mutate(site, _invitations):
@@ -1151,7 +1178,7 @@ class NamedTextTests(SchemaTestCase):
     def test_a_text_with_several_lines_in_a_title(self):
         def mutate(site, _invitations):
             with_texts(site)
-            site["texts"]["heading"] = {"ty": "Дата\nи время", "vy": "Дата", "all": "Дата"}
+            site["texts"]["heading"] = {"ty": "Date\nand time", "vy": "Date", "all": "Date"}
             site["sections"][3]["title"] = "{text:heading}"
 
         self.assertOneError(
@@ -1192,7 +1219,7 @@ class NamedTextTests(SchemaTestCase):
     def test_the_common_form_knows_no_guest(self):
         def mutate(site, _invitations):
             with_texts(site)
-            site["texts"]["invite"]["all"] = "{greeting}, ждём вас."
+            site["texts"]["invite"]["all"] = "{greeting}, we look forward to seeing you."
 
         self.assertOneError(
             run(mutate),
@@ -1204,7 +1231,7 @@ class NamedTextTests(SchemaTestCase):
         def mutate(site, _invitations):
             with_texts(site)
             site["texts"]["hello"] = "{greeting}"
-            site["texts"]["invite"]["all"] = "{text:hello} Ждём вас."
+            site["texts"]["invite"]["all"] = "{text:hello} See you soon."
             site["sections"][1]["widgets"][1]["text"] = "{text:hello}"
 
         report = run(mutate)
@@ -1218,7 +1245,7 @@ class NamedTextTests(SchemaTestCase):
 
     def test_the_common_form_is_for_named_texts_only(self):
         def mutate(site, _invitations):
-            site["sections"][1]["widgets"][1]["text"]["all"] = "Для всех"
+            site["sections"][1]["widgets"][1]["text"] = {"ty": "a", "vy": "b", "all": "For everybody"}
 
         self.assertOneError(
             run(mutate),
@@ -1267,7 +1294,8 @@ class LinkPreviewTests(SchemaTestCase):
 
     def test_a_text_with_forms_needs_the_common_form(self):
         report = self.run_with(
-            "{text:invite}", announce="Мы женимся!", invite={"ty": "Ждём тебя.", "vy": "Ждём вас."}
+            "{text:invite}", announce="We are getting married!",
+            invite={"ty": "See you.", "vy": "We look forward to seeing you."},
         )
         self.assertEqual(
             report.errors,
@@ -1282,7 +1310,7 @@ class LinkPreviewTests(SchemaTestCase):
             f"{self.FIELD} uses {{greeting}} (directly or through a text): the link preview is "
             "the same for everybody; use named texts with the common form 'all' without {greeting}"
         )
-        self.assertOneError(self.run_with("{greeting}, ждём!"), expected)
+        self.assertOneError(self.run_with("{greeting}, see you!"), expected)
         report = self.run_with("{text:hello}", hello="{greeting}!", announce="a", invite="b")
         self.assertEqual(report.errors, [expected])
 
@@ -1328,7 +1356,7 @@ class InvitationTests(SchemaTestCase):
                 self.assertMessages(run(lambda s, i: i[1].update(token=token)))
 
     def test_token_characters(self):
-        for token in ("otter king", "otter.king", "выдра-выдра", "otter/king", "otter%20"):
+        for token in ("otter king", "otter.king", "løve-bjørn", "otter/king", "otter%20"):
             with self.subTest(token=token):
                 report = run(lambda s, i: i[1].update(token=token))
                 self.assertOneError(
@@ -1375,15 +1403,15 @@ class InvitationTests(SchemaTestCase):
             with self.subTest(form=form):
                 self.assertMessages(run(lambda s, i: i[5].update(form=form)))
         # optional here: the page tree reports it when a text with forms needs it
-        self.assertMessages(run(lambda s, i: i[5].pop("form")))
+        self.assertNotIn("form", F.INVITATIONS[5])
+        self.assertMessages(run())
 
     def test_greeting_is_one_line(self):
-        report = run(lambda s, i: i[0].update(greeting="Дорогая\nКэрол"))
+        report = run(lambda s, i: i[0].update(greeting="Dear\nCarol"))
         self.assertOneError(report, f"{GUEST_1}: field 'greeting' must be a single line (no line breaks)")
 
     def test_old_fields_of_one_invitation(self):
         def change(site, invitations):
-            invitations[0].pop("form")
             invitations[0].update(ty=True, plusOne=True, note=SECRET)
 
         report = run(change)
@@ -1463,7 +1491,7 @@ class InvitationTests(SchemaTestCase):
         self.assertOneError(report, f"{GUEST_1}: field 'sections.personal.note' must be a string, got an object")
 
     def test_note_placeholders(self):
-        report = run(lambda s, i: i[2]["sections"]["personal"].update(note="Ждём тебя к {eventTme}, {Masha}!"))
+        report = run(lambda s, i: i[2]["sections"]["personal"].update(note="We start at {eventTme}, {Masha}!"))
         self.assertEqual(len(report.errors), 2)
         self.assertIn("field 'sections.personal.note' has an unknown placeholder at character 13 (did you mean {eventTime}?)", report.errors[0])
         self.assertIn("at character 25; available:", report.errors[1])
@@ -1471,8 +1499,8 @@ class InvitationTests(SchemaTestCase):
 
     def test_note_on_hidden_section_or_event(self):
         def change(site, invitations):
-            invitations[4]["sections"]["travel"] = {"note": "Встретим вас на вокзале"}
-            invitations[1]["events"]["brunch"] = {"note": "Второй день"}
+            invitations[4]["sections"]["travel"] = {"note": "We will meet you at the station"}
+            invitations[1]["events"]["brunch"] = {"note": "The day after"}
 
         report = run(change)
         self.assertEqual(report.errors, [])
@@ -1554,8 +1582,8 @@ class EventLinkTests(SchemaTestCase):
         def change(site, invitations):
             change_photos(visible=True)(site, invitations)
             site["events"]["ceremony"]["links"] = {
-                "seating": {"text": "Рассадка", "href": "/seating/", "visible": False},
-                "video": {"text": "Видео", "href": "/a/{token}/b-1_c/"},
+                "seating": {"text": "Seating chart", "href": "/seating/", "visible": False},
+                "video": {"text": "Video", "href": "/a/{token}/b-1_c/"},
             }
             site["events"]["brunch"]["links"] = {}
 
@@ -1575,15 +1603,15 @@ class EventLinkTests(SchemaTestCase):
 
     def test_the_text_is_one_plain_line(self):
         for text, problem in (
-            ("Фотографии\nс ужина", "must be a single line (no line breaks)"),
-            ({"ty": "Фото", "vy": "Фото"}, "must be a string, got an object"),
+            ("Photos\nfrom the dinner", "must be a single line (no line breaks)"),
+            ({"ty": "Photos", "vy": "Photos"}, "must be a string, got an object"),
             ("", "must not be empty"),
-            ("Фото {eventTitle}", "must not contain '{' or '}': the text of a link is shown as it "
-                                  "is, without placeholders or named texts"),
+            ("Photos {eventTitle}", "must not contain '{' or '}': the text of a link is shown as "
+                                    "it is, without placeholders or named texts"),
             ("{text:announce}", "must not contain '{' or '}': the text of a link is shown as it "
                                 "is, without placeholders or named texts"),
-            ("Фото }}", "must not contain '{' or '}': the text of a link is shown as it is, "
-                        "without placeholders or named texts"),
+            ("Photos }}", "must not contain '{' or '}': the text of a link is shown as it is, "
+                          "without placeholders or named texts"),
         ):  # fmt: skip
             with self.subTest(text=text):
                 self.assertOneError(run(change_photos(text=text)), f"{PHOTOS}.text' {problem}")
@@ -1608,7 +1636,7 @@ class EventLinkTests(SchemaTestCase):
             ("/photos#a/", segment),
             ("/ph%6Ftos/", segment),
             ("/pho tos/", segment),
-            ("/фото/", segment),
+            ("/fotó/", segment),
             ("/photos\\x/", segment),
             ("/photos/x{token}/", segment),
             ("/photos/{TOKEN}/", segment),
@@ -1666,8 +1694,8 @@ class EventLinkTests(SchemaTestCase):
 #: A text in place of the link `photos` (fictional): the same shape as the
 #: description of an event.
 PENDING = {
-    "ty": "Фотографии появятся здесь позже — мы тебе напишем",
-    "vy": "Фотографии появятся здесь позже — мы вам напишем",
+    "ty": "Photos will appear here later — we will let you know",
+    "vy": "Photos will appear here later — we shall let you know",
 }
 TOKEN_IN_PENDING = (
     "must not contain {token}: the text stands in place of the link and holds no token"
@@ -1678,15 +1706,15 @@ class LinkPendingTests(SchemaTestCase):
     """`events.<id>.links.<id>.pending`: the text in place of the button."""
 
     def test_a_string_or_forms_of_address(self):
-        for value in ("Фотографии появятся здесь позже", PENDING):
+        for value in ("Photos will appear here later", PENDING):
             with self.subTest(value=value):
                 self.assertMessages(run(change_photos(pending=value)))
 
     def test_named_texts_and_placeholders_as_in_a_description(self):
         for value in (
-            "{text:announce} Фото — {eventTitle}, {eventDate}, {eventPlace}",
-            {"ty": "{greeting} Фото — позже", "vy": "{coupleNames}: фото — позже"},
-            "Фото {{скоро}}",
+            "{text:announce} Photos: {eventTitle}, {eventDate}, {eventPlace}",
+            {"ty": "{greeting} Photos later", "vy": "{coupleNames}: photos later"},
+            "Photos {{soon}}",
         ):
             with self.subTest(value=value):
                 self.assertMessages(run(change_photos(pending=value)))
@@ -1698,35 +1726,41 @@ class LinkPendingTests(SchemaTestCase):
 
     def test_one_line(self):
         for value, field, problem in (
-            ("Фото\nпозже", "pending", "must be a single line (no line breaks)"),
-            ({"ty": "Фото", "vy": "Фото\r\nпозже"}, "pending.vy",
+            ("Photos\nlater", "pending", "must be a single line (no line breaks)"),
+            ({"ty": "Photos", "vy": "Photos\r\nlater"}, "pending.vy",
              "must be a single line (no line breaks)"),
-            # `texts.invite` has several lines
-            ("{text:invite}", "pending",
+            # `texts.lines` has several lines
+            ("{text:lines}", "pending",
              "must be a single line (no line breaks), but a text it uses has several lines"),
         ):  # fmt: skip
+
+            def change(site, invitations, value=value):
+                site["texts"]["lines"] = "Photos\nlater"
+                site["sections"][2]["widgets"].append({"type": "text", "text": "{text:lines}"})
+                change_photos(pending=value)(site, invitations)
+
             with self.subTest(value=value):
-                self.assertOneError(run(change_photos(pending=value)), f"{PHOTOS}.{field}' {problem}")
+                self.assertOneError(run(change), f"{PHOTOS}.{field}' {problem}")
 
     def test_the_token_is_an_error_of_its_own(self):
         # one message for the field, whatever else is wrong with the text; the
         # text is never quoted
         for value, field in (
-            ("Фото {token}", "pending"),
-            ("Фото {token}, {token} и {foo}\nпозже", "pending"),
-            ({"ty": "Фото {token}", "vy": "Фото"}, "pending.ty"),
+            ("Pics {token}", "pending"),
+            ("Pics {token}, {token} and {foo}\nlater", "pending"),
+            ({"ty": "Pics {token}", "vy": "Pics"}, "pending.ty"),
         ):
             with self.subTest(value=value):
                 report = run(change_photos(pending=value))
                 self.assertOneError(report, f"{PHOTOS}.{field}' {TOKEN_IN_PENDING}")
-                self.assertNotIn("Фото", report.errors[0])
-        report = run(change_photos(pending={"ty": "{token}", "vy": "Фото {token}"}))
+                self.assertNotIn("Pics", report.errors[0])
+        report = run(change_photos(pending={"ty": "{token}", "vy": "Pics {token}"}))
         self.assertMessages(
             report,
             errors=[f"{PHOTOS}.pending.ty' {TOKEN_IN_PENDING}", f"{PHOTOS}.pending.vy' {TOKEN_IN_PENDING}"],
         )
         # a literal brace is text
-        self.assertMessages(run(change_photos(pending="Фото {{token}}")))
+        self.assertMessages(run(change_photos(pending="Pics {{token}}")))
 
     def test_the_problems_of_a_text(self):
         available = (
@@ -1734,8 +1768,8 @@ class LinkPendingTests(SchemaTestCase):
             "{eventTime}, {eventPlace} (write '{{' for a literal brace)"
         )
         for value, problem in (
-            ("Фото {foo}", f"has an unknown placeholder at character 6; {available}"),
-            ("Фото {token", "has an unclosed '{' at character 6 (write '{{' for a literal brace)"),
+            ("Pics {foo}", f"has an unknown placeholder at character 6; {available}"),
+            ("Pics {token", "has an unclosed '{' at character 6 (write '{{' for a literal brace)"),
             ("{text:nope}", "refers to an unknown text 'nope' at character 1; known: announce, invite"),
             (3, "must be a string or an object with the strings 'informal' and 'formal' "
                 "(or 'ty' and 'vy')"),
@@ -1745,7 +1779,7 @@ class LinkPendingTests(SchemaTestCase):
                 self.assertOneError(run(change_photos(pending=value)), f"{PHOTOS}.pending' {problem}")
 
         def without_deadline(site, invitations):
-            change_photos(pending="Фото до {rsvpDeadline}")(site, invitations)
+            change_photos(pending="Photos by {rsvpDeadline}")(site, invitations)
             site.pop("rsvpDeadline")
 
         # (the text of the section `rsvp` uses it as well)
@@ -1787,7 +1821,7 @@ class GuestLinkTests(SchemaTestCase):
         report = run(lambda s, i: i[1]["events"]["dinner"]["links"]["photos"].update(note="x"))
         self.assertOneError(report, f"{GUEST_2}: unknown field 'events.dinner.links.photos.note'")
         # the text in place of a link belongs to site.json: one switch per guest
-        for value in ("Фото позже", PENDING):
+        for value in ("Photos later", PENDING):
             with self.subTest(pending=value):
                 report = run(
                     lambda s, i: i[1]["events"]["dinner"]["links"]["photos"].update(pending=value)
@@ -1933,14 +1967,14 @@ class PageWarningTests(SchemaTestCase):
     def test_event_note_that_no_widget_shows(self):
         def change(site, invitations):
             site["sections"][4]["widgets"][0]["events"] = ["dinner", "brunch"]
-            invitations[1]["events"]["ceremony"] = {"note": "Приходи пораньше"}
+            invitations[1]["events"]["ceremony"] = {"note": "Come a little early"}
 
         warnings = self.warnings(change)
         self.assertIn(
             f"{GUEST_2}: field 'events.ceremony.note' is set, but no 'events' widget on this page shows the event",
             warnings,
         )
-        self.assertNotIn("Приходи пораньше", " ".join(warnings))
+        self.assertNotIn("Come a little early", " ".join(warnings))
 
     def test_event_link_that_no_widget_shows(self):
         def change(site, invitations):
@@ -1968,11 +2002,11 @@ class PageWarningTests(SchemaTestCase):
 
     def test_unused_parts_of_site_json(self):
         def change(site, invitations):
-            site["sections"].insert(7, {"id": "gifts", "title": "Подарки", "visible": False, "widgets": [{"type": "text", "text": "x"}]})
-            site["locations"]["station"] = {"name": "Вокзал"}
-            site["schedules"]["spare"] = [{"title": "Сбор"}]
+            site["sections"].insert(7, {"id": "gifts", "title": "Gifts", "visible": False, "widgets": [{"type": "text", "text": "x"}]})
+            site["locations"]["station"] = {"name": "The station"}
+            site["schedules"]["spare"] = [{"title": "Gathering"}]
             site["media"]["unused-1"] = {"type": "image", "file": "unused-1.webp", "alt": "x"}
-            site["events"]["rehearsal"] = {"title": "Репетиция", "location": "manor", "start": "2030-06-14T18:00:00+03:00", "end": "2030-06-14T20:00:00+03:00", "visible": False}
+            site["events"]["rehearsal"] = {"title": "Rehearsal", "location": "manor", "start": "2030-06-14T18:00:00+03:00", "end": "2030-06-14T20:00:00+03:00", "visible": False}
 
         self.assertEqual(
             self.warnings(change),
@@ -1987,7 +2021,7 @@ class PageWarningTests(SchemaTestCase):
 
     def test_place_not_announced(self):
         def change(site, invitations):
-            site["sections"][1]["widgets"][0]["text"] = "Ждём вас в {eventPlace}. {text:announce}"
+            site["sections"][1]["widgets"][0]["text"] = "See you at {eventPlace}. {text:announce}"
             invitations[0]["primaryEvent"] = "brunch"
 
         warnings = self.warnings(change)

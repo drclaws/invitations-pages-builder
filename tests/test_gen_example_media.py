@@ -25,6 +25,7 @@ sys.dont_write_bytecode = True
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "tools" / "gen_example_media.py"
 EXAMPLES_DATA = REPO_ROOT / "examples" / "data"
+EXAMPLES_DATA_RU = REPO_ROOT / "examples" / "data-ru"
 EXAMPLES_DATA_PENDING = REPO_ROOT / "examples" / "data-venue-pending"
 
 FFMPEG = shutil.which("ffmpeg")
@@ -158,6 +159,27 @@ class PlanMediaTest(unittest.TestCase):
         self.assertEqual(sizes["registry-1.png"], gen.PHOTO_SIZE)
         self.assertEqual(sizes["venue-1.png"], gen.PHOTO_PORTRAIT_SIZE)
         self.assertEqual(len([item for item in plan if item.kind == "video"]), 2)
+
+    def test_the_two_main_sets_share_one_registry(self):
+        """Both sets use `examples/media`, and the generator makes every file
+        from the order, the size and the role of the items: the registries may
+        differ in the descriptions only, or one set would overwrite the files
+        of the other."""
+        english, russian = gen.load_site(EXAMPLES_DATA), gen.load_site(EXAMPLES_DATA_RU)
+
+        def without_alt(site):
+            return [
+                (media_id, {key: value for key, value in item.items() if key != "alt"})
+                for media_id, item in site["media"].items()
+            ]
+
+        self.assertEqual(without_alt(english), without_alt(russian))
+        self.assertEqual(gen.plan_media(english), gen.plan_media(russian))
+        self.assertEqual(english["mediaDir"], russian["mediaDir"])
+        # the same items behind the cover and on the map
+        for site in (english, russian):
+            self.assertEqual(site["sections"][0]["background"], "cover")
+            self.assertEqual(site["locations"]["manor"]["directions"], "directions")
 
     def test_pending_example_data_has_no_media(self):
         site = gen.load_site(EXAMPLES_DATA_PENDING)

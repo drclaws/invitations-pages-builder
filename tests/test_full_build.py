@@ -10,6 +10,7 @@ import unittest
 from pathlib import Path
 from urllib.parse import quote
 
+from tests import fixtures_ru as R
 from tests import fixtures_v2 as F
 from tests import support
 from tests.support import (
@@ -554,6 +555,7 @@ class ExampleDataTests(CliTestCase):
     def test_the_examples_are_the_fixture_data(self):
         self.assertEqual(self.load("data"), (F.SITE, F.INVITATIONS))
         self.assertEqual(self.load("data-venue-pending"), (F.PENDING_SITE, F.PENDING_INVITATIONS))
+        self.assertEqual(self.load("data-ru"), (R.RU_SITE, R.RU_INVITATIONS))
 
     def test_example_with_places_and_media(self):
         site, invitations = self.load("data")
@@ -577,16 +579,16 @@ class ExampleDataTests(CliTestCase):
         with_link = [
             number
             for number, invitation in enumerate(invitations, start=1)
-            if f'href="/photos/{invitation["token"]}/">Фотографии с ужина</a>'
+            if f'href="/photos/{invitation["token"]}/">Photos from the dinner</a>'
             in (out / invitation["token"] / "index.html").read_text(encoding="utf-8")
         ]
         self.assertEqual(with_link, [2, 8])
-        # the others see the text in place of the button, in their form
+        # the others see the text in place of the button
         pending = site["events"]["dinner"]["links"]["photos"]["pending"]
         with_text = [
             number
             for number, invitation in enumerate(invitations, start=1)
-            if f'<p class="events__actions card__text">{pending[invitation["form"]]}</p>'
+            if f'<p class="events__actions card__text">{pending}</p>'
             in (out / invitation["token"] / "index.html").read_text(encoding="utf-8")
         ]
         self.assertEqual(with_text, [1, 3, 4, 5, 6, 7])

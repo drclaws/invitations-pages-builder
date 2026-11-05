@@ -1,6 +1,6 @@
-"""The pages in Russian, end to end: the main example set (`"lang": "ru"`)
-built with the real template, fragments and assets; the words, dates and
-labels come from the built-in `ru` pack."""
+"""The pages in Russian, end to end: the Russian example set
+(`examples/data-ru`, `"lang": "ru"`) built with the real template, fragments
+and assets; the words, dates and labels come from the built-in `ru` pack."""
 
 from __future__ import annotations
 
@@ -17,10 +17,10 @@ from tests.test_locale import CHROME, LEFT_SECONDS, plural_category, shipped_str
 from tools import _locale
 
 ROOT = support.ROOT
-DATA = ROOT / "examples" / "data"
-#: The main set links to a directory of its fictional site that is not built.
+DATA = ROOT / "examples" / "data-ru"
+#: The set links to a directory of its fictional site that is not built.
 ALLOW_PATHS = ("/photos",)
-#: The first invitation of the main set: it sees every event.
+#: The first invitation of the set: it sees every event.
 TOKEN = "0R-pnCqGFgrPOR5e-NluZw"
 
 
@@ -135,9 +135,16 @@ class RussianPendingTests(unittest.TestCase):
     def test_the_place_not_announced_yet(self):
         tmp = Path(tempfile.mkdtemp(prefix="invite-locale-ru-pending-"))
         self.addCleanup(shutil.rmtree, tmp, True)
+        # the set without a place, switched to Russian
+        source = ROOT / "examples" / "data-venue-pending"
+        site = json.loads((source / "site.json").read_text(encoding="utf-8"))
+        data = support.write_data(
+            tmp / "data", {"lang": "ru", **site},
+            json.loads((source / "invitations.json").read_text(encoding="utf-8")),
+        )
         out = tmp / "dist"
         build.build_site(
-            ROOT / "examples" / "data-venue-pending", ROOT / "examples" / "media-none", out,
+            data, ROOT / "examples" / "media-none", out,
             code_dir=ROOT, log=lambda _line: None, preview=build.PreviewOptions(enabled=False),
         )  # fmt: skip
         page = (out / "quokka" / "index.html").read_text(encoding="utf-8")
