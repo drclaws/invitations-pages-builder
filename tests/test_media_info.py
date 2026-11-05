@@ -1,8 +1,8 @@
 """Tests for the facts of media files (`tools/_media.py`).
 
-No media file is stored in the repository: every picture and video below is
-assembled from bytes in memory and, where a path is needed, written to a
-temporary directory.
+No media file for the tests is stored in the repository: every picture and
+video below is assembled from bytes in memory and, where a path is needed,
+written to a temporary directory.
 """
 
 from __future__ import annotations

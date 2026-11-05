@@ -69,12 +69,12 @@ It never reaches the output: every file named `styleguide.*` is skipped.
   (recomputed when the window width changes), the type scale, the layout, and
   the components in their states (hover, focus-visible, active, disabled).
   **Photo and video tiles** are shown as plain cards instead of pictures (the
-  repository has no media): the ▶ badge, focus, hover, the duration and a
-  single tile `.gallery--single`. The styleguide only describes a video in
-  the viewer: the script makes the viewer, and the panel of a video is the
-  browser's, with no styles or tokens of its own. Check the viewer with a
-  video and a single tile in the proportion of the frame on a built page
-  with a video (a page of the main example does).
+  repository has no media for the pages): the ▶ badge, focus, hover, the
+  duration and a single tile `.gallery--single`. The styleguide only
+  describes a video in the viewer: the script makes the viewer, and the panel
+  of a video is the browser's, with no styles or tokens of its own. Check the
+  viewer with a video and a single tile in the proportion of the frame on a
+  built page with a video (a page of the main example does).
 - **The text size switch** of the styleguide (100 / 125 / 150 / 200 / 330 %)
   is a quick check that the layout holds at a large system text size. The
   real check is to enlarge the text in the settings of the browser or the

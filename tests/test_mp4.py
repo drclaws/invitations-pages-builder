@@ -1,7 +1,7 @@
 """Tests for `tools/_mp4.py`.
 
-No media file is stored in the repository: the MP4 files below are assembled
-in memory from boxes, and the test with real clips makes them with ffmpeg in
+No MP4 file is stored in the repository: the files below are assembled in
+memory from boxes, and the test with real clips makes them with ffmpeg in
 a temporary directory (it is skipped when ffmpeg is not installed).
 """
 

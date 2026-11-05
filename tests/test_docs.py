@@ -26,6 +26,9 @@ MARKDOWN = [ROOT / "README.md", *DOCS]
 _FENCE_RE = re.compile(r"^```.*?^```[ \t]*$", re.M | re.S)
 _CODE_SPAN_RE = re.compile(r"`[^`\n]*`")
 _LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+#: The target of an HTML link or image (`<a href>`, `<img src>`), in double
+#: or single quotes (group 2).
+_HTML_LINK_RE = re.compile(r"""<(?:a|img)\b[^>]*?\s(?:href|src)=(["'])(.*?)\1""")
 _HEADING_RE = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", re.M)
 _JSON_BLOCK_RE = re.compile(r"^```json[ \t]*\n(.*?)^```", re.M | re.S)
 #: A doc cited by the code: `docs/<name>.md`, maybe with an anchor.
@@ -62,9 +65,10 @@ def anchors(path: Path) -> set[str]:
 
 
 def links(path: Path) -> list[str]:
-    """The link targets of a Markdown file, outside code."""
+    """The link and image targets of a Markdown file, outside code, in
+    Markdown and in HTML."""
     text = _CODE_SPAN_RE.sub("", without_code(path.read_text(encoding="utf-8")))
-    return _LINK_RE.findall(text)
+    return _LINK_RE.findall(text) + [match.group(2) for match in _HTML_LINK_RE.finditer(text)]
 
 
 def tracked_files() -> set[str] | None:
@@ -140,6 +144,23 @@ class LinkTests(unittest.TestCase):
         for path in DOCS:
             with self.subTest(doc=path.name):
                 self.assertIn(f"docs/{path.name}", listed)
+
+    def test_the_readme_shows_every_readme_image(self):
+        """`.github/assets/` holds the README images and nothing else."""
+        shown = {target for target in links(ROOT / "README.md") if target.startswith(".github/assets/")}
+        if self.tracked is None:
+            present = {path.relative_to(ROOT).as_posix()
+                       for path in (ROOT / ".github" / "assets").glob("*") if path.is_file()}  # fmt: skip
+        else:
+            present = {name for name in self.tracked if name.startswith(".github/assets/")}
+        self.assertTrue(present)
+        self.assertEqual(shown, present)
+
+    def test_html_targets_are_found(self):
+        text = ('<p><a href="docs/cli.md"><img src=".github/assets/a.gif" alt="A" width="300"></a>'
+                "<img alt='B' src='.github/assets/b.png'></p>")
+        self.assertEqual([match.group(2) for match in _HTML_LINK_RE.finditer(text)],
+                         ["docs/cli.md", ".github/assets/a.gif", ".github/assets/b.png"])
 
     def test_slugs_follow_the_rules_of_github(self):
         self.assertEqual(github_slug("`--allow-path`: links to other pages"), "--allow-path-links-to-other-pages")

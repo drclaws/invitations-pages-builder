@@ -142,7 +142,7 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   gap: var(--space-md);
 }
 
-/* --- Plates in place of images (the repository has no media files) ------- */
+/* --- Plates (the repository has no media for the pages) ------------------ */
 .sg-plate {
   background-color: var(--color-surface-sunken);
   background-image: repeating-linear-gradient(
