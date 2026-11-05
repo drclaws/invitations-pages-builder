@@ -234,8 +234,9 @@ class ReplaceableOutputTests(TempDirTestCase):
     OLD_LAYOUT = (
         "refusing to replace --out: it looks like a whole site (index.html, 404.html, "
         "_headers or robots.txt at the top, or the pages one directory deeper); the build "
-        "now writes the invitations only, straight into --out - remove the directory or "
-        "choose another --out (e.g. a directory inside the site, see README 5)"
+        "writes the invitations only, straight into --out - remove the directory or "
+        "choose another --out (e.g. a directory inside the site, see "
+        "docs/deploying.md#publishing-into-a-directory-of-a-site)"
     )
 
     def test_a_site_of_the_old_layout_is_refused_with_a_hint(self):

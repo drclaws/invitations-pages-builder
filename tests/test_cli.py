@@ -70,7 +70,7 @@ class TokenCommandTests(CliTestCase):
 
 
 class ShortTokenSummaryTests(CliTestCase):
-    SUMMARY = "tokens: 3 (2 shorter than 12 characters, see README 3.3)"
+    SUMMARY = "tokens: 3 (2 shorter than 12 characters, see docs/data-format.md#tokens)"
 
     def test_summary_counts_the_short_tokens(self):
         invitations = invitations_data()
@@ -287,7 +287,7 @@ class ValidateCommandTests(CliTestCase):
         self.assertNotIn("surpriseField", result.stderr)
         self.assertNotIn("VALUE-MUST-NOT-LEAK", result.stderr)
 
-    def test_old_data_is_one_message_that_points_to_the_readme(self):
+    def test_old_data_is_one_message_that_points_to_the_data_format(self):
         write_json(
             self.data / "site.json",
             {"coupleNames": "x", "dateISO": "2030-06-01T16:00:00+03:00", "venue": {}},
@@ -301,8 +301,9 @@ class ValidateCommandTests(CliTestCase):
         errors = [line for line in result.stderr.splitlines() if line.startswith("error:")]
         self.assertEqual(len(errors), 2, result.stderr)
         self.assertIn("site.json: is in the old data format", errors[0])
-        self.assertIn("README", errors[0])
+        self.assertIn("docs/data-format.md", errors[0])
         self.assertIn("invitations.json: all 1 invitations are in the old data format", errors[1])
+        self.assertIn("docs/data-format.md", errors[1])
 
 
 class BuildCommandTests(CliTestCase):
@@ -680,8 +681,9 @@ class OutputDirectoryGuardTests(CliTestCase):
     OLD_LAYOUT = (
         "error: refusing to replace --out: it looks like a whole site (index.html, 404.html, "
         "_headers or robots.txt at the top, or the pages one directory deeper); the build "
-        "now writes the invitations only, straight into --out - remove the directory or "
-        "choose another --out (e.g. a directory inside the site, see README 5)\n"
+        "writes the invitations only, straight into --out - remove the directory or "
+        "choose another --out (e.g. a directory inside the site, see "
+        "docs/deploying.md#publishing-into-a-directory-of-a-site)\n"
     )
 
     def make_old_site(self, pages: str = "pages") -> dict[str, str]:

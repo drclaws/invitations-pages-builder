@@ -3167,9 +3167,10 @@ def _check_replaceable(out: Path) -> None:
     ):
         raise BuildError(
             f"{refuse}: it looks like a whole site (index.html, 404.html, _headers or "
-            "robots.txt at the top, or the pages one directory deeper); the build now "
+            "robots.txt at the top, or the pages one directory deeper); the build "
             "writes the invitations only, straight into --out - remove the directory or "
-            "choose another --out (e.g. a directory inside the site, see README 5)"
+            "choose another --out (e.g. a directory inside the site, see "
+            "docs/deploying.md#publishing-into-a-directory-of-a-site)"
         )
     unexpected = [
         entry

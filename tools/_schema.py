@@ -83,9 +83,9 @@ SITE_FIELDS = (
 )
 #: Fields of `linkPreview`: what the services that show link previews read.
 LINK_PREVIEW_FIELDS = ("description",)
-#: Fields of the old format and where their contents live now.
+#: Fields of the old format and where their contents belong.
 V1_SITE_HINTS = {
-    "dateISO": "the date and time belong to the events now ('events.<id>.start')",
+    "dateISO": "the date and time belong to the events ('events.<id>.start')",
     "dateText": "the build writes the dates from 'events.<id>.start'",
     "outOfTownText": "put the text into a 'text' widget of the section for guests "
     "from other cities",
@@ -234,7 +234,10 @@ MAX_LISTED = 8
 
 def _old(hints: Mapping[str, str]) -> dict[str, str]:
     """The problems of the old-format fields, with their hints."""
-    return {name: f"is no longer supported: {hint}" for name, hint in hints.items()}
+    return {
+        name: f"is a field of the old format and is not read: {hint}; see docs/data-format.md"
+        for name, hint in hints.items()
+    }
 
 
 _V1_SITE_PROBLEMS = _old(V1_SITE_HINTS)
@@ -588,9 +591,9 @@ def _check_version(check: _Checker, site: dict) -> bool:
         if legacy:
             listed = ", ".join(f"'{name}'" for name in legacy)
             check.raw_error(
-                f"is in the old data format (it has {listed}), which this version no "
-                f'longer reads; add "schemaVersion": {SCHEMA_VERSION} and convert the '
-                "data as described in the README (data format)"
+                f"is in the old data format (it has {listed}), which the build does not "
+                f'read; add "schemaVersion": {SCHEMA_VERSION} and convert the data as '
+                "described in docs/data-format.md"
             )
         else:
             check.error(("schemaVersion",), f"is required (use {SCHEMA_VERSION})")
@@ -1447,7 +1450,7 @@ def _check_invitations(
         top.raw_error(
             f"all {len(invitations)} invitations are in the old data format (fields "
             f"{', '.join(repr(name) for name in names)}); convert them as described "
-            "in the README (data format)"
+            "in docs/data-format.md"
         )
         return
     known = GUEST_FIELD_NAMES | index.declared_ids()
