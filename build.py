@@ -192,7 +192,7 @@ STYLEGUIDE_PREFIX = "styleguide."
 #: How long an event without an end lasts (in its calendar file and for the
 #: past/now marks of the page); `site.json` gets a warning for such an event.
 ICS_DEFAULT_DURATION = DEFAULT_EVENT_DURATION
-ICS_PRODID = "-//invitation//static site build//RU"
+ICS_PRODID = "-//invitation//static site build//EN"
 ICS_UID_DOMAIN = "invitation"
 #: `DTSTAMP` is a constant so that equal inputs give a byte-identical output.
 ICS_DTSTAMP = "20000101T000000Z"

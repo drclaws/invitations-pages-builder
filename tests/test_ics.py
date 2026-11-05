@@ -431,7 +431,7 @@ class SingleEventCalendarTests(unittest.TestCase):
     FIXTURE_ICS = (
         "BEGIN:VCALENDAR\r\n"
         "VERSION:2.0\r\n"
-        "PRODID:-//invitation//static site build//RU\r\n"
+        "PRODID:-//invitation//static site build//EN\r\n"
         "CALSCALE:GREGORIAN\r\n"
         "BEGIN:VEVENT\r\n"
         "UID:{uid}@invitation\r\n"
