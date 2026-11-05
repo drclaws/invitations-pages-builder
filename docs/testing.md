@@ -202,7 +202,7 @@ This cannot be checked automatically: it needs a real phone and real apps.
    the build: `og:image` is a path from the root and there is no `og:url`,
    [cli.md](cli.md#link-preview-options)):
    1. **Telegram on iOS and Android**: send the link to "Saved Messages": the
-      site name (or the domain), "Invitation · <names>", the description;
+      site name (or the domain), "Invitation · `<names>`", the description;
       write down **whether the rendered cover shows and whether it is large**;
       no greeting of a guest; the cards of two guests are the same. The
       cache: after publishing, send the link to
