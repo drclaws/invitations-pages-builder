@@ -42,8 +42,6 @@ ALLOWED: dict[str, int | None] = {
     "tests/test_output_checks.py": 2,
     # a fragment name with a Cyrillic letter that looks like a Latin one
     "tests/test_fragments.py": 1,
-
-    "README.md": None,
 }
 
 

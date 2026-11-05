@@ -112,13 +112,13 @@ SITE = {
         },
         {
             "id": "rsvp",
-            "title": "Reply",
+            "title": "RSVP",
             "align": "center",
             "widgets": [
                 {
                     "type": "text",
-                    "text": "Please reply by {rsvpDeadline}, wherever this link reached you."
-                    "\n\nWe can't wait to celebrate with you!",
+                    "text": "Please reply by {rsvpDeadline}: just answer the message that "
+                    "brought you this link.\n\nWe can't wait to celebrate with you!",
                 },
                 {"type": "text", "variant": "signature", "text": "{coupleNames}"},
             ],
@@ -206,7 +206,7 @@ SITE = {
             {
                 "time": "18:00",
                 "title": "Wedding dinner",
-                "text": "The great hall of the manor.\nSeating by place cards.",
+                "text": "The great hall of the manor.\nPlace cards will show you to your seat.",
             },
             {"time": "23:00", "title": "End of the evening"},
         ]
@@ -382,19 +382,20 @@ PENDING_SITE = {
             "widgets": [
                 {
                     "type": "text",
-                    "text": "We will send the details of travel and accommodation together "
-                    "with the address.",
+                    "text": "We will send travel and accommodation details along with the "
+                    "address.",
                 }
             ],
         },
         {
             "id": "rsvp",
-            "title": "Reply",
+            "title": "RSVP",
             "align": "center",
             "widgets": [
                 {
                     "type": "text",
-                    "text": "Please reply by {rsvpDeadline}, wherever this link reached you.",
+                    "text": "Please reply by {rsvpDeadline}: just answer the message that "
+                    "brought you this link.",
                 },
                 {"type": "text", "variant": "signature", "text": "{coupleNames}"},
             ],

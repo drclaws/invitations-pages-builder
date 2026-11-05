@@ -207,7 +207,12 @@ class FieldTests(SchemaTestCase):
     def test_field_of_the_old_format_says_where_it_went(self):
         report = run(lambda s, i: s.update(venue={}))
         self.assertEqual(len(report.errors), 1)
-        self.assertTrue(report.errors[0].startswith("site.json: field 'venue' is no longer supported: "))
+        self.assertTrue(
+            report.errors[0].startswith(
+                "site.json: field 'venue' is a field of the old format and is not read: "
+            )
+        )
+        self.assertTrue(report.errors[0].endswith("; see docs/data-format.md"))
 
     def test_comment_keys_are_unknown_fields(self):
         report = run(lambda s, i: s.update(_comment=SECRET))
@@ -793,8 +798,9 @@ class LocationTests(SchemaTestCase):
         report = run(lambda s, i: s["locations"]["hotel"].update(directionsImage="x.png"))
         self.assertOneError(
             report,
-            "site.json: field 'locations.hotel.directionsImage' is no longer supported: use "
-            "'directions' with the id of a media item",
+            "site.json: field 'locations.hotel.directionsImage' is a field of the old format "
+            "and is not read: use 'directions' with the id of a media item; see "
+            "docs/data-format.md",
         )
 
     def credit_report(self, value):
@@ -1417,8 +1423,9 @@ class InvitationTests(SchemaTestCase):
         report = run(change)
         self.assertEqual(
             [message.split(":")[1] for message in report.errors],
-            [" field 'ty' is no longer supported", " field 'plusOne' is no longer supported",
-             " field 'note' is no longer supported"],
+            [" field 'ty' is a field of the old format and is not read",
+             " field 'plusOne' is a field of the old format and is not read",
+             " field 'note' is a field of the old format and is not read"],
         )
         self.assertNoPrivateData(report, SECRET)
 

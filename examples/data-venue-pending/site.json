@@ -65,18 +65,18 @@
       "widgets": [
         {
           "type": "text",
-          "text": "We will send the details of travel and accommodation together with the address."
+          "text": "We will send travel and accommodation details along with the address."
         }
       ]
     },
     {
       "id": "rsvp",
-      "title": "Reply",
+      "title": "RSVP",
       "align": "center",
       "widgets": [
         {
           "type": "text",
-          "text": "Please reply by {rsvpDeadline}, wherever this link reached you."
+          "text": "Please reply by {rsvpDeadline}: just answer the message that brought you this link."
         },
         {
           "type": "text",

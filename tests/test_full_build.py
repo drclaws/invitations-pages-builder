@@ -666,7 +666,8 @@ class ExampleDataTests(CliTestCase):
         )  # fmt: skip
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(
-            "validate: tokens: 3 (2 shorter than 12 characters, see README 3.3)\n", result.stdout
+            "validate: tokens: 3 (2 shorter than 12 characters, see docs/data-format.md#tokens)\n",
+            result.stdout,
         )
         # the main example keeps its random tokens: no summary
         _site, invitations = self.load("data")

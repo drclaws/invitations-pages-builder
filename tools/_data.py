@@ -784,8 +784,8 @@ def format_size(size: int) -> str:
 
 #: Tokens are written by the owners and may be short and readable: the token
 #: is the only thing that protects a page from being guessed, so the build
-#: counts the short ones (`short_token_summary`) and the README explains the
-#: trade-off.
+#: counts the short ones (`short_token_summary`) and docs/data-format.md
+#: explains the trade-off.
 MIN_TOKEN_LENGTH = 5
 #: Tokens shorter than this are counted in the summary of `validate` and `build`.
 SHORT_TOKEN_LENGTH = 12
@@ -903,7 +903,7 @@ def short_token_summary(invitations: Sequence[Any]) -> str | None:
         return None
     return (
         f"tokens: {len(tokens)} ({short} shorter than {SHORT_TOKEN_LENGTH} characters, "
-        "see README 3.3)"
+        "see docs/data-format.md#tokens)"
     )
 
 
