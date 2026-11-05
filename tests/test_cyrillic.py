@@ -44,9 +44,6 @@ ALLOWED: dict[str, int | None] = {
     "tests/test_fragments.py": 1,
 
     "README.md": None,
-    "styleguide.html": None,
-    "assets/styleguide.js": None,
-    "assets/styleguide.css": None,
 }
 
 

@@ -1,53 +1,53 @@
-/* Скрипт витрины (styleguide.html).
+/* Showcase script (styleguide.html).
  *
- * Читает список токенов прямо из таблицы стилей дизайн-системы
- * (document.styleSheets -> правила :root -> свойства --*) и показывает их
- * вычисленные значения (getComputedStyle), пересчитывая при изменении ширины
- * окна. Ничего не настраивает и в сборку сайта не попадает.
+ * Reads the list of tokens straight from the design-system style sheet
+ * (document.styleSheets -> :root rules -> --* properties) and shows their
+ * computed values (getComputedStyle), recalculating them when the window
+ * width changes. It configures nothing and is not part of the built site.
  *
- * Без этого скрипта витрина остаётся работоспособной: компоненты и
- * типографическая шкала — статическая разметка, скриптом строится только
- * таблица токенов.
+ * Without this script the showcase still works: the components and the type
+ * scale are static markup; only the token table is built by the script.
  */
 (function () {
   'use strict';
 
-  // Тот же первый шаг, что и у скрипта страницы: прогрессивное улучшение.
+  // The same first step as in the page script: progressive enhancement.
   document.documentElement.classList.add('js');
 
-  var SOURCE = 'app.css'; // токены берём только из дизайн-системы, не из витрины
+  var SOURCE = 'app.css'; // tokens come from the design system only, not from the showcase
 
   var GROUPS = [
-    ['Опорные ширины и интерполяция', /^--(vw-|fluid$|bp-)/],
-    ['Цвета', /^--color-/],
-    ['Шрифты', /^--(font-|line-height-|tracking-)/],
-    ['Типографическая шкала', /^--text-/],
-    ['Отступы', /^--(space-|flow-)/],
-    ['Контейнер', /^--container-/],
-    ['Сетка', /^--(grid-|gallery-columns|countdown-columns|countdown-gap|countdown-inline-|countdown-stack-)/],
-    ['Радиусы, тени, линии', /^--(radius-|shadow-|line-width|focus-ring|opacity-)/],
-    ['Пропорции изображений и кадр', /^--(ratio-|image-focus)/],
-    ['Высота экрана, обложка, предел медиа', /^--(viewport-|cover-height-|cover-min-|media-max-)/],
-    ['Движение', /^--(duration-|ease-|reveal-|cover-distance|hover-scale)/],
-    ['Доступность и слои', /^--(tap-|z-|safe-inset-)/],
-    ['Токены компонентов', /^--(media-play-|icon-|countdown-cell|schedule-|divider-|card-|btn-)/]
+    ['Reference widths and interpolation', /^--(vw-|fluid$|bp-)/],
+    ['Colours', /^--color-/],
+    ['Fonts', /^--(font-|line-height-|tracking-)/],
+    ['Type scale', /^--text-/],
+    ['Spacing', /^--(space-|flow-)/],
+    ['Container', /^--container-/],
+    ['Grid', /^--(grid-|gallery-columns|countdown-columns|countdown-gap|countdown-inline-|countdown-stack-)/],
+    ['Radii, shadows, lines', /^--(radius-|shadow-|line-width|focus-ring|opacity-)/],
+    ['Image aspect ratios and framing', /^--(ratio-|image-focus)/],
+    ['Viewport height, cover, media height limit', /^--(viewport-|cover-height-|cover-min-|media-max-)/],
+    ['Motion', /^--(duration-|ease-|reveal-|cover-distance|hover-scale)/],
+    ['Accessibility and layers', /^--(tap-|z-|safe-inset-)/],
+    ['Component tokens', /^--(media-play-|icon-|countdown-cell|schedule-|divider-|card-|btn-)/]
   ];
-  var OTHER = 'Прочее';
+  var OTHER = 'Other';
 
   var COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(|hsla?\()/i;
 
-  /* getComputedStyle для кастомного свойства возвращает записанное значение
-     (clamp/calc целиком), а не длину. Чтобы показать именно вычисленное
-     значение, длина измеряется скрытым пробником: свойству width назначается
-     var(--токен) и читается уже разрешённая ширина. Единицы, зависящие от шрифта
-     конкретного элемента (ch, em), не разрешаются: у пробника свой шрифт, и
-     число получилось бы не тем, что в компоненте, — показывается исходная запись.
-     Исключение — пороги медиазапросов (--bp-*) в em: там em — размер шрифта
-     браузера по умолчанию, и пробник измеряет их при font-size: medium. */
+  /* For a custom property getComputedStyle returns the value as written
+     (the whole clamp/calc), not a length. To show the computed value, the
+     length is measured with a hidden probe: its width is set to var(--token)
+     and the resolved width is read back. Units that depend on the font of a
+     particular element (ch, em) are not resolved: the probe has its own font,
+     and the number would differ from the one in the component, so the value
+     as written is shown. The exception is the media query thresholds (--bp-*)
+     in em: there em is the browser's default font size, and the probe
+     measures them at font-size: medium. */
   var LENGTH_RE = /^(calc|clamp|min|max|env)\(|^-?[0-9.]+(px|rem|vw|vh|svh|dvh|lvh|vmin|vmax)$/;
   var MEDIA_EM_RE = /^--bp-/;
   var EM_RE = /^-?[0-9.]+em$/;
-  /* Короткая запись в rem/em показывается вместе с пикселями: «48em = 768px». */
+  /* A short value in rem/em is shown together with the pixels: "48em = 768px". */
   var RELATIVE_RE = /^-?[0-9.]+(rem|em)$/;
   var probe = null;
 
@@ -75,7 +75,7 @@
     return /^-?[0-9.]+px$/.test(resolved) ? resolved : null;
   }
 
-  /* Возвращает то, что показать в таблице, и полную запись для подсказки. */
+  /* Returns what to show in the table and the full value for the tooltip. */
   function readValue(css, name) {
     var raw = css.getPropertyValue(name).trim().replace(/\s+/g, ' ');
     var shown = raw;
@@ -97,7 +97,7 @@
     return OTHER;
   }
 
-  /* Собирает имена кастомных свойств из всех правил :root нужной таблицы. */
+  /* Collects the custom property names from every :root rule of the source sheet. */
   function collectNames() {
     var names = [];
     var seen = Object.create(null);
@@ -115,9 +115,9 @@
             }
           }
         }
-        // @media, @supports и вложенные правила. Проверять надо после
-        // rule.style: у обычного правила cssRules тоже есть (вложенный CSS),
-        // просто пустой.
+        // @media, @supports and nested rules. The check has to come after
+        // rule.style: an ordinary rule has cssRules too (nested CSS), just
+        // empty.
         if (rule.cssRules && rule.cssRules.length) walk(rule.cssRules);
       }
     }
@@ -130,7 +130,7 @@
       try {
         rules = sheet.cssRules;
       } catch (err) {
-        continue; // на всякий случай: чужой источник
+        continue; // just in case: a cross-origin sheet
       }
       if (rules) walk(rules);
     }
@@ -183,7 +183,7 @@
 
         var badge = null;
         if (/-(mobile|desktop)$/.test(name)) {
-          badge = 'опорное значение';
+          badge = 'reference value';
         } else if (known[name + '-mobile'] && known[name + '-desktop']) {
           badge = 'mobile/desktop';
         }
@@ -210,18 +210,18 @@
     if (meta) {
       var width = document.documentElement.clientWidth;
       meta.textContent = '';
-      meta.appendChild(el('span', null, 'ширина области просмотра: ' + width + ' px'));
-      // Граница раскладки читается из токена --bp-layout, а не зашита в скрипт.
+      meta.appendChild(el('span', null, 'viewport width: ' + width + ' px'));
+      // The layout breakpoint is read from the --bp-layout token, not hard-coded.
       var bp = css.getPropertyValue('--bp-layout').trim();
       var desktop = bp ? window.matchMedia('(min-width: ' + bp + ')').matches : false;
-      meta.appendChild(el('span', null, 'раскладка: ' + (desktop ? 'десктоп' : 'мобильная') +
-        (bp ? ' (граница ' + bp + ')' : '')));
-      meta.appendChild(el('span', null, 'токенов: ' + rows.length));
+      meta.appendChild(el('span', null, 'layout: ' + (desktop ? 'desktop' : 'mobile') +
+        (bp ? ' (breakpoint ' + bp + ')' : '')));
+      meta.appendChild(el('span', null, 'tokens: ' + rows.length));
     }
   }
 
-  /* Переключатель «Проверка масштаба шрифта»: ставит на <html> атрибут, по
-     которому таблица стилей витрины меняет размер шрифта корневого элемента. */
+  /* The "Font size check" switch: sets an attribute on <html> by which the
+     showcase style sheet changes the font size of the root element. */
   function initFontScale(onChange) {
     var group = document.querySelector('[data-font-scale]');
     if (!group) return;
@@ -252,8 +252,8 @@
     var names = collectNames();
     if (!names.length) {
       container.appendChild(el('p', 'sg-note',
-        'Не удалось прочитать токены из таблицы стилей. Откройте страницу ' +
-        'через локальный HTTP-сервер, а не как file://.'));
+        'The tokens could not be read from the style sheet. Open the page ' +
+        'through a local HTTP server, not as file://.'));
       return;
     }
     var rows = build(container, names);

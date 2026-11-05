@@ -1,12 +1,12 @@
 /* =============================================================================
-   Стили витрины (styleguide.html).
+   Showcase styles (styleguide.html).
 
-   Только раскладка самой витрины: рамки демонстрационных блоков, подписи,
-   таблица токенов. В сборку сайта (dist/) не попадает.
+   Only the layout of the showcase itself: the frames of the demo blocks, the
+   labels, the token table. Not part of the built site (dist/).
 
-   Собственные значения витрины вынесены в токены --sg-* ниже; всё остальное
-   берётся из токенов дизайн-системы (/assets/app.css), чтобы витрина менялась
-   вместе с ней.
+   The showcase's own values are the --sg-* tokens below; everything else
+   comes from the design-system tokens (/assets/app.css), so that the
+   showcase changes together with it.
    ========================================================================== */
 
 :root {
@@ -16,17 +16,18 @@
   --sg-header-gap: var(--space-sm);
   --sg-demo-min: 15rem;
   --sg-scale-label-width: 14ch;
-  --sg-plate-angle: 45deg;   /* наклон штриховки плашек */
-  /* Проверка масштаба шрифта: размер шрифта корневого элемента. */
+  --sg-plate-angle: 45deg;   /* angle of the plate hatching */
+  /* Font size check: the font size of the root element. */
   --sg-font-scale-125: 125%;
   --sg-font-scale-150: 150%;
   --sg-font-scale-200: 200%;
-  --sg-font-scale-330: 330%;  /* предел системного «Увеличенного текста» на iOS */
+  --sg-font-scale-330: 330%;  /* the limit of the system "Larger Text" on iOS */
 }
 
-/* --- Проверка масштаба шрифта ---------------------------------------------
-   Атрибут на <html> ставит скрипт витрины; всё, что задано в rem, следует за
-   размером шрифта корневого элемента. Без скрипта переключатель скрыт. */
+/* --- Font size check -------------------------------------------------------
+   The showcase script sets the attribute on <html>; everything set in rem
+   follows the font size of the root element. Without the script the switch
+   is hidden. */
 html[data-sg-font-scale="125"] { font-size: var(--sg-font-scale-125); }
 html[data-sg-font-scale="150"] { font-size: var(--sg-font-scale-150); }
 html[data-sg-font-scale="200"] { font-size: var(--sg-font-scale-200); }
@@ -40,7 +41,7 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   display: block;
 }
 
-/* --- Каркас страницы ------------------------------------------------------ */
+/* --- Page frame ------------------------------------------------------------ */
 .sg-header {
   padding-block: var(--space-lg);
   border-block-end: var(--line-width-hairline) solid var(--color-line);
@@ -86,7 +87,7 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   font-size: var(--text-sm);
 }
 
-/* --- Пояснения и демонстрационные блоки ----------------------------------- */
+/* --- Notes and demo blocks ------------------------------------------------ */
 .sg-note {
   margin-block: var(--space-sm);
   padding: var(--space-xs) var(--space-sm);
@@ -97,8 +98,8 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   font-size: var(--text-sm);
 }
 
-/* Рамка — контейнер для @container: компоненты внутри (таймер) раскладываются
-   по её ширине, как на странице — по ширине .container. */
+/* The frame is an @container: the components inside (the countdown) lay out
+   by its width, just as on the page they lay out by the width of .container. */
 .sg-demo {
   container-type: inline-size;
   margin-block-start: var(--space-md);
@@ -141,7 +142,7 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   gap: var(--space-md);
 }
 
-/* --- Плашки вместо изображений (медиафайлов в репозитории нет) ------------ */
+/* --- Plates in place of images (the repository has no media files) ------- */
 .sg-plate {
   background-color: var(--color-surface-sunken);
   background-image: repeating-linear-gradient(
@@ -153,8 +154,8 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   );
 }
 
-/* Плашка во всю рамку плитки, пропорцию которой задаёт её элемент
-   (.gallery--single). */
+/* A plate that fills the frame of a tile whose proportion comes from its
+   item (.gallery--single). */
 .sg-plate--fill {
   display: block;
   inline-size: 100%;
@@ -172,18 +173,18 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   text-align: center;
 }
 
-/* Обложка с фото в демонстрационном блоке: высота — по содержимому, а не
-   доля экрана, как на странице. */
+/* A cover with a photo in a demo block: its height follows the content, not
+   a share of the screen as on the page. */
 .cover.sg-cover {
   min-block-size: 0;
   padding-block: var(--space-xl);
   border-radius: var(--radius-lg);
 }
 
-/* Верхний край окна для панели: рамка обрезает заливку над панелью
-   (.cover-bar::before — на высоту экрана), чтобы она не закрыла витрину.
-   Полосы-плашки — содержимое страницы: над панелью — то, что на iOS 26
-   видно под строкой состояния, под панелью — то, что уезжает под неё. */
+/* The top edge of the window for the bar: the frame clips the fill above the
+   bar (.cover-bar::before, the height of the screen) so that it does not
+   cover the showcase. The plate strips are page content: above the bar, what
+   iOS 26 shows under the status bar; below the bar, what scrolls under it. */
 .sg-edge {
   overflow: clip;
   padding-block-end: var(--space-xs);
@@ -201,7 +202,7 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   letter-spacing: var(--tracking-heading);
 }
 
-/* --- Типографическая шкала ------------------------------------------------ */
+/* --- Type scale ------------------------------------------------------------ */
 .sg-scale {
   display: grid;
   gap: var(--space-md);
@@ -232,7 +233,7 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   line-height: var(--line-height-heading);
 }
 
-/* --- Таблица токенов ------------------------------------------------------ */
+/* --- Token table ----------------------------------------------------------- */
 .sg-tokens {
   display: grid;
   gap: var(--space-2xs);
@@ -277,8 +278,8 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   color: var(--color-text-muted);
 }
 
-/* Плашка может сжиматься и переноситься: при крупном шрифте на узком экране
-   она шире строки таблицы. */
+/* The badge may shrink and wrap: with a large font on a narrow screen it is
+   wider than a row of the table. */
 .sg-token__badge {
   flex: 0 1 auto;
   min-inline-size: 0;
@@ -304,12 +305,12 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   font-size: var(--text-sm);
 }
 
-/* Пояснение видно только без JS: таблица токенов строится скриптом. */
+/* The note is visible only without JS: the script builds the token table. */
 .js .sg-nojs {
   display: none;
 }
 
-/* --- Демонстрация контейнера и сетки -------------------------------------- */
+/* --- Container and grid demo ---------------------------------------------- */
 .sg-box {
   padding: var(--space-xs);
   border-radius: var(--radius-sm);
@@ -319,7 +320,7 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   text-align: center;
 }
 
-/* Размеры типографической шкалы для образцов. */
+/* Type scale sizes for the samples. */
 .sg-scale__sample--xs { font-size: var(--text-xs); }
 .sg-scale__sample--sm { font-size: var(--text-sm); }
 .sg-scale__sample--base { font-size: var(--text-base); }
@@ -329,8 +330,8 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
 .sg-scale__sample--2xl { font-size: var(--text-2xl); }
 .sg-scale__sample--display { font-size: var(--text-display); }
 
-/* Показ элементов поверх оверлея: полупрозрачная подложка лежит на плашке,
-   как лайтбокс лежит на странице. */
+/* Elements over the overlay: a translucent backdrop lies on a plate, as the
+   lightbox lies on the page. */
 .sg-overlay {
   display: flex;
   flex-wrap: wrap;
@@ -345,9 +346,9 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   border-radius: var(--radius-md);
 }
 
-/* При очень крупном системном шрифте (корень до ~53px) длинные имена токенов,
-   подписи состояний и образцы шкалы переносятся в любом месте, а не распирают
-   страницу. */
+/* With a very large system font (a root of up to ~53px) long token names,
+   state labels and scale samples break anywhere instead of stretching the
+   page. */
 .sg-token__name,
 .sg-token__value,
 .sg-scale__name,
@@ -359,8 +360,8 @@ html[data-sg-font-scale="330"] { font-size: var(--sg-font-scale-330); }
   overflow-wrap: anywhere;
 }
 
-/* Метка времени в демонстрационных блоках переносится, когда не помещается
-   (на странице она переносится только в программе дня). */
+/* The time label in the demo blocks wraps when it does not fit (on the page
+   it wraps only in the programme of the day). */
 .sg-demo .time-label {
   white-space: normal;
   overflow-wrap: anywhere;

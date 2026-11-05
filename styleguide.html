@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,9 +7,9 @@
   <meta name="text-scale" content="scale">
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer">
-  <title>Дизайн-система</title>
-  <!-- Пустая иконка: медиафайлов в репозитории нет, а без этой строки браузер
-       запрашивает /favicon.ico и получает 404. -->
+  <title>Design system</title>
+  <!-- An empty icon: the repository has no media files, and without this line
+       the browser requests /favicon.ico and gets a 404. -->
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/assets/app.css">
   <link rel="stylesheet" href="/assets/styleguide.css">
@@ -19,19 +19,19 @@
 
 <header class="sg-header">
   <div class="container container--wide">
-    <h1 class="sg-header__title">Дизайн-система</h1>
+    <h1 class="sg-header__title">Design system</h1>
     <p class="sg-header__lead">
-      Витрина токенов и компонентов. Значения временные: стилизация выполняется
-      отдельным этапом, здесь только нейтральные заглушки, достаточные для
-      проверки раскладки и читаемости.
+      A showcase of the design tokens and components of the invitation pages.
+      The token values are the default theme: to restyle the pages, change the
+      token values, and every component here follows.
     </p>
-    <nav class="sg-nav" aria-label="Разделы витрины">
+    <nav class="sg-nav" aria-label="Showcase sections">
       <ul class="sg-nav__list">
-        <li><a class="sg-nav__link" href="#tokens">Токены</a></li>
-        <li><a class="sg-nav__link" href="#type">Типографика</a></li>
-        <li><a class="sg-nav__link" href="#layout">Раскладка</a></li>
-        <li><a class="sg-nav__link" href="#components">Компоненты</a></li>
-        <li><a class="sg-nav__link" href="#states">Состояния</a></li>
+        <li><a class="sg-nav__link" href="#tokens">Tokens</a></li>
+        <li><a class="sg-nav__link" href="#type">Typography</a></li>
+        <li><a class="sg-nav__link" href="#layout">Layout</a></li>
+        <li><a class="sg-nav__link" href="#components">Components</a></li>
+        <li><a class="sg-nav__link" href="#states">States</a></li>
       </ul>
     </nav>
   </div>
@@ -39,24 +39,25 @@
 
 <main>
 
-  <!-- ====================================================== Токены ====== -->
+  <!-- ====================================================== Tokens ====== -->
   <section class="section" id="tokens">
     <div class="container container--wide">
-      <h2 class="section__title">Токены</h2>
+      <h2 class="section__title">Tokens</h2>
       <p class="prose prose--muted">
-        Список читается скриптом прямо из <code>/assets/app.css</code>: правила
-        <code>:root</code> → свойства <code>--*</code>; значения — вычисленные
-        (<code>getComputedStyle</code>), поэтому таблица показывает то, что
-        реально применилось на текущей ширине, и пересчитывается при изменении
-        размера окна. Пометка «mobile/desktop» — у производных токенов, для
-        которых заданы отдельные опорные значения для двух форматов. У токенов,
-        записанных в <code>rem</code> или <code>em</code>, показаны и исходная
-        запись, и пиксели; полная формула — во всплывающей подсказке значения.
+        The script reads the list straight from <code>/assets/app.css</code>:
+        <code>:root</code> rules → <code>--*</code> properties. The values are
+        the computed ones (<code>getComputedStyle</code>), so the table shows
+        what actually applies at the current width and is recalculated when
+        the window is resized. The “mobile/desktop” badge marks derived tokens
+        that have separate reference values for the two device classes. For
+        tokens written in <code>rem</code> or <code>em</code>, both the
+        original value and the pixels are shown; the full formula is in the
+        tooltip of the value.
       </p>
 
       <div class="sg-demo sg-fontscale" data-font-scale>
-        <p class="sg-demo__label">Проверка масштаба шрифта</p>
-        <div class="sg-row" role="group" aria-label="Размер шрифта страницы">
+        <p class="sg-demo__label">Font size check</p>
+        <div class="sg-row" role="group" aria-label="Page font size">
           <button type="button" class="btn btn--primary" data-font-scale-value="100" aria-pressed="true">100 %</button>
           <button type="button" class="btn btn--secondary" data-font-scale-value="125" aria-pressed="false">125 %</button>
           <button type="button" class="btn btn--secondary" data-font-scale-value="150" aria-pressed="false">150 %</button>
@@ -65,155 +66,155 @@
         </div>
       </div>
       <p class="sg-note">
-        Страница следует размеру шрифта пользователя: шрифты, ширины контейнеров
-        и иконки заданы в <code>rem</code>, отступы — в <code>rem</code> с
-        потолком от ширины окна, пороги раскладки компонентов — в
-        <code>rem</code> по ширине контейнера. Кнопки выше (нужен скрипт) меняют
-        размер шрифта корневого элемента этой страницы — так же, как его меняет
-        системная настройка на телефоне. Проверять на ширине 360 px при 150 % и
-        200 %: без горизонтальной прокрутки, таймер складывается в 2×2, подписи
-        не выходят из ячеек. 330 % — предел системного «Увеличенного текста» на
-        iPhone (корень ≈ 53 px): таймер встаёт в одну колонку, прокрутки
-        по-прежнему нет. Граница раскладки <code>--bp-layout</code> задана в
-        <code>em</code> медиазапроса и зависит от размера шрифта в настройках
-        браузера, а не от корневого элемента: её проверяют настройкой браузера
-        «Размер шрифта» — при «очень крупном» две колонки включаются на более
-        широком окне.
+        The page follows the user’s font size: fonts, container widths and
+        icons are set in <code>rem</code>, spacing in <code>rem</code> capped by
+        the window width, and the layout thresholds of components in
+        <code>rem</code>, measured against the container width. The buttons above (they need
+        the script) change the font size of the root element of this page, just
+        as the system setting on a phone does. Check at a width of 360 px at
+        150 % and 200 %: no horizontal scroll, the countdown folds into 2×2, the
+        labels stay inside their cells. 330 % is the limit of the system
+        “Larger Text” setting on an iPhone (root ≈ 53 px): the countdown
+        becomes a single column, and there is still no scroll. The layout
+        breakpoint <code>--bp-layout</code> is set in <code>em</code> in a
+        media query and depends on the font size in the browser settings,
+        not on the root element: check it with the browser’s “Font size”
+        setting — at “Very large”, the two columns switch on at a wider window.
       </p>
 
       <div class="sg-demo">
-        <p class="sg-meta" data-token-meta>Ширина области просмотра определяется скриптом.</p>
+        <p class="sg-meta" data-token-meta>The script reports the viewport width.</p>
         <p class="sg-note sg-nojs">
-          Таблица токенов строится скриптом и без JavaScript не отображается —
-          это единственная часть витрины, которой нужен скрипт. Компоненты,
-          состояния и типографическая шкала ниже видны и без него; значения
-          токенов можно прочитать в <code>/assets/app.css</code>, секция
-          «1. Tokens».
+          The script builds the token table, so it is not shown without
+          JavaScript — this is the only part of the showcase that needs the
+          script. The components, states and type scale below are visible
+          without it; the token values can be read in
+          <code>/assets/app.css</code>, section “1. Tokens”.
         </p>
         <div data-token-table></div>
       </div>
     </div>
   </section>
 
-  <!-- ================================================= Типографика ====== -->
+  <!-- ================================================== Typography ====== -->
   <section class="section" id="type">
     <div class="container container--wide">
-      <h2 class="section__title">Типографическая шкала</h2>
+      <h2 class="section__title">Type scale</h2>
       <p class="prose prose--muted">
-        Восемь ступеней — от мелкой подписи до «дисплейного» размера обложки.
-        Каждая ступень интерполируется между мобильным и десктопным опорным
-        значением, поэтому размеры на этой странице зависят от ширины окна.
+        Eight steps, from a small caption to the “display” size of the cover.
+        Each step is interpolated between a mobile and a desktop reference
+        value, so the sizes on this page depend on the window width.
       </p>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Ступени шкалы</p>
+        <p class="sg-demo__label">Scale steps</p>
         <div class="sg-scale">
           <p class="sg-scale__row">
             <code class="sg-scale__name">--text-xs</code>
-            <span class="sg-scale__sample sg-scale__sample--xs">Мелкая подпись под элементом</span>
+            <span class="sg-scale__sample sg-scale__sample--xs">A small caption under an element</span>
           </p>
           <p class="sg-scale__row">
             <code class="sg-scale__name">--text-sm</code>
-            <span class="sg-scale__sample sg-scale__sample--sm">Вторичный текст и сноски</span>
+            <span class="sg-scale__sample sg-scale__sample--sm">Secondary text and footnotes</span>
           </p>
           <p class="sg-scale__row">
             <code class="sg-scale__name">--text-base</code>
-            <span class="sg-scale__sample sg-scale__sample--base">Основной текст страницы</span>
+            <span class="sg-scale__sample sg-scale__sample--base">Body text of the page</span>
           </p>
           <p class="sg-scale__row">
             <code class="sg-scale__name">--text-md</code>
-            <span class="sg-scale__sample sg-scale__sample--md">Вводный абзац секции</span>
+            <span class="sg-scale__sample sg-scale__sample--md">The lead paragraph of a section</span>
           </p>
           <p class="sg-scale__row">
             <code class="sg-scale__name">--text-lg</code>
-            <span class="sg-scale__sample sg-scale__sample--lg">Заголовок третьего уровня</span>
+            <span class="sg-scale__sample sg-scale__sample--lg">A third-level heading</span>
           </p>
           <p class="sg-scale__row">
             <code class="sg-scale__name">--text-xl</code>
-            <span class="sg-scale__sample sg-scale__sample--xl">Заголовок секции</span>
+            <span class="sg-scale__sample sg-scale__sample--xl">Section heading</span>
           </p>
           <p class="sg-scale__row">
             <code class="sg-scale__name">--text-2xl</code>
-            <span class="sg-scale__sample sg-scale__sample--2xl">Заголовок страницы</span>
+            <span class="sg-scale__sample sg-scale__sample--2xl">Page heading</span>
           </p>
           <p class="sg-scale__row">
             <code class="sg-scale__name">--text-display</code>
-            <span class="sg-scale__sample sg-scale__sample--display">Обложка</span>
+            <span class="sg-scale__sample sg-scale__sample--display">Cover</span>
           </p>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Плашка обложки: дисплейный размер, метка даты</p>
+        <p class="sg-demo__label">Cover plate: display size, date label</p>
         <div class="sg-plate sg-plate--cover">
-          <p class="sg-plate__display">Заголовок обложки</p>
-          <p class="time-label time-label--strong">15 июня 2030</p>
+          <p class="sg-plate__display">Cover heading</p>
+          <p class="time-label time-label--strong">15 June 2030</p>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Перенос длинных слов</p>
-        <p class="prose">Непрерывнаястрокабезпробеловкотораядолжнаперенестисьанерастянутьраскладкустраницы</p>
+        <p class="sg-demo__label">Breaking long words</p>
+        <p class="prose">Acontinuousstringwithoutspacesthatmustwrapratherthanstretchthelayoutofthepage</p>
       </div>
     </div>
   </section>
 
-  <!-- ==================================================== Раскладка ====== -->
+  <!-- ====================================================== Layout ====== -->
   <section class="section" id="layout">
     <div class="container container--wide">
-      <h2 class="section__title">Раскладка</h2>
+      <h2 class="section__title">Layout</h2>
       <p class="prose prose--muted">
-        Один контейнер в двух ширинах, одна сетка, один вертикальный ритм и одно
-        медиа с фиксированными пропорциями. На границе раскладки
-        (<code>48em</code> — 768&nbsp;px при размере шрифта по умолчанию)
-        переопределяются только раскладочные токены: число колонок и пропорции
-        изображений; визуальный стиль компонентов не меняется.
+        One container in two widths, one grid, one vertical rhythm and one
+        media frame with fixed proportions. At the layout breakpoint
+        (<code>48em</code> — 768&nbsp;px at the default font size) only the
+        layout tokens are overridden: the number of columns and the image
+        proportions; the visual style of the components stays the same.
       </p>
 
       <p class="sg-note">
-        Высота обложки задаётся токеном <code>--cover-min-height</code> — доля
-        <code>--cover-height-ratio</code> (отдельно для мобильного и десктопа)
-        от <code>--viewport-height</code> (<code>100svh</code> с фолбэком на
-        <code>100vh</code>). Медиа и плитка видео не выше
-        <code>--media-max-height</code>, поэтому в ландшафтной ориентации
-        телефона кадр помещается в экран.
+        The cover height is set by the token <code>--cover-min-height</code>:
+        the share <code>--cover-height-ratio</code> (separate for mobile and
+        desktop) of <code>--viewport-height</code> (<code>100svh</code> with a
+        fallback to <code>100vh</code>). Media and the video tile are no taller
+        than <code>--media-max-height</code>, so in landscape orientation on a
+        phone the frame fits the screen.
       </p>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Контейнер: .container и .container--wide</p>
+        <p class="sg-demo__label">Container: .container and .container--wide</p>
         <div class="container">
-          <p class="sg-box">.container — текстовая колонка (--container-text)</p>
+          <p class="sg-box">.container — the text column (--container-text)</p>
         </div>
         <div class="container container--wide">
-          <p class="sg-box">.container--wide — широкий контейнер (--container-wide)</p>
+          <p class="sg-box">.container--wide — the wide container (--container-wide)</p>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Сетка: .grid (--grid-columns, --grid-gap)</p>
+        <p class="sg-demo__label">Grid: .grid (--grid-columns, --grid-gap)</p>
         <div class="grid">
-          <p class="sg-box">Колонка 1</p>
-          <p class="sg-box">Колонка 2</p>
-          <p class="sg-box">Колонка 3</p>
-          <p class="sg-box">Колонка 4</p>
+          <p class="sg-box">Column 1</p>
+          <p class="sg-box">Column 2</p>
+          <p class="sg-box">Column 3</p>
+          <p class="sg-box">Column 4</p>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Вертикальный ритм: .stack (--flow-space)</p>
+        <p class="sg-demo__label">Vertical rhythm: .stack (--flow-space)</p>
         <div class="stack">
-          <p class="sg-box">Первый элемент стека</p>
-          <p class="sg-box">Второй элемент стека</p>
-          <p class="sg-box">Третий элемент стека</p>
+          <p class="sg-box">First item of the stack</p>
+          <p class="sg-box">Second item of the stack</p>
+          <p class="sg-box">Third item of the stack</p>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Пропорции медиа: .media, .media--video, .media--scheme</p>
+        <p class="sg-demo__label">Media proportions: .media, .media--video, .media--scheme</p>
         <div class="sg-cols">
           <figure>
             <div class="media sg-plate"></div>
-            <figcaption class="gallery__caption">.media — фото (--ratio-photo)</figcaption>
+            <figcaption class="gallery__caption">.media — photo (--ratio-photo)</figcaption>
           </figure>
           <figure>
             <div class="media media--video sg-plate"></div>
@@ -228,106 +229,107 @@
     </div>
   </section>
 
-  <!-- =================================================== Компоненты ====== -->
+  <!-- ================================================== Components ====== -->
   <section class="section" id="components">
     <div class="container container--wide">
-      <h2 class="section__title">Компоненты</h2>
+      <h2 class="section__title">Components</h2>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Заголовок секции и текстовый блок</p>
-        <p class="section__subtitle">Подзаголовок секции</p>
-        <h3 class="section__title">Заголовок секции</h3>
+        <p class="sg-demo__label">Section heading and text block</p>
+        <p class="section__subtitle">Section subtitle</p>
+        <h3 class="section__title">Section heading</h3>
         <div class="prose">
           <p class="prose--lead">
-            Вводный абзац секции: короткий текст, который задаёт тон и вводит в
-            содержание блока.
+            The lead paragraph of a section: a short text that sets the tone and
+            introduces the content of the block.
           </p>
           <p>
-            Основной текст секции. Он набран основным размером шкалы и
-            ограничен по ширине текстовой колонкой, чтобы строки оставались
-            удобными для чтения на широком экране.
+            The body text of a section. It is set in the base size of the scale
+            and limited in width by the text column, so that the lines stay
+            comfortable to read on a wide screen.
           </p>
           <p class="prose--muted">
-            Дополнительное пояснение вторичным цветом: уточнение, примечание
-            или сноска.
+            An additional explanation in the secondary colour: a clarification,
+            a remark or a footnote.
           </p>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Разделитель: .divider и .divider--accent</p>
+        <p class="sg-demo__label">Divider: .divider and .divider--accent</p>
         <hr class="divider">
         <hr class="divider divider--accent">
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Карточка: .card</p>
+        <p class="sg-demo__label">Card: .card</p>
         <div class="grid">
           <div class="card">
-            <h4 class="card__title">Заголовок карточки</h4>
+            <h4 class="card__title">Card heading</h4>
             <p class="card__text">
-              Короткий текст карточки: две-три строки описания, которых хватает,
-              чтобы оценить отступы и межстрочный интервал.
+              A short card text: two or three lines of description, enough to
+              judge the padding and the line spacing.
             </p>
             <div class="card__footer">
-              <button type="button" class="btn btn--primary">Основное действие</button>
-              <button type="button" class="btn btn--secondary">Второстепенное</button>
+              <button type="button" class="btn btn--primary">Primary action</button>
+              <button type="button" class="btn btn--secondary">Secondary</button>
             </div>
           </div>
           <div class="card card--plain">
-            <h4 class="card__title">Карточка без заливки</h4>
+            <h4 class="card__title">A card without a fill</h4>
             <p class="card__text">
-              Модификатор .card--plain: та же геометрия, прозрачный фон и без
-              тени.
+              The .card--plain modifier: the same geometry, a transparent
+              background and no shadow.
             </p>
           </div>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Метка времени: .time-label</p>
+        <p class="sg-demo__label">Time label: .time-label</p>
         <div class="sg-row">
           <span class="time-label">12:00</span>
-          <span class="time-label">15 июня 2030</span>
+          <span class="time-label">15 June 2030</span>
           <span class="time-label time-label--strong">18:30</span>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Таймер: .countdown / .countdown__cell</p>
+        <p class="sg-demo__label">Countdown: .countdown / .countdown__cell</p>
         <p class="sg-note">
-          Раскладка зависит от ширины контейнера, а не окна: четыре ячейки в
-          ряд, если контейнер не уже <code>--countdown-inline-min</code>, иначе
-          2×2; в контейнере не шире <code>--countdown-stack-max</code> (очень
-          крупный системный шрифт на телефоне) — одна колонка. Здесь контейнер — рамка демонстрационного блока.
+          The layout depends on the width of the container, not of the window:
+          four cells in a row if the container is at least
+          <code>--countdown-inline-min</code> wide, otherwise 2×2; in a
+          container no wider than <code>--countdown-stack-max</code> (a very
+          large system font on a phone), a single column. Here the container is the frame of the demo block.
         </p>
         <ul class="countdown">
           <li class="countdown__cell">
             <span class="countdown__value">128</span>
-            <span class="countdown__label">дней</span>
+            <span class="countdown__label">days</span>
           </li>
           <li class="countdown__cell">
             <span class="countdown__value">07</span>
-            <span class="countdown__label">часов</span>
+            <span class="countdown__label">hours</span>
           </li>
           <li class="countdown__cell">
             <span class="countdown__value">42</span>
-            <span class="countdown__label">минут</span>
+            <span class="countdown__label">minutes</span>
           </li>
           <li class="countdown__cell">
             <span class="countdown__value">09</span>
-            <span class="countdown__label">секунд</span>
+            <span class="countdown__label">seconds</span>
           </li>
         </ul>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Галерея: .gallery / .gallery__item (плашки вместо фотографий)</p>
+        <p class="sg-demo__label">Gallery: .gallery / .gallery__item (plates in place of photos)</p>
         <p class="sg-note">
-          В репозитории нет медиафайлов, поэтому элементы галереи показаны
-          плашками. На настоящих изображениях <code>.gallery__item</code>
-          задаёт пропорцию <code>--ratio-gallery</code>,
-          <code>object-fit: cover</code> и точку кадрирования
+          The repository has no media files, so the gallery items are shown as
+          plates. On real images, <code>.gallery__item</code> sets the
+          proportion <code>--ratio-gallery</code>,
+          <code>object-fit: cover</code> and the focal point
           <code>--image-focus</code>.
         </p>
         <ul class="gallery">
@@ -336,19 +338,19 @@
           <li><div class="gallery__item sg-plate"></div></li>
           <li>
             <button type="button" class="gallery__link">
-              <span class="visually-hidden">Открыть изображение</span>
+              <span class="visually-hidden">Photo</span>
               <span class="gallery__item sg-plate"></span>
             </button>
           </li>
           <li>
             <button type="button" class="gallery__link is-hover">
-              <span class="visually-hidden">Открыть изображение</span>
+              <span class="visually-hidden">Photo</span>
               <span class="gallery__item sg-plate"></span>
             </button>
           </li>
           <li>
             <button type="button" class="gallery__link is-focus">
-              <span class="visually-hidden">Открыть изображение</span>
+              <span class="visually-hidden">Photo</span>
               <span class="gallery__item sg-plate"></span>
             </button>
           </li>
@@ -357,48 +359,50 @@
 
       <!-- sg:cover -->
       <div class="sg-demo">
-        <p class="sg-demo__label">Фото на обложке: .cover__backdrop, .cover__photo (плашки вместо фото)</p>
+        <p class="sg-demo__label">Cover photo: .cover__backdrop, .cover__photo (plates in place of photos)</p>
         <p class="sg-note">
-          Необязательное фото на фоне обложки (поле <code>background</code>)
-          лежит в подложке <code>.cover__backdrop</code> под содержимым и
-          заполняет обложку при любой пропорции экрана
-          (<code>object-fit: cover</code>). Поверх фото — вуаль цвета
-          <code>--color-cover-veil</code> непрозрачностью
-          <code>--cover-veil-opacity</code>, весь текст обложки на фото —
-          цветом <code>--color-cover-text</code>, вторичного серого на фото нет.
-          Вуаль подобрана под худший кадр — чёрный: контраст текста не ниже
-          4,5:1 на любом фото (расчёт — в комментарии у токена). Фото
-          декоративное: <code>alt=""</code>, подложка скрыта от диктора; при
-          печати фото нет. Здесь фото заменяют плашки: светлая и тёмная.
+          The optional photo behind the cover (the <code>background</code>
+          field) sits in the backdrop <code>.cover__backdrop</code> under the
+          content and fills the cover at any screen proportion
+          (<code>object-fit: cover</code>). Over the photo lies a veil of the
+          colour <code>--color-cover-veil</code> at the opacity
+          <code>--cover-veil-opacity</code>, and all the cover text on the photo
+          is in <code>--color-cover-text</code>; there is no secondary grey on
+          the photo. The veil is chosen for the worst frame, a black one: the
+          text contrast is at least 4.5:1 on any photo (the calculation is in
+          the comment next to the token). The photo is decorative:
+          <code>alt=""</code>, the backdrop is hidden from screen readers, and
+          the photo is left out of print. Here plates stand in for the photo: a
+          light one and a dark one.
         </p>
         <p class="sg-note">
-          Какая часть кадра остаётся видна, когда экран обрезает фото, задаёт
-          модификатор из перечисления <code>backgroundFocus</code>:
-          <code>.cover__photo--center</code> (по умолчанию),
+          Which part of the frame stays visible when the screen crops the photo
+          is set by a modifier from the <code>backgroundFocus</code> list:
+          <code>.cover__photo--center</code> (the default),
           <code>--top</code>, <code>--bottom</code>, <code>--left</code>,
           <code>--right</code>, <code>--top-left</code>, <code>--top-right</code>,
-          <code>--bottom-left</code>, <code>--bottom-right</code> — ключевые
-          слова <code>object-position</code>. На портретном экране обрезаются
-          края ландшафтного кадра слева и справа, на широком — сверху и снизу.
-          Проверять фокус — на собранной странице основного примера.
+          <code>--bottom-left</code>, <code>--bottom-right</code> — the
+          <code>object-position</code> keywords. A portrait screen crops a
+          landscape frame on the left and the right, a wide one at the top and
+          the bottom. Check the focus on the built page of the main example.
         </p>
         <div class="sg-cols">
           <div class="cover sg-cover">
             <div class="cover__backdrop" aria-hidden="true"><div class="cover__photo sg-plate"></div></div>
             <div class="container cover__inner">
-              <p class="section__subtitle cover__eyebrow">Светлый кадр</p>
-              <p class="cover__title sg-plate__display">Заголовок обложки</p>
+              <p class="section__subtitle cover__eyebrow">Light frame</p>
+              <p class="cover__title sg-plate__display">Cover heading</p>
               <hr class="divider divider--accent cover__divider">
-              <p class="cover__date">15 июня 2030</p>
+              <p class="cover__date">15 June 2030</p>
             </div>
           </div>
           <div class="cover sg-cover">
             <div class="cover__backdrop" aria-hidden="true"><div class="cover__photo sg-overlay"></div></div>
             <div class="container cover__inner">
-              <p class="section__subtitle cover__eyebrow">Тёмный кадр</p>
-              <p class="cover__title sg-plate__display">Заголовок обложки</p>
+              <p class="section__subtitle cover__eyebrow">Dark frame</p>
+              <p class="cover__title sg-plate__display">Cover heading</p>
               <hr class="divider divider--accent cover__divider">
-              <p class="cover__date">15 июня 2030</p>
+              <p class="cover__date">15 June 2030</p>
             </div>
           </div>
         </div>
@@ -407,54 +411,54 @@
 
       <!-- sg:media-tile -->
       <div class="sg-demo">
-        <p class="sg-demo__label">Плитка медиа: .media-tile, .media-tile--video (плашки вместо постеров)</p>
+        <p class="sg-demo__label">Media tile: .media-tile, .media-tile--video (plates in place of posters)</p>
         <p class="sg-note">
-          Фото и видео на странице — одинаковые плитки: ссылка на файл
-          (<code>.gallery__link.media-tile</code>), картинка во всю рамку,
-          кольцо фокуса внутри рамки. У видео поверх постера — круглый значок
-          ▶ (<code>.media-tile__badge</code>, внутри inline-SVG
-          <code>.media-tile__icon</code> цвета <code>currentColor</code>):
-          диаметр <code>--media-play-size</code>, треугольник
-          <code>--media-play-icon-size</code>, цвета — роли оверлея
-          (<code>--color-overlay-control</code>, под курсором
+          Photos and videos on the page are the same tiles: a link to the file
+          (<code>.gallery__link.media-tile</code>), the picture fills the frame,
+          and the focus ring is inside the frame. A video has a round ▶ badge
+          over the poster (<code>.media-tile__badge</code>, with the inline SVG
+          <code>.media-tile__icon</code> in <code>currentColor</code> inside):
+          diameter <code>--media-play-size</code>, triangle
+          <code>--media-play-icon-size</code>, colours from the overlay roles
+          (<code>--color-overlay-control</code>, under the pointer
           <code>--color-overlay-control-hover</code>,
-          <code>--color-on-overlay</code>). Нажимается вся плитка, значок
-          только показывает, что это ролик. <code>.media-tile__duration</code>
-          — длительность в углу; разметка сайта её пока не выводит. По
-          порядку: фото, видео, видео под курсором, видео в фокусе, видео с
-          длительностью.
+          <code>--color-on-overlay</code>). The whole tile is pressable; the
+          badge only shows that it is a video. <code>.media-tile__duration</code>
+          is the duration in the corner, shown when the length of the video is
+          known. In order: photo, video, video under the pointer, video in
+          focus, video with a duration.
         </p>
         <ul class="gallery">
           <li>
             <button type="button" class="gallery__link media-tile">
-              <span class="visually-hidden">Открыть фотографию</span>
+              <span class="visually-hidden">Photo</span>
               <span class="gallery__item sg-plate"></span>
             </button>
           </li>
           <li>
             <button type="button" class="gallery__link media-tile media-tile--video">
-              <span class="visually-hidden">Видео</span>
+              <span class="visually-hidden">Video</span>
               <span class="gallery__item sg-plate"></span>
               <span class="media-tile__badge" aria-hidden="true"><svg class="media-tile__icon" viewBox="0 0 24 24" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
             </button>
           </li>
           <li>
             <button type="button" class="gallery__link media-tile media-tile--video is-hover">
-              <span class="visually-hidden">Видео</span>
+              <span class="visually-hidden">Video</span>
               <span class="gallery__item sg-plate"></span>
               <span class="media-tile__badge" aria-hidden="true"><svg class="media-tile__icon" viewBox="0 0 24 24" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
             </button>
           </li>
           <li>
             <button type="button" class="gallery__link media-tile media-tile--video is-focus">
-              <span class="visually-hidden">Видео</span>
+              <span class="visually-hidden">Video</span>
               <span class="gallery__item sg-plate"></span>
               <span class="media-tile__badge" aria-hidden="true"><svg class="media-tile__icon" viewBox="0 0 24 24" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
             </button>
           </li>
           <li>
             <button type="button" class="gallery__link media-tile media-tile--video">
-              <span class="visually-hidden">Видео, 0:20</span>
+              <span class="visually-hidden">Video, 0:20</span>
               <span class="gallery__item sg-plate"></span>
               <span class="media-tile__badge" aria-hidden="true"><svg class="media-tile__icon" viewBox="0 0 24 24" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
               <span class="media-tile__duration" aria-hidden="true">0:20</span>
@@ -464,23 +468,23 @@
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Одиночная плитка: .gallery--single (вертикальный кадр 9 / 16)</p>
+        <p class="sg-demo__label">Single tile: .gallery--single (portrait frame 9 / 16)</p>
         <p class="sg-note">
-          Одна плитка по центру колонки в пропорции своего кадра. Размер задаёт
-          невидимый размерник перед плиткой: <code>&lt;svg
-          class="gallery__sizer"&gt;</code> с размерами ролика из данных в
-          <code>width</code>/<code>height</code>/<code>viewBox</code>, а без
-          них — <code>.gallery__sizer--default</code> с пропорцией
-          <code>--ratio-video</code>. Атрибута <code>style</code> в разметке
-          нет. Плитка не выше <code>--media-max-height</code> и не шире
-          колонки, поэтому вертикальный ролик на десктопе остаётся узкой
-          плиткой по центру.
+          A single tile in the centre of the column, in the proportion of its
+          frame. The size comes from an invisible sizer before the tile:
+          <code>&lt;svg class="gallery__sizer"&gt;</code> with the size of the
+          video from the data in <code>width</code>/<code>height</code>/<code>viewBox</code>,
+          or, without them, <code>.gallery__sizer--default</code> with the
+          proportion <code>--ratio-video</code>. The markup has no
+          <code>style</code> attribute. The tile is no taller than
+          <code>--media-max-height</code> and no wider than the column, so a
+          portrait video on the desktop stays a narrow tile in the centre.
         </p>
         <ul class="gallery gallery--single">
           <li class="gallery__item">
             <svg class="gallery__sizer" width="720" height="1280" viewBox="0 0 720 1280" aria-hidden="true" focusable="false"></svg>
             <button type="button" class="gallery__link media-tile media-tile--video">
-              <span class="visually-hidden">Видео</span>
+              <span class="visually-hidden">Video</span>
               <span class="sg-plate sg-plate--fill"></span>
               <span class="media-tile__badge" aria-hidden="true"><svg class="media-tile__icon" viewBox="0 0 24 24" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
             </button>
@@ -489,49 +493,51 @@
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Ролик в окне просмотра: .lightbox.is-video, .lightbox__video</p>
+        <p class="sg-demo__label">Video in the viewer: .lightbox.is-video, .lightbox__video</p>
         <p class="sg-note">
-          Нажатие на плитку видео открывает то же окно просмотра, что и у фото,
-          и сразу запускает ролик со звуком. В окне один
-          <code>&lt;video controls&gt;</code> с нативной панелью браузера: вид,
-          кнопки, перемотку и полноэкранный режим (на iPhone — системным
-          плеером) задаёт браузер, своих стилей и токенов у панели нет. Кадр
-          вписан в окно целиком в пропорции ролика. Ролик, до которого
-          долистали, сам не стартует и до нажатия не загружается; при уходе с
-          него и при закрытии окна он останавливается. Esc в полноэкранном
-          режиме сначала выходит из него, второй Esc закрывает окно. Если файл
-          не загрузился, вместо кадра — сообщение
-          (<code>.lightbox.is-error</code>). Окно создаёт скрипт, а медиафайлов
-          в репозитории нет, поэтому здесь только описание; проверяют его на
-          собранной странице с видео. Без скрипта плитка — обычная ссылка:
-          браузер открывает ролик своим плеером.
+          Pressing a video tile opens the same viewer as for photos and starts
+          the video at once, with sound. The viewer holds a single
+          <code>&lt;video controls&gt;</code> with the browser’s native panel:
+          its look, buttons, seeking and full-screen mode (on an iPhone, the
+          system player) come from the browser; the panel has no styles or
+          tokens of its own. The frame fits the viewer whole, in the proportion
+          of the video. A video reached by swiping does not start by itself and
+          loads nothing until it is pressed; it stops when the viewer moves away
+          from it or closes. In full-screen mode, Esc first leaves it, and a
+          second Esc closes the viewer. If the file fails to load, a message
+          replaces the frame (<code>.lightbox.is-error</code>). The script
+          creates the viewer and the repository has no media files, so there is
+          only a description here; check it on a built page with a video.
+          Without the script the tile is a plain link: the browser opens the
+          video in its own player.
         </p>
       </div>
       <!-- /sg:media-tile -->
 
       <!-- sg:section -->
       <div class="sg-demo">
-        <p class="sg-demo__label">Секция из виджетов: .section--start | --center, .container--narrow | --wide, .section__body, .section__note</p>
+        <p class="sg-demo__label">A section of widgets: .section--start | --center, .container--narrow | --wide, .section__body, .section__note</p>
         <p class="sg-note">
-          Каркас каждой обычной секции страницы: заголовок h2 (здесь — h3, внутри раздела витрины) и тело — виджеты
-          подряд с шагом <code>--space-lg</code>, в конце приписка гостя
-          (<code>.card.section__note</code>, не шире текстовой колонки).
-          Ширину и выравнивание выбирает конфигурация. Заголовок можно скрыть
-          (<code>.visually-hidden</code>): он остаётся доступным именем секции.
-          Метка появления — одна на секцию, на контейнере. По порядку: узкая
-          слева с припиской; широкая по центру; скрытый заголовок; секция из
-          одной приписки.
+          The frame of every ordinary section of the page: an h2 heading (h3
+          here, inside a showcase section) and the body — widgets one after
+          another with a gap of <code>--space-lg</code>, ending with the guest’s
+          note (<code>.card.section__note</code>, no wider than the text
+          column). The width and alignment come from the configuration. The
+          heading can be hidden (<code>.visually-hidden</code>): it stays the
+          accessible name of the section. There is one reveal mark per section,
+          on the container. In order: narrow, left-aligned, with a note; wide,
+          centred; a hidden heading; a section of a single note.
         </p>
         <section class="section section--start" aria-labelledby="sg-section-1">
           <div class="container container--narrow">
-            <h3 class="section__title" id="sg-section-1">Гостям из других городов</h3>
+            <h3 class="section__title" id="sg-section-1">For guests from out of town</h3>
             <div class="stack section__body">
               <div class="widget text-widget text-widget--body prose">
-                <p>От вокзала до усадьбы и обратно ходит трансфер.</p>
+                <p>A shuttle runs between the station and the manor.</p>
               </div>
               <div class="card section__note">
                 <div class="prose">
-                  <p>Встретим тебя на вокзале — скажи, каким поездом приедешь.</p>
+                  <p>We’ll meet you at the station — just let us know which train you’re on.</p>
                 </div>
               </div>
             </div>
@@ -539,34 +545,34 @@
         </section>
         <section class="section section--center" aria-labelledby="sg-section-2">
           <div class="container container--wide">
-            <h3 class="section__title" id="sg-section-2">Подтверждение</h3>
+            <h3 class="section__title" id="sg-section-2">RSVP</h3>
             <div class="stack section__body">
               <div class="widget text-widget text-widget--lead prose">
-                <p>Пожалуйста, ответьте нам до 1 мая 2030.</p><p>Будем очень рады встрече!</p>
+                <p>Please reply by 1 May 2030.</p><p>We can’t wait to see you!</p>
               </div>
               <div class="widget text-widget text-widget--signature prose">
-                <p>Алиса и Боб</p>
+                <p>Alice and Bob</p>
               </div>
             </div>
           </div>
         </section>
         <section class="section section--start" aria-labelledby="sg-section-3">
           <div class="container container--narrow">
-            <h3 class="section__title visually-hidden" id="sg-section-3">Скрытый заголовок</h3>
+            <h3 class="section__title visually-hidden" id="sg-section-3">Hidden heading</h3>
             <div class="stack section__body">
               <div class="widget text-widget text-widget--body prose">
-                <p>У этой секции заголовок скрыт визуально: его прочтёт экранный диктор, а на экране секция начинается сразу с текста.</p>
+                <p>This section’s heading is hidden visually: a screen reader reads it out, while on screen the section starts straight with the text.</p>
               </div>
             </div>
           </div>
         </section>
         <section class="section section--start" aria-labelledby="sg-section-4">
           <div class="container container--narrow">
-            <h3 class="section__title" id="sg-section-4">Несколько слов лично</h3>
+            <h3 class="section__title" id="sg-section-4">A few personal words</h3>
             <div class="stack section__body">
               <div class="card section__note">
                 <div class="prose">
-                  <p>Помнишь, как мы познакомились в поезде?</p><p>Обнимаем и ждём!</p>
+                  <p>Remember how we met on the train?</p><p>Big hugs, and see you soon!</p>
                 </div>
               </div>
             </div>
@@ -577,47 +583,49 @@
 
       <!-- sg:location-card -->
       <div class="sg-demo">
-        <p class="sg-demo__label">Карточка места: .location-card — полная, .location-card--compact, ready: false</p>
+        <p class="sg-demo__label">Venue card: .location-card — full, .location-card--compact, ready: false</p>
         <p class="sg-note">
-          Полная карточка на десктопе стоит в две колонки (<code>.grid</code>,
-          <code>.venue__*</code>): название, адрес, описание, кнопки карт и
-          схема проезда слева, лента фото и видео справа. Под схемой —
-          подпись «Схема проезда» и, если оно задано, авторство схемы
-          (<code>.venue__scheme-credit</code>) через пробел. Компактная —
-          только название, адрес и кнопки карт. Пока место не объявлено —
-          «Подробности появятся на этой странице позже.». В отдельном
-          виджете название — h3, внутри карточки события — h4. Кнопки карт
-          на странице — ссылки на сервисы карт, здесь — кнопки без действия.
+          On the desktop the full card has two columns (<code>.grid</code>,
+          <code>.venue__*</code>): the name, address, description, map buttons
+          and directions on the left, a ribbon of photos and videos on the
+          right. Under the directions map is the caption “Directions” and, if
+          one is given, the credit of the map
+          (<code>.venue__scheme-credit</code>) after a space. The compact card
+          has only the name, the address and the map buttons. While the place
+          is not announced, the card reads “Details will appear on this page
+          later.” In a separate widget the name is an h3, inside an event card
+          an h4. On the page the map buttons are links to map services; here
+          they are buttons that do nothing.
         </p>
         <div class="stack stack--loose">
         <div class="widget location-widget">
           <div class="grid venue__layout location-card">
             <div class="stack venue__info">
-              <h3 class="venue__name">Усадьба «Образец»</h3>
-              <p class="venue__address">г. Энск, ул. Примерная, д. 1</p>
+              <h3 class="venue__name">Example Manor</h3>
+              <p class="venue__address">1 Example Street, Sampleton</p>
               <div class="prose venue__description">
-                <p>Старинная усадьба на берегу пруда.</p><p>На территории есть бесплатная парковка.</p>
+                <p>An old manor house by a pond.</p><p>There is free parking on site.</p>
               </div>
-              <ul class="venue__maps" role="list" aria-label="Открыть на карте">
-                <li class="venue__map"><button type="button" class="btn btn--secondary">Google Карты</button></li>
-                <li class="venue__map"><button type="button" class="btn btn--secondary">Яндекс Карты</button></li>
-                <li class="venue__map"><button type="button" class="btn btn--secondary">Apple Карты</button></li>
+              <ul class="venue__maps" role="list" aria-label="Open in maps">
+                <li class="venue__map"><button type="button" class="btn btn--secondary">Google Maps</button></li>
+                <li class="venue__map"><button type="button" class="btn btn--secondary">Yandex Maps</button></li>
+                <li class="venue__map"><button type="button" class="btn btn--secondary">Apple Maps</button></li>
               </ul>
               <figure class="venue__scheme">
                 <div class="media media--scheme sg-plate"></div>
-                <figcaption class="gallery__caption">Схема проезда <span class="venue__scheme-credit">©&nbsp;Картографическая служба Энска</span></figcaption>
+                <figcaption class="gallery__caption">Directions <span class="venue__scheme-credit">©&nbsp;Sampleton Mapping Service</span></figcaption>
               </figure>
             </div>
             <ul class="gallery gallery--ribbon venue__gallery" role="list">
               <li class="gallery__item">
                 <button type="button" class="gallery__link media-tile">
-                  <span class="visually-hidden">Сад усадьбы</span>
+                  <span class="visually-hidden">The manor garden</span>
                   <span class="sg-plate sg-plate--fill"></span>
                 </button>
               </li>
               <li class="gallery__item">
                 <button type="button" class="gallery__link media-tile media-tile--video">
-                  <span class="visually-hidden">Видео: прогулка по саду, 0:05</span>
+                  <span class="visually-hidden">Video: a walk in the garden, 0:05</span>
                   <span class="sg-plate sg-plate--fill"></span>
                   <span class="media-tile__badge" aria-hidden="true"><svg class="media-tile__icon" viewBox="0 0 24 24" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
                   <span class="media-tile__duration" aria-hidden="true">0:05</span>
@@ -625,7 +633,7 @@
               </li>
               <li class="gallery__item">
                 <button type="button" class="gallery__link media-tile">
-                  <span class="visually-hidden">Главный зал</span>
+                  <span class="visually-hidden">The main hall</span>
                   <span class="sg-plate sg-plate--fill"></span>
                 </button>
               </li>
@@ -635,17 +643,17 @@
         <div class="grid">
           <div class="widget location-widget">
             <div class="card stack location-card location-card--compact">
-              <h3 class="venue__name">Гостиница «Пример»</h3>
-              <p class="venue__address">г. Энск, Вокзальная ул., д. 5</p>
-              <ul class="venue__maps" role="list" aria-label="Открыть на карте">
-                <li class="venue__map"><button type="button" class="btn btn--secondary">Google Карты</button></li>
-                <li class="venue__map"><button type="button" class="btn btn--secondary">Яндекс Карты</button></li>
+              <h3 class="venue__name">Example Hotel</h3>
+              <p class="venue__address">5 Station Road, Sampleton</p>
+              <ul class="venue__maps" role="list" aria-label="Open in maps">
+                <li class="venue__map"><button type="button" class="btn btn--secondary">Google Maps</button></li>
+                <li class="venue__map"><button type="button" class="btn btn--secondary">Yandex Maps</button></li>
               </ul>
             </div>
           </div>
           <div class="widget location-widget">
             <div class="card location-card location-card--pending venue__pending">
-              <p>Подробности появятся на этой странице позже.</p>
+              <p>Details will appear on this page later.</p>
             </div>
           </div>
         </div>
@@ -655,69 +663,72 @@
 
       <!-- sg:event-card -->
       <div class="sg-demo">
-        <p class="sg-demo__label">Карточка события без скрипта: .events__panel, .events__panel--primary</p>
+        <p class="sg-demo__label">Event card without the script: .events__panel, .events__panel--primary</p>
         <p class="sg-note">
-          Без скрипта карточки событий идут подряд по времени начала,
-          первостепенная для гостя — в рамке цвета акцента. Порядок в
-          карточке: название (h3), когда, кнопка календаря, описание,
-          приписка гостя (<code>.events__note</code>), место (название — h4),
-          программа (подзаголовок h4, пункты h5). Список вкладок, пометки
-          «прошло» / «идёт сейчас» и показ одной карточки за раз добавляет
-          скрипт — это отдельный компонент. По порядку: первостепенная
-          карточка с местом и программой; обычная, место ещё не объявлено.
+          Without the script the event cards follow one another by start time,
+          and the one that matters most for the guest has a border in the
+          accent colour. The order inside a card: the name (h3), when, the
+          calendar button, the description, the guest’s note
+          (<code>.events__note</code>), the place (its name is an h4) and the
+          programme (an h4 subheading, items in h5). The tab list, the marks
+          “past” / “happening now” (on a card, “this event is over” /
+          “happening now”) and showing one card at a time come from the script
+          — that is a separate component. In order: the primary card with a
+          place and a programme; an ordinary one whose place is not announced
+          yet.
         </p>
         <div class="widget events-widget events">
           <article class="card event events__panel events__panel--primary" aria-labelledby="sg-event-1">
             <header class="events__head">
-              <h3 class="card__title events__title" id="sg-event-1">Праздничный ужин</h3>
-              <p class="events__when"><time datetime="2030-06-15T16:00:00+03:00">Суббота, 15 июня 2030, 16:00–23:30</time></p>
-              <p class="events__actions"><button type="button" class="btn btn--secondary">Добавить в календарь</button></p>
+              <h3 class="card__title events__title" id="sg-event-1">Wedding dinner</h3>
+              <p class="events__when"><time datetime="2030-06-15T16:00:00+03:00">Saturday, 15 June 2030, 16:00–23:30</time></p>
+              <p class="events__actions"><button type="button" class="btn btn--secondary">Add to calendar</button></p>
             </header>
             <div class="prose events__description">
-              <p>Дресс-код — светлые тона.</p>
+              <p>Dress code: light colours.</p>
             </div>
             <div class="card events__note">
               <div class="prose">
-                <p>Напиши нам, пожалуйста, про аллергию — учтём это при выборе блюд.</p>
+                <p>Please let us know about any allergies — we’ll take them into account when choosing the dishes.</p>
               </div>
             </div>
             <div class="grid venue__layout location-card">
               <div class="stack venue__info">
-                <h4 class="venue__name">Усадьба «Образец»</h4>
-                <p class="venue__address">г. Энск, ул. Примерная, д. 1</p>
-                <ul class="venue__maps" role="list" aria-label="Открыть на карте">
-                  <li class="venue__map"><button type="button" class="btn btn--secondary">Google Карты</button></li>
+                <h4 class="venue__name">Example Manor</h4>
+                <p class="venue__address">1 Example Street, Sampleton</p>
+                <ul class="venue__maps" role="list" aria-label="Open in maps">
+                  <li class="venue__map"><button type="button" class="btn btn--secondary">Google Maps</button></li>
                 </ul>
               </div>
               <ul class="gallery gallery--ribbon venue__gallery" role="list">
                 <li class="gallery__item">
                   <button type="button" class="gallery__link media-tile">
-                    <span class="visually-hidden">Сад усадьбы</span>
+                    <span class="visually-hidden">The manor garden</span>
                     <span class="sg-plate sg-plate--fill"></span>
                   </button>
                 </li>
                 <li class="gallery__item">
                   <button type="button" class="gallery__link media-tile">
-                    <span class="visually-hidden">Главный зал</span>
+                    <span class="visually-hidden">The main hall</span>
                     <span class="sg-plate sg-plate--fill"></span>
                   </button>
                 </li>
               </ul>
             </div>
             <section class="events__program" aria-labelledby="sg-event-1-program">
-              <h4 class="events__program-title" id="sg-event-1-program">Программа</h4>
+              <h4 class="events__program-title" id="sg-event-1-program">Programme</h4>
               <ol class="schedule__list" role="list">
                 <li class="schedule__item">
                   <span class="time-label schedule__time">15:30</span>
                   <div class="stack stack--tight schedule__body">
-                    <h5 class="schedule__name">Сбор гостей</h5>
-                    <p>Напитки и закуски в саду.</p>
+                    <h5 class="schedule__name">Guests arrive</h5>
+                    <p>Drinks and canapés in the garden.</p>
                   </div>
                 </li>
                 <li class="schedule__item">
                   <span class="time-label schedule__time">18:00</span>
                   <div class="stack stack--tight schedule__body">
-                    <h5 class="schedule__name">Праздничный ужин</h5>
+                    <h5 class="schedule__name">Wedding dinner</h5>
                   </div>
                 </li>
               </ol>
@@ -725,12 +736,12 @@
           </article>
           <article class="card event events__panel events__panel--regular" aria-labelledby="sg-event-2">
             <header class="events__head">
-              <h3 class="card__title events__title" id="sg-event-2">Второй день</h3>
-              <p class="events__when"><time datetime="2030-06-16T12:00:00+03:00">Воскресенье, 16 июня 2030, 12:00</time></p>
-              <p class="events__actions"><button type="button" class="btn btn--secondary">Добавить в календарь</button></p>
+              <h3 class="card__title events__title" id="sg-event-2">The day after</h3>
+              <p class="events__when"><time datetime="2030-06-16T12:00:00+03:00">Sunday, 16 June 2030, 12:00</time></p>
+              <p class="events__actions"><button type="button" class="btn btn--secondary">Add to calendar</button></p>
             </header>
             <div class="location-card location-card--pending venue__pending">
-              <p>Подробности появятся на этой странице позже.</p>
+              <p>Details will appear on this page later.</p>
             </div>
           </article>
         </div>
@@ -739,104 +750,104 @@
 
       <!-- sg:events -->
       <div class="sg-demo">
-        <p class="sg-demo__label">Вкладки событий: .events__tab — состояния</p>
+        <p class="sg-demo__label">Event tabs: .events__tab — states</p>
         <p class="sg-note">
-          Со скриптом над карточками появляется список вкладок: название,
-          время и пометки «прошло» / «идёт сейчас» (тексты лежат в разметке,
-          скрипт только показывает их). Выбранная вкладка —
-          <code>aria-selected="true"</code>, пометки — классы
-          <code>.is-past</code> / <code>.is-now</code>. По порядку: обычная,
-          выбранная, hover, focus, нажатие, прошло, идёт сейчас.
+          With the script a tab list appears above the cards: the name, the
+          time and the marks “past” / “happening now” (the texts are in the
+          markup; the script only shows them). The selected tab has
+          <code>aria-selected="true"</code>; the marks are the classes
+          <code>.is-past</code> / <code>.is-now</code>. In order: ordinary,
+          selected, hover, focus, pressed, past, happening now.
         </p>
         <div class="sg-row">
           <span class="sg-state">
-            <span class="sg-state__label">обычная</span>
+            <span class="sg-state__label">ordinary</span>
             <button type="button" class="events__tab">
-              <span class="events__tab-title">Второй день</span>
-              <span class="events__tab-time"><time datetime="2030-06-16T12:00:00+03:00">16 июня, 12:00</time></span>
+              <span class="events__tab-title">The day after</span>
+              <span class="events__tab-time"><time datetime="2030-06-16T12:00:00+03:00">16 June, 12:00</time></span>
             </button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">aria-selected</span>
             <button type="button" class="events__tab" aria-selected="true">
-              <span class="events__tab-title">Праздничный ужин</span>
-              <span class="events__tab-time"><time datetime="2030-06-15T16:00:00+03:00">15 июня, 16:00</time></span>
+              <span class="events__tab-title">Wedding dinner</span>
+              <span class="events__tab-time"><time datetime="2030-06-15T16:00:00+03:00">15 June, 16:00</time></span>
             </button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:hover</span>
             <button type="button" class="events__tab is-hover">
-              <span class="events__tab-title">Второй день</span>
-              <span class="events__tab-time"><time datetime="2030-06-16T12:00:00+03:00">16 июня, 12:00</time></span>
+              <span class="events__tab-title">The day after</span>
+              <span class="events__tab-time"><time datetime="2030-06-16T12:00:00+03:00">16 June, 12:00</time></span>
             </button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:focus-visible</span>
             <button type="button" class="events__tab is-focus">
-              <span class="events__tab-title">Второй день</span>
-              <span class="events__tab-time"><time datetime="2030-06-16T12:00:00+03:00">16 июня, 12:00</time></span>
+              <span class="events__tab-title">The day after</span>
+              <span class="events__tab-time"><time datetime="2030-06-16T12:00:00+03:00">16 June, 12:00</time></span>
             </button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:active</span>
             <button type="button" class="events__tab is-active">
-              <span class="events__tab-title">Второй день</span>
-              <span class="events__tab-time"><time datetime="2030-06-16T12:00:00+03:00">16 июня, 12:00</time></span>
+              <span class="events__tab-title">The day after</span>
+              <span class="events__tab-time"><time datetime="2030-06-16T12:00:00+03:00">16 June, 12:00</time></span>
             </button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">.is-past</span>
             <button type="button" class="events__tab is-past">
-              <span class="events__tab-title">Регистрация</span>
-              <span class="events__tab-time"><time datetime="2030-06-15T11:00:00+03:00">15 июня, 11:00</time></span>
-              <span class="time-label">прошло</span>
+              <span class="events__tab-title">Ceremony</span>
+              <span class="events__tab-time"><time datetime="2030-06-15T11:00:00+03:00">15 June, 11:00</time></span>
+              <span class="time-label">past</span>
             </button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">.is-now</span>
             <button type="button" class="events__tab is-now">
-              <span class="events__tab-title">Праздничный ужин</span>
-              <span class="events__tab-time"><time datetime="2030-06-15T16:00:00+03:00">15 июня, 16:00</time></span>
-              <span class="time-label time-label--strong">идёт сейчас</span>
+              <span class="events__tab-title">Wedding dinner</span>
+              <span class="events__tab-time"><time datetime="2030-06-15T16:00:00+03:00">15 June, 16:00</time></span>
+              <span class="time-label time-label--strong">happening now</span>
             </button>
           </span>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Виджет событий со скриптом: .events__tabs и видимая карточка</p>
+        <p class="sg-demo__label">Events widget with the script: .events__tabs and the visible card</p>
         <p class="sg-note">
-          Все вкладки стоят в ряд, пока помещаются при ширине
-          <code>--events-tab-min</code>, иначе все столбиком. Число вкладок
-          на странице скрипт передаёт в <code>--events-count</code>; здесь
-          скрипта нет, и вкладки считаются по одной — они всегда в ряд.
-          Видна одна карточка, у первостепенной рамки акцентом больше нет:
-          выбор показывает вкладка. Карточка ниже — событие, которое идёт
-          сейчас.
+          All the tabs stand in a row while they fit at a width of
+          <code>--events-tab-min</code> each; otherwise they all stack in a
+          column. On the page the script passes the number of tabs in
+          <code>--events-count</code>; there is no script here, so the tabs are
+          counted as one each and always stand in a row. One card is visible,
+          and the primary one has no accent border: the tab shows the choice.
+          The card below is an event that is happening now.
         </p>
         <div class="widget events-widget events">
           <div class="events__tabs">
             <button type="button" class="events__tab is-past">
-              <span class="events__tab-title">Регистрация</span>
+              <span class="events__tab-title">Ceremony</span>
               <span class="events__tab-time"><time datetime="2030-06-15T11:00:00+03:00">11:00</time></span>
-              <span class="time-label">прошло</span>
+              <span class="time-label">past</span>
             </button>
             <button type="button" class="events__tab is-now" aria-selected="true">
-              <span class="events__tab-title">Праздничный ужин</span>
+              <span class="events__tab-title">Wedding dinner</span>
               <span class="events__tab-time"><time datetime="2030-06-15T16:00:00+03:00">16:00</time></span>
-              <span class="time-label time-label--strong">идёт сейчас</span>
+              <span class="time-label time-label--strong">happening now</span>
             </button>
           </div>
           <article class="card event events__panel events__panel--primary is-now" aria-labelledby="sg-event-3">
             <header class="events__head">
-              <h3 class="card__title events__title" id="sg-event-3">Праздничный ужин</h3>
-              <p class="events__when"><time datetime="2030-06-15T16:00:00+03:00">Суббота, 15 июня 2030, 16:00–23:30</time>
-                <span class="time-label time-label--strong">идёт сейчас</span></p>
-              <p class="events__actions"><button type="button" class="btn btn--secondary">Добавить в календарь</button></p>
+              <h3 class="card__title events__title" id="sg-event-3">Wedding dinner</h3>
+              <p class="events__when"><time datetime="2030-06-15T16:00:00+03:00">Saturday, 15 June 2030, 16:00–23:30</time>
+                <span class="time-label time-label--strong">happening now</span></p>
+              <p class="events__actions"><button type="button" class="btn btn--secondary">Add to calendar</button></p>
             </header>
             <div class="stack venue__info location-card">
-              <h4 class="venue__name">Усадьба «Образец»</h4>
-              <p class="venue__address">г. Энск, ул. Примерная, д. 1</p>
+              <h4 class="venue__name">Example Manor</h4>
+              <p class="venue__address">1 Example Street, Sampleton</p>
             </div>
           </article>
         </div>
@@ -845,67 +856,67 @@
 
       <!-- sg:cover-bar -->
       <div class="sg-demo">
-        <p class="sg-demo__label">Верхняя панель — свёрнутая обложка: .cover-bar, .cover-bar__title, __sep, __date</p>
+        <p class="sg-demo__label">Top bar — the collapsed cover: .cover-bar, .cover-bar__title, __sep, __date</p>
         <p class="sg-note">
-          При прокрутке обложка сворачивается в панель у верхнего края окна:
-          текст обложки и фото гаснут, панель проявляется — меняется только
-          <code>opacity</code>, по прогрессу <code>--cover-progress</code>
-          (доли <code>--cover-fade-end</code> и
-          <code>--cover-bar-fade-start</code>). В панели одна строка «имена ·
-          дата», без подписи над именами; нажатие на неё ничего не делает.
-          Высота — <code>--cover-bar-block-size</code>: строка
-          <code>--text-base</code> с полями
-          <code>--cover-bar-padding-block</code>, но не меньше
-          <code>--tap-min</code>, плюс безопасная зона сверху; она растёт с
-          размером шрифта (кнопки масштаба в начале витрины: 150 % и 200 %).
-          Имена, которым не хватает места, обрезаются многоточием, дата и
-          разделитель — нет. Слой — <code>--z-sticky</code>: над страницей,
-          под окном просмотра. Здесь панель показана в свёрнутом виде, без
-          хука <code>data-cover-bar</code>: на странице панель с хуком видна
-          только под маркером <code>cover-bar-on</code>, который ставит
-          скрипт; без скрипта её нет. Само сворачивание проверяют на
-          собранной странице.
+          On scroll the cover collapses into a bar at the top edge of the
+          window: the cover text and photo fade out and the bar fades in — only
+          <code>opacity</code> changes, following the progress
+          <code>--cover-progress</code> (the shares <code>--cover-fade-end</code>
+          and <code>--cover-bar-fade-start</code>). The bar holds a single line,
+          “names · date”, with no caption above the names; pressing it does
+          nothing. Its height is <code>--cover-bar-block-size</code>: a
+          <code>--text-base</code> line with the padding
+          <code>--cover-bar-padding-block</code>, but no less than
+          <code>--tap-min</code>, plus the safe area at the top; it grows with
+          the font size (the font size buttons at the start of the showcase:
+          150 % and 200 %). Names that do not fit are cut with an ellipsis; the
+          date and the separator are not. The layer is <code>--z-sticky</code>:
+          above the page, below the viewer. Here the bar is shown collapsed,
+          without the <code>data-cover-bar</code> hook: on the page the bar with
+          the hook is visible only under the <code>cover-bar-on</code> marker,
+          which the script sets; without the script there is no bar. Check the
+          collapsing itself on a built page.
         </p>
         <div class="sg-edge">
           <div class="cover-bar" aria-hidden="true">
-            <div class="container cover-bar__inner"><span class="cover-bar__title">Алиса и Боб</span><span class="cover-bar__sep">·</span><span class="cover-bar__date">15 июня 2030</span></div>
+            <div class="container cover-bar__inner"><span class="cover-bar__title">Alice and Bob</span><span class="cover-bar__sep">·</span><span class="cover-bar__date">15 June 2030</span></div>
           </div>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Заливка над панелью: .cover-bar::before</p>
+        <p class="sg-demo__label">The fill above the bar: .cover-bar::before</p>
         <p class="sg-note">
-          Safari на iOS 26 рисует страницу и над окном — под прозрачной
-          строкой состояния, а прилипшая панель стоит ниже этой полосы.
-          Панель продолжается вверх своим же цветом на высоту экрана
-          (<code>--viewport-height</code>), и прокручиваемое содержимое в
-          полосе не видно. Здесь рамка обрезает заливку: верхняя
-          штрихованная полоса — содержимое страницы над панелью, она закрыта;
-          нижняя — содержимое под панелью, оно видно. Заливка — часть панели:
-          появляется и гаснет вместе с ней, нажатий не ловит, места в потоке
-          не занимает, при печати её нет.
+          Safari on iOS 26 also paints the page above the window — under the
+          translucent status bar — while the stuck bar sits below that strip.
+          The bar extends upwards in its own colour by the height of the screen
+          (<code>--viewport-height</code>), so the scrolled content is not
+          visible in the strip. Here the frame clips the fill: the upper hatched
+          strip is page content above the bar, and it is covered; the lower one
+          is content below the bar, and it is visible. The fill is part of the
+          bar: it appears and fades with it, catches no presses, takes no space
+          in the flow and is left out of print.
         </p>
         <div class="sg-edge">
           <div class="sg-plate sg-edge__strip"></div>
           <div class="cover-bar" aria-hidden="true">
-            <div class="container cover-bar__inner"><span class="cover-bar__title">Алиса и Боб</span><span class="cover-bar__sep">·</span><span class="cover-bar__date">15 июня 2030</span></div>
+            <div class="container cover-bar__inner"><span class="cover-bar__title">Alice and Bob</span><span class="cover-bar__sep">·</span><span class="cover-bar__date">15 June 2030</span></div>
           </div>
           <div class="sg-plate sg-edge__strip"></div>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Панель в узкой колонке: длинные имена с многоточием</p>
+        <p class="sg-demo__label">The bar in a narrow column: long names with an ellipsis</p>
         <div class="sg-cols">
           <div class="sg-edge">
             <div class="cover-bar" aria-hidden="true">
-              <div class="container cover-bar__inner"><span class="cover-bar__title">Александра Константинопольская и Максимилиан Преображенский</span><span class="cover-bar__sep">·</span><span class="cover-bar__date">15 июня 2030</span></div>
+              <div class="container cover-bar__inner"><span class="cover-bar__title">Alexandrina Montgomery-Fitzwilliam and Maximilian Featherstonehaugh</span><span class="cover-bar__sep">·</span><span class="cover-bar__date">15 June 2030</span></div>
             </div>
           </div>
           <div class="sg-edge">
             <div class="cover-bar" aria-hidden="true">
-              <div class="container cover-bar__inner"><span class="cover-bar__title">Ева и Ян</span><span class="cover-bar__sep">·</span><span class="cover-bar__date">1 мая 2031</span></div>
+              <div class="container cover-bar__inner"><span class="cover-bar__title">Eve and Ian</span><span class="cover-bar__sep">·</span><span class="cover-bar__date">1 May 2031</span></div>
             </div>
           </div>
         </div>
@@ -914,106 +925,108 @@
     </div>
   </section>
 
-  <!-- ==================================================== Состояния ====== -->
+  <!-- ====================================================== States ====== -->
   <section class="section" id="states">
     <div class="container container--wide">
-      <h2 class="section__title">Состояния</h2>
+      <h2 class="section__title">States</h2>
       <p class="prose prose--muted">
-        Состояния одинаковы на мобильном и десктопе. Наведение действует только
-        там, где есть настоящий курсор (<code>@media (hover: hover)</code>);
-        фокус с клавиатуры виден всегда. Ниже состояния показаны статически
-        демонстрационными классами <code>.is-hover</code>,
-        <code>.is-focus</code>, <code>.is-active</code> — они перечислены рядом
-        с настоящими <code>:hover</code>, <code>:focus-visible</code> и
-        <code>:active</code> и собственных значений не задают.
+        The states are the same on mobile and desktop. Hover applies only where
+        there is a real pointer (<code>@media (hover: hover)</code>); keyboard
+        focus is always visible. Below, the states are shown statically with
+        the demo classes <code>.is-hover</code>, <code>.is-focus</code> and
+        <code>.is-active</code>: they are listed next to the real
+        <code>:hover</code>, <code>:focus-visible</code> and
+        <code>:active</code> and set no values of their own.
       </p>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Кнопка основная: .btn.btn--primary</p>
+        <p class="sg-demo__label">Primary button: .btn.btn--primary</p>
         <div class="sg-row">
           <span class="sg-state">
-            <span class="sg-state__label">обычное</span>
-            <button type="button" class="btn btn--primary">Действие</button>
+            <span class="sg-state__label">ordinary</span>
+            <button type="button" class="btn btn--primary">Action</button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:hover</span>
-            <button type="button" class="btn btn--primary is-hover">Действие</button>
+            <button type="button" class="btn btn--primary is-hover">Action</button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:focus-visible</span>
-            <button type="button" class="btn btn--primary is-focus">Действие</button>
+            <button type="button" class="btn btn--primary is-focus">Action</button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:active</span>
-            <button type="button" class="btn btn--primary is-active">Действие</button>
+            <button type="button" class="btn btn--primary is-active">Action</button>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:disabled</span>
-            <button type="button" class="btn btn--primary" disabled>Действие</button>
+            <button type="button" class="btn btn--primary" disabled>Action</button>
           </span>
         </div>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Кнопка второстепенная: .btn.btn--secondary</p>
+        <p class="sg-demo__label">Secondary button: .btn.btn--secondary</p>
         <div class="sg-row">
           <span class="sg-state">
-            <span class="sg-state__label">обычное</span>
-            <a class="btn btn--secondary" href="#states">Ссылка-кнопка</a>
+            <span class="sg-state__label">ordinary</span>
+            <a class="btn btn--secondary" href="#states">Link button</a>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:hover</span>
-            <a class="btn btn--secondary is-hover" href="#states">Ссылка-кнопка</a>
+            <a class="btn btn--secondary is-hover" href="#states">Link button</a>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:focus-visible</span>
-            <a class="btn btn--secondary is-focus" href="#states">Ссылка-кнопка</a>
+            <a class="btn btn--secondary is-focus" href="#states">Link button</a>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">:active</span>
-            <a class="btn btn--secondary is-active" href="#states">Ссылка-кнопка</a>
+            <a class="btn btn--secondary is-active" href="#states">Link button</a>
           </span>
           <span class="sg-state">
             <span class="sg-state__label">aria-disabled</span>
-            <a class="btn btn--secondary" role="link" aria-disabled="true">Ссылка-кнопка</a>
+            <a class="btn btn--secondary" role="link" aria-disabled="true">Link button</a>
           </span>
         </div>
         <p class="sg-note">
-          Выключенная ссылка-кнопка выводится без <code>href</code>
-          (<code>role="link" aria-disabled="true"</code>): CSS блокирует только
-          указатель, а с клавиатуры ссылка с адресом всё равно сработала бы.
+          A disabled link button is output without <code>href</code>
+          (<code>role="link" aria-disabled="true"</code>): CSS blocks only the
+          pointer, and a link with an address would still work from the
+          keyboard.
         </p>
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Поверх оверлея: .on-overlay и элементы лайтбокса (.lightbox__counter, .lightbox__button)</p>
+        <p class="sg-demo__label">Over the overlay: .on-overlay and the lightbox elements (.lightbox__counter, .lightbox__button)</p>
         <p class="sg-note">
-          Внутри <code>.on-overlay</code> роли текста и кольца фокуса получают
-          значения для тёмной подложки лайтбокса; сами компоненты при этом не
-          переписываются. Кнопки лайтбокса несут собственную подложку
-          <code>--color-overlay-control</code>: стрелки лежат поверх фотографии.
-          Само окно (<code>.lightbox</code>) создаёт скрипт страницы. По порядку:
-          обычная, hover, focus, выключенная (край галереи).
+          Inside <code>.on-overlay</code> the text and focus ring roles take the
+          values for the dark backdrop of the lightbox; the components
+          themselves are not rewritten. The lightbox buttons carry their own
+          backdrop, <code>--color-overlay-control</code>, because the arrows lie
+          over the photo. The page script creates the window itself
+          (<code>.lightbox</code>). In order: ordinary, hover, focus, disabled
+          (the end of the gallery).
         </p>
         <div class="sg-overlay-frame sg-plate">
           <div class="sg-overlay on-overlay">
             <p class="lightbox__counter">2 / 4</p>
-            <button type="button" class="lightbox__button" aria-label="Закрыть">
+            <button type="button" class="lightbox__button" aria-label="Close">
               <svg class="lightbox__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M6 6 18 18M18 6 6 18"></path>
               </svg>
             </button>
-            <button type="button" class="lightbox__button is-hover" aria-label="Закрыть">
+            <button type="button" class="lightbox__button is-hover" aria-label="Close">
               <svg class="lightbox__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M6 6 18 18M18 6 6 18"></path>
               </svg>
             </button>
-            <button type="button" class="lightbox__button is-focus" aria-label="Закрыть">
+            <button type="button" class="lightbox__button is-focus" aria-label="Close">
               <svg class="lightbox__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M6 6 18 18M18 6 6 18"></path>
               </svg>
             </button>
-            <button type="button" class="lightbox__button" aria-label="Следующая фотография" aria-disabled="true">
+            <button type="button" class="lightbox__button" aria-label="Next photo" aria-disabled="true">
               <svg class="lightbox__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M9 5 16 12 9 19"></path>
               </svg>
@@ -1023,10 +1036,10 @@
       </div>
 
       <div class="sg-demo">
-        <p class="sg-demo__label">Ссылка в тексте</p>
+        <p class="sg-demo__label">A link in the text</p>
         <p class="prose">
-          Обычный абзац с <a href="#states">ссылкой внутри текста</a> и
-          продолжением предложения после неё.
+          An ordinary paragraph with <a href="#states">a link inside the text</a>
+          and the rest of the sentence after it.
         </p>
       </div>
     </div>
@@ -1037,8 +1050,9 @@
 <footer class="sg-footer">
   <div class="container container--wide">
     <p>
-      Страница служебная: в сборку сайта не попадает, поисковым системам
-      закрыта. Значения токенов временные и меняются на этапе стилизации.
+      A reference page: it is not part of the built site and is closed to
+      search engines. The token values are the default theme of the pages;
+      changing them restyles every page.
     </p>
   </div>
 </footer>
