@@ -275,7 +275,7 @@ empty.
 **A media item:** `id`, `type` (`image` or `video`), `isVideo`, `src`,
 `posterSrc`, `thumbSrc` (`thumb`, otherwise the poster, the file itself for a
 photo), `width`, `height` (`""` when the size is unknown), `ratio`
-(`"w / h"`), `durationText` ("0:20"), `label` ("Video: <alt>, 0:20", built
+(`"w / h"`), `durationText` ("0:20"), `label` ("Video: `<alt>`, 0:20", built
 from the `video` string) and `alt` (the `photo` or `video` string without
 one). The addresses carry hash names
 ([data-format.md](data-format.md#the-media-directory-and-file-names)); the
@@ -527,7 +527,7 @@ come from the `ui` labels; the script takes its own from the strings line of
    `tests/test_fragments_contract.py` (the test takes the list of types from
    `tools/_schema.py` and compares it with the files of
    `fragments/widgets/`), and an example widget in `widget_variants()`.
-4. The styles in the "Widget: <type>" part of section 6 of `app.css`, tokens
+4. The styles in the "Widget: `<type>`" part of section 6 of `app.css`, tokens
    only.
 5. A demonstration in the markup of `styleguide.html`, in a block of its own
    `<!-- sg:<component> --> … <!-- /sg:<component> -->`.

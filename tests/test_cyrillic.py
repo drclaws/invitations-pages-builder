@@ -6,7 +6,7 @@ in a few robustness tests that need non-ASCII input of exactly this kind.
 The tracked files of the repository are read from git; a copy without a git
 work tree (e.g. `git archive`) skips the test.  The README images (real
 PNG, JPEG or GIF files directly in `.github/assets/`) are not text and are
-skipped.
+skipped; their credits next to them, `.github/assets/README.md`, are read.
 """
 
 from __future__ import annotations
@@ -113,8 +113,9 @@ class CyrillicTests(unittest.TestCase):
             # a real image elsewhere, or deeper: read
             "docs/screen.png": (b"\x89PNG\r\n\x1a\n" + cyrillic, False),
             ".github/assets/more/demo.gif": (b"GIF89a" + cyrillic, False),
-            # not an image name
+            # not an image name, the credits of the images among them
             ".github/assets/notes.txt": (b"GIF89a" + cyrillic, False),
+            ".github/assets/README.md": (cyrillic, False),
         }
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

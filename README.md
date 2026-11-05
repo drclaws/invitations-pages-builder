@@ -9,14 +9,9 @@ dependencies. It reads `site.json` (what is happening) and `invitations.json`
 (who is invited and what each of them sees) and writes plain HTML files that
 any static host can serve. There is no server, no database and no forms.
 
-<p align="center">
-  <img src=".github/assets/invitation-mobile.gif" width="300" align="top"
-    alt="A demo invitation on a phone, 390 px wide, scrolled from the photo cover down the page">
-  <img src=".github/assets/invitation-compare-events.png" width="480" align="top"
-    alt="The same invitation on a desktop at 1440 px and on a phone at 390 px: tabs for three events with the wedding dinner selected, its time and calendar button, and the venue with its address, map links and photos">
-</p>
-<p align="center"><sub>Screenshots of a demo site with stock photos and videos from
-Unsplash and Pexels: <a href="#licence">credits below</a>.</sub></p>
+![A demo invitation on a desktop and a phone side by side, scrolling in sync: the cover, the event tabs, the dinner with its venue, map and programme, the photos and the reply](.github/assets/demo.gif)
+
+Demo photos and videos: Unsplash and Pexels — [credits](.github/assets/README.md).
 
 ## Features
 
@@ -275,40 +270,5 @@ and open `http://localhost:8000/styleguide.html`.
 
 ## Licence
 
-MIT, see [LICENSE](LICENSE).
-
-<details>
-<summary>Demo media credits</summary>
-
-Photos from Unsplash under the [Unsplash License](https://unsplash.com/license):
-
-- [Set table under trees](https://unsplash.com/photos/OqFZPMeufYQ) by
-  [Bruno Ngarukiye](https://unsplash.com/@itsbrunoagain)
-- [Stone town-hall facade](https://unsplash.com/photos/vNEyBKD6Exg) by
-  [Pierre Jarry](https://unsplash.com/@pierrejarry)
-- [Brick house by a pond](https://unsplash.com/photos/mu-FkG-8teA) by
-  [T](https://unsplash.com/@tanyabarrow)
-- [Summer flower border](https://unsplash.com/photos/GPKEM4iEGjU) by
-  [Kevin Hessey](https://unsplash.com/@kevinhessey)
-- [Round table set for dinner](https://unsplash.com/photos/PO56PwADoFU) by
-  [Thomas Beaman](https://unsplash.com/@paunveiled)
-- [Columned porch with chairs](https://unsplash.com/photos/5urBxoebDbQ) by
-  [Clay Banks](https://unsplash.com/@claybanks)
-- [Two cups on a café table](https://unsplash.com/photos/t16HUOz9fjI) by
-  [engin akyurt](https://unsplash.com/@enginakyurt)
-- [Hands with an engagement ring](https://unsplash.com/photos/kV8c_1YvTzs) by
-  [Daniel Gutko](https://unsplash.com/@whatsupitsdan)
-
-Videos from Pexels under the [Pexels License](https://www.pexels.com/license/):
-
-- [Joined hands walking past garden plants](https://www.pexels.com/video/a-couple-holding-hands-while-walking-outdoors-3327617/)
-  by [Taryn Elliott](https://www.pexels.com/@taryn-elliott/)
-- [Hands opening a ring box](https://www.pexels.com/video/a-person-holding-a-ring-box-6570503/)
-  by [Pavel Danilyuk](https://www.pexels.com/@pavel-danilyuk/)
-
-The map was drawn for the demo. All names and places are fictional.
-
-The images in `.github/assets/` are not covered by the licence of the
-repository: the photos and videos in them stay under their own licences.
-
-</details>
+MIT, see [LICENSE](LICENSE). The demo images in `.github/assets/` are not
+covered by it: see [their credits](.github/assets/README.md).

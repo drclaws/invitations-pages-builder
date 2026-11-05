@@ -136,11 +136,14 @@ class CiWorkflowTest(unittest.TestCase):
         # the whole tree: no path given to the listing, no directory filtered out
         self.assertIn("media=\"$(tracked | grep -aEi "
                       "'\\.(png|jpe?g|webp|gif|avif|mp4|mov|webm|ico|svg)$' || true)\"", block)
-        # the one exception: PNG, JPEG or GIF files directly in .github/assets/
+        # the one exception: PNG, JPEG or GIF files directly in .github/assets/,
+        # and their credits next to them
         self.assertIn('assets="$(tracked .github/assets)"', block)
-        # the directory in its exact case, only the extension in any case
+        # the directory and README.md in their exact case, only the extension
+        # of an image in any case
         self.assertEqual(re.findall(r"grep\s+-[A-Za-z]*v[A-Za-z]*\s+(\S+)", block),
-                         ["'^\\.github/assets/[^/]+\\.([Pp][Nn][Gg]|[Jj][Pp][Ee]?[Gg]|[Gg][Ii][Ff])$'"])
+                         ["'^\\.github/assets/([^/]+\\.([Pp][Nn][Gg]|[Jj][Pp][Ee]?[Gg]|[Gg][Ii][Ff])"
+                          "|README\\.md)$'"])  # fmt: skip
         self.assertNotRegex(block, r"grep\s+-[A-Za-z]*i[A-Za-z]*v|grep\s+-[A-Za-z]*v[A-Za-z]*i")
         self.assertIn("8 * 1024 * 1024", block)
         # a statement of its own: `set -e` stops the step when the file is missing
@@ -152,7 +155,8 @@ class CiWorkflowTest(unittest.TestCase):
     def test_hygiene_comment_names_the_exception(self):
         # the words of the comment, wrapped anywhere
         words = ("Every tracked file is checked. The only media are the README images: "
-                 "PNG, JPEG or GIF files directly in .github/assets/, which holds nothing else.")
+                 "PNG, JPEG or GIF files directly in .github/assets/, which holds nothing else "
+                 "but their credits, README.md.")
         self.assertRegex(self.raw, r"#\s+" + r"\s+(?:#\s+)?".join(map(re.escape, words.split())))
 
     def test_link_preview_tags_are_checked_without_a_site_address(self):
@@ -275,6 +279,8 @@ class HygieneStepTest(unittest.TestCase):
         ".github/assets/demo image.gif": 100,
         ".github/assets/screen.png": 100,
         ".github/assets/still.JPEG": 100,
+        # the credits of the images
+        ".github/assets/README.md": 10,
     }
 
     def run_step(self, files: dict[str, int], missing: str | None = None) -> subprocess.CompletedProcess:
@@ -308,7 +314,10 @@ class HygieneStepTest(unittest.TestCase):
     def test_the_readme_images_pass(self):
         result = self.run_step(self.ALLOWED)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("OK: no tracked media but the README images", result.stdout)
+        self.assertIn("OK: no tracked media but the README images and their credits", result.stdout)
+        # the credits are optional
+        images = {name: size for name, size in self.ALLOWED.items() if name != ".github/assets/README.md"}
+        self.assertEqual(self.run_step(images).returncode, 0)
 
     def test_media_anywhere_else_fail(self):
         for name in ("docs/screen.png", "docs/demo image.gif", "assets/icon.svg",
@@ -316,20 +325,28 @@ class HygieneStepTest(unittest.TestCase):
                      ".github/assets/more/screen.png", ".GITHUB/ASSETS/x.gif",
                      ".github/Assets/x.png", ".github/assets/clip.mp4",
                      ".github/assets/screen.webp", ".github/assets/icon.svg",
-                     ".github/assets/notes.txt"):  # fmt: skip
+                     ".github/assets/notes.txt", ".github/assets/notes.md",
+                     ".github/assets/readme.md", ".github/assets/README.MD",
+                     ".github/assets/README.md.txt", ".github/assets/more/README.md"):  # fmt: skip
             with self.subTest(name=name):
                 result = self.run_step({**self.ALLOWED, name: 100})
                 self.assertEqual(result.returncode, 1)
-                self.assertIn("Media files must not be tracked", result.stderr)
+                self.assertEqual(result.stderr.splitlines()[0],
+                                 "Not allowed: media outside .github/assets/, or anything there "
+                                 "but PNG, JPEG or GIF README images and README.md:")
                 self.assertEqual(result.stderr.splitlines()[1:], [name])
 
     def test_a_large_readme_image_fails(self):
         result = self.run_step({**self.ALLOWED, ".github/assets/demo.gif": 8 * 1024 * 1024 + 1})
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stderr.splitlines(),
-                         ["README images must not be larger than 8 MiB:", ".github/assets/demo.gif"])
+                         ["Files in .github/assets/ must not be larger than 8 MiB:", ".github/assets/demo.gif"])
         result = self.run_step({**self.ALLOWED, ".github/assets/demo.gif": 8 * 1024 * 1024})
         self.assertEqual(result.returncode, 0, result.stderr)
+        # the credits too
+        result = self.run_step({**self.ALLOWED, ".github/assets/README.md": 8 * 1024 * 1024 + 1})
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stderr.splitlines()[1:], [".github/assets/README.md"])
 
     def test_a_readme_image_missing_on_disk_fails(self):
         result = self.run_step(self.ALLOWED, missing=".github/assets/demo image.gif")

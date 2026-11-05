@@ -56,13 +56,14 @@ jobs:
             exit 1
           fi
           # Every tracked file is checked. The only media are the README images: PNG, JPEG
-          # or GIF files directly in .github/assets/, which holds nothing else.
+          # or GIF files directly in .github/assets/, which holds nothing else but their
+          # credits, README.md.
           media="$(tracked | grep -aEi '\.(png|jpe?g|webp|gif|avif|mp4|mov|webm|ico|svg)$' || true)"
           assets="$(tracked .github/assets)"
           stray="$(printf '%s\n%s\n' "$media" "$assets" | grep -a . | sort -u \
-            | grep -aEv '^\.github/assets/[^/]+\.([Pp][Nn][Gg]|[Jj][Pp][Ee]?[Gg]|[Gg][Ii][Ff])$' || true)"
+            | grep -aEv '^\.github/assets/([^/]+\.([Pp][Nn][Gg]|[Jj][Pp][Ee]?[Gg]|[Gg][Ii][Ff])|README\.md)$' || true)"
           if [ -n "$stray" ]; then
-            echo "Media files must not be tracked (only PNG, JPEG or GIF README images in .github/assets/):" >&2
+            echo "Not allowed: media outside .github/assets/, or anything there but PNG, JPEG or GIF README images and README.md:" >&2
             echo "$stray" >&2
             exit 1
           fi
@@ -76,7 +77,7 @@ jobs:
             fi
           done <<< "$assets"
           if [ -n "$large" ]; then
-            echo "README images must not be larger than 8 MiB:" >&2
+            echo "Files in .github/assets/ must not be larger than 8 MiB:" >&2
             printf '%s' "$large" >&2
             exit 1
           fi
@@ -86,7 +87,7 @@ jobs:
             echo "$output" >&2
             exit 1
           fi
-          echo "OK: no tracked media but the README images, no tracked build output"
+          echo "OK: no tracked media but the README images and their credits, no tracked build output"
 
       - name: Ensure Chrome is available
         run: |
