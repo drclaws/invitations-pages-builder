@@ -10,6 +10,7 @@ import unittest
 from pathlib import Path
 from urllib.parse import quote
 
+from tests import fixtures_ru as R
 from tests import fixtures_v2 as F
 from tests import support
 from tests.support import (
@@ -116,7 +117,7 @@ class OutputContentsTests(FullBuildTestCase):
             ),
         )
         page = self.page(support.TOKEN_A)
-        self.assertIn("Подробности появятся на этой странице позже", page)
+        self.assertIn("Details will appear on this page later", page)
         self.assertNotIn("<video", page)
         self.assertNotIn("<img", page)
         self.assertNotIn("maps", page)
@@ -269,7 +270,7 @@ class OutputContentsTests(FullBuildTestCase):
 
     def test_media_shown_on_no_page_is_not_published(self):
         site = site_data()
-        site["media"]["spare"] = {"type": "image", "file": "spare.png", "alt": "Запасное"}
+        site["media"]["spare"] = {"type": "image", "file": "spare.png", "alt": "Spare"}
         write_data(self.data, site=site)
         support.write_media(self.media, ["spare.png"])
         result = self.build()
@@ -297,11 +298,11 @@ class OutputContentsTests(FullBuildTestCase):
             f'href="https://yandex.ru/maps/?text={query}&amp;ll=20.25,10.5&amp;z=16"',
             'href="https://maps.apple.com/place?place-id=IEXAMPLE0000001'
             f'&amp;coordinate=10.5,20.25&amp;name={quote(support.PLACE_NAME, safe="")}"',
-            '<h1 class="cover__title" id="s-cover--title">Алиса и Боб</h1>',
-            "Приходи 1 июня 2030.",
+            '<h1 class="cover__title" id="s-cover--title">Alice and Bob</h1>',
+            "Come on 1 June 2030.",
         ):
             self.assertIn(fragment, page)
-        self.assertIn("Приходите 1 июня 2030.", self.page(support.TOKEN_B))
+        self.assertIn("Please come on 1 June 2030.", self.page(support.TOKEN_B))
 
     def test_comment_markers_in_guest_text_are_just_text(self):
         invitations = invitations_data()
@@ -464,7 +465,7 @@ class PrivacyTests(FullBuildTestCase):
             if name.startswith(f"{MEDIA}/") and name.endswith(".ics"):
                 self.assertIn(support.COUPLE_NAMES.encode(), content, name)
                 continue
-            for secret in (support.COUPLE_NAMES, "Алиса", "Боб"):
+            for secret in (support.COUPLE_NAMES, "Alice", "Bob"):
                 self.assertNotIn(secret.encode(), content, f"{secret!r} in {name}")
 
     def test_no_data_files_in_the_output(self):
@@ -554,6 +555,7 @@ class ExampleDataTests(CliTestCase):
     def test_the_examples_are_the_fixture_data(self):
         self.assertEqual(self.load("data"), (F.SITE, F.INVITATIONS))
         self.assertEqual(self.load("data-venue-pending"), (F.PENDING_SITE, F.PENDING_INVITATIONS))
+        self.assertEqual(self.load("data-ru"), (R.RU_SITE, R.RU_INVITATIONS))
 
     def test_example_with_places_and_media(self):
         site, invitations = self.load("data")
@@ -577,16 +579,16 @@ class ExampleDataTests(CliTestCase):
         with_link = [
             number
             for number, invitation in enumerate(invitations, start=1)
-            if f'href="/photos/{invitation["token"]}/">Фотографии с ужина</a>'
+            if f'href="/photos/{invitation["token"]}/">Photos from the dinner</a>'
             in (out / invitation["token"] / "index.html").read_text(encoding="utf-8")
         ]
         self.assertEqual(with_link, [2, 8])
-        # the others see the text in place of the button, in their form
+        # the others see the text in place of the button
         pending = site["events"]["dinner"]["links"]["photos"]["pending"]
         with_text = [
             number
             for number, invitation in enumerate(invitations, start=1)
-            if f'<p class="events__actions card__text">{pending[invitation["form"]]}</p>'
+            if f'<p class="events__actions card__text">{pending}</p>'
             in (out / invitation["token"] / "index.html").read_text(encoding="utf-8")
         ]
         self.assertEqual(with_text, [1, 3, 4, 5, 6, 7])
@@ -609,10 +611,37 @@ class ExampleDataTests(CliTestCase):
                     "--media", str(media), "--out", str(self.out), *extra, cwd=self.work,
                 )  # fmt: skip
                 self.assertEqual(result.returncode, 1, result.stdout)
-                self.assertIn(f"2 files: {message}; first: …/index.html line ", result.stderr)
+                # the message suggests the option the build needs
+                self.assertIn(
+                    f"2 files: {message}; a page of the site that the build does not write? "
+                    "see --allow-path; first: …/index.html line ",
+                    result.stderr,
+                )
                 self.assertFalse(self.out.exists())
                 for invitation in invitations:
                     self.assertNotIn(invitation["token"], result.stdout + result.stderr)
+
+    def test_the_default_build_without_the_allowed_path_gives_the_hint(self):
+        # `python3 build.py build --out …`: the main example is the default data
+        site, _invitations = self.load("data")
+        shutil.copytree(support.ROOT / "examples" / "data", self.code / "examples" / "data")
+        names = sorted(
+            {item[key] for item in site["media"].values() for key in ("file", "poster", "thumb")
+             if key in item}
+        )  # fmt: skip
+        support.write_media(self.code / "examples" / "media", names)
+        result = support.run_cli(self.code, "build", "--out", str(self.out), cwd=self.work)
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn(
+            "<a href>: '/…' does not exist in the output; a page of the site that the build "
+            "does not write? see --allow-path",
+            result.stderr,
+        )
+        self.assertFalse(self.out.exists())
+        result = support.run_cli(
+            self.code, "build", "--out", str(self.out), "--allow-path", "/photos", cwd=self.work
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_example_with_pending_venue(self):
         site, invitations = self.load("data-venue-pending")

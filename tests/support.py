@@ -41,25 +41,27 @@ from tools._png import encode_png  # noqa: E402
 
 # --- fictional fixture data ------------------------------------------------
 
-COUPLE_NAMES = "Алиса и Боб"
-RSVP_DEADLINE = "1 мая 2030 года"
-OUT_OF_TOWN_TEXT = "Из Энска ходит автобус.\n\nПодскажем, где остановиться."
+COUPLE_NAMES = "Alice and Bob"
+RSVP_DEADLINE = "1 May 2030"
+OUT_OF_TOWN_TEXT = "A bus runs from Exampleton.\n\nWe will suggest where to stay."
 
-PLACE_NAME = "Усадьба в Энске"
-PLACE_ADDRESS = "Энск, Вымышленная улица, 1"
-PLACE_QUERY = "Гостевой вход усадьбы, Энск"
+PLACE_NAME = "The manor in Exampleton"
+PLACE_ADDRESS = "1 Fictional Street, Exampleton, Fictional County"
+PLACE_QUERY = "Guest entrance of the manor, Exampleton"
 MEDIA_DIR = "m3d1a-f1xtur3-dir"
 
-GREETING_TY = "Дорогая Ева!"
-GREETING_VY = "Дорогие Карл и Клара!"
-GREETING_THIRD = "Дорогой Гоша!"
+#: Greetings of the guests addressed informally (`ty`), formally (`vy`) and
+#: informally again.
+GREETING_TY = "Dear Eve,"
+GREETING_VY = "Dear Karl and Klara,"
+GREETING_THIRD = "Dear Gosha,"
 #: A note to a section (Eve), to a section switched on for one guest (Gosha)
 #: and to an event (Karl and Klara).
-NOTE = "Личная приписка для Евы."
-TRAVEL_NOTE = "Встретим Гошу на вокзале Энска."
-EVENT_NOTE = "Про аллергию Клары помним."
+NOTE = "A personal note for Eve."
+TRAVEL_NOTE = "We will meet Gosha at Exampleton station."
+EVENT_NOTE = "Noted: no nuts for Klara."
 #: The event that only Eve sees.
-HIDDEN_EVENT_TITLE = "Второй день у пруда"
+HIDDEN_EVENT_TITLE = "The day after by the pond"
 
 TOKEN_A = "EveToken-0123456789abcdefg"
 TOKEN_B = "KarlKlaraToken-zyxwvutsrq98"
@@ -90,46 +92,45 @@ PRIVATE_STRINGS = (
 
 SITE: dict = {
     "schemaVersion": 2,
-    "lang": "ru",
     "coupleNames": COUPLE_NAMES,
     "rsvpDeadline": RSVP_DEADLINE,
     "mediaDir": MEDIA_DIR,
     "mainEvent": "dinner",
     "sections": [
-        {"id": "cover", "type": "cover", "eyebrow": "Приглашение"},
+        {"id": "cover", "type": "cover", "eyebrow": "Invitation"},
         {
             "id": "invite",
             "title": "{greeting}",
             "widgets": [
                 {
                     "type": "text",
-                    "text": {"ty": "Приходи {eventDate}.", "vy": "Приходите {eventDate}."},
+                    "text": {"ty": "Come on {eventDate}.", "vy": "Please come on {eventDate}."},
                 }
             ],
         },
-        {"id": "personal", "title": "Несколько слов лично", "widgets": []},
-        {"id": "when", "title": "Дата и время", "widgets": [{"type": "date"}]},
-        {"id": "where", "title": "Где и когда", "widgets": [{"type": "events"}]},
+        {"id": "personal", "title": "A few personal words", "widgets": []},
+        {"id": "when", "title": "Date and time", "widgets": [{"type": "date"}]},
+        {"id": "where", "title": "Where and when", "widgets": [{"type": "events"}]},
         {
             "id": "travel",
-            "title": "Гостям из других городов",
+            "title": "For guests from out of town",
             "visible": False,
             "widgets": [{"type": "text", "text": OUT_OF_TOWN_TEXT}],
         },
         {
             "id": "video",
-            "title": "Видео",
+            "title": "Video",
             "widgets": [{"type": "media", "layout": "single", "items": ["clip"]}],
         },
         {
             "id": "rsvp",
-            "title": "Подтверждение",
+            "title": "Reply",
             "widgets": [
                 {
                     "type": "text",
                     "text": {
-                        "ty": "Ответь нам до {rsvpDeadline}.",
-                        "vy": "Ответьте нам до {rsvpDeadline}.",
+                        "ty": "Reply by {rsvpDeadline}.",
+                        "vy": "Kindly reply by {rsvpDeadline}.",
                     },
                 }
             ],
@@ -137,7 +138,7 @@ SITE: dict = {
     ],
     "events": {
         "dinner": {
-            "title": "Праздничный ужин",
+            "title": "Wedding dinner",
             "location": "manor",
             "start": "2030-06-01T16:00:00+03:00",
             "end": "2030-06-01T22:00:00+03:00",
@@ -155,7 +156,7 @@ SITE: dict = {
         "manor": {
             "name": PLACE_NAME,
             "address": PLACE_ADDRESS,
-            "description": "Описание площадки.",
+            "description": "About the venue.",
             "geo": {"lat": 10.5, "lng": 20.25},
             "maps": {
                 "googleQuery": PLACE_QUERY,
@@ -168,15 +169,15 @@ SITE: dict = {
     },
     "schedules": {
         "day": [
-            {"time": "16:00", "title": "Сбор гостей", "text": "У входа в парк"},
-            {"time": "17:00", "title": "Церемония"},
+            {"time": "16:00", "title": "Guests arrive", "text": "At the park entrance"},
+            {"time": "17:00", "title": "Ceremony"},
         ]
     },
     "media": {
-        "venue-1": {"type": "image", "file": "venue-1.png", "alt": "Усадьба"},
-        "venue-2": {"type": "image", "file": "venue-2.png", "alt": "Сад"},
-        "route": {"type": "image", "file": "route.png", "alt": "Схема проезда"},
-        "clip": {"type": "video", "file": "clip.mp4", "poster": "poster.png", "alt": "Ролик"},
+        "venue-1": {"type": "image", "file": "venue-1.png", "alt": "The manor"},
+        "venue-2": {"type": "image", "file": "venue-2.png", "alt": "The garden"},
+        "route": {"type": "image", "file": "route.png", "alt": "Map of the way to the manor"},
+        "clip": {"type": "video", "file": "clip.mp4", "poster": "poster.png", "alt": "The clip"},
     },
 }
 
@@ -208,11 +209,11 @@ VISIBLE_EVENTS = {TOKEN_A: ("brunch", "dinner"), TOKEN_B: ("dinner",), TOKEN_C: 
 #: Fixture template: the page frame of `template.html` (the sections come
 #: from the fragments of the repository).
 TEMPLATE = """<!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="theme-color" content="{{themeColor}}">
-<title>Приглашение</title>
+<title>Invitation</title>
 <meta property="og:image" content="{{ogImage}}">
 <meta property="og:image:type" content="{{ogImageType}}">
 <meta property="og:image:width" content="{{ogImageWidth}}">

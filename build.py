@@ -192,7 +192,7 @@ STYLEGUIDE_PREFIX = "styleguide."
 #: How long an event without an end lasts (in its calendar file and for the
 #: past/now marks of the page); `site.json` gets a warning for such an event.
 ICS_DEFAULT_DURATION = DEFAULT_EVENT_DURATION
-ICS_PRODID = "-//invitation//static site build//RU"
+ICS_PRODID = "-//invitation//static site build//EN"
 ICS_UID_DOMAIN = "invitation"
 #: `DTSTAMP` is a constant so that equal inputs give a byte-identical output.
 ICS_DTSTAMP = "20000101T000000Z"
@@ -2006,6 +2006,11 @@ def _srcset_urls(value: str) -> list[str]:
     return urls
 
 
+#: Follows the message of a link whose local target is not in the output: it
+#: may be a page of the site around the invitations (`build --allow-path`).
+LINK_TARGET_HINT = "a page of the site that the build does not write? see --allow-path"
+
+
 class _UrlPolicy:
     """Shared URL rules of the HTML and CSS checks; collects (line, problem)."""
 
@@ -2095,21 +2100,31 @@ class _UrlPolicy:
     def problem(self, line: int, message: str) -> None:
         self.problems.append((line, message))
 
-    def _common(self, line: int, where: str, kind: str, url: str, what: str) -> bool:
-        """Rules shared by resources and links; True when the URL is settled."""
+    def _common(
+        self, line: int, where: str, kind: str, url: str, what: str, hint: str = ""
+    ) -> bool:
+        """Rules shared by resources and links; True when the URL is settled.
+
+        `hint` follows the message of a local URL that is outside the output
+        or missing from it (links only: a resource has to be in the output).
+        """
         if kind == "fragment":
             return True
         if kind == "local":
             target = _local_file(url, self.base_path)
+            suffix = f"; {hint}" if hint else ""
             if not _within_base(url, self.base_path):
-                self.problem(line, f"{where}: '{self.show_path(url)}' points outside the output")
+                self.problem(
+                    line, f"{where}: '{self.show_path(url)}' points outside the output{suffix}"
+                )
             elif target is None:
                 self.problem(
                     line, f"{where}: '{self.show_path(url)}' is not a plain absolute path"
                 )
             elif not self.exists(target):
                 self.problem(
-                    line, f"{where}: '{self.show_path(url)}' does not exist in the output"
+                    line,
+                    f"{where}: '{self.show_path(url)}' does not exist in the output{suffix}",
                 )
         elif kind == "empty":
             self.problem(line, f"{where}: the URL is empty")
@@ -2176,7 +2191,7 @@ class _UrlPolicy:
         # before the base path: at `--base-path /` every local URL is under it
         if kind == "local" and self.allow_paths and self._allowed_link(line, where, url):
             return
-        if self._common(line, where, kind, url, "links"):
+        if self._common(line, where, kind, url, "links", LINK_TARGET_HINT):
             return
         if kind == "external" and _is_map_link(url):
             if (attrs.get("target") or "").strip().lower() != "_blank":

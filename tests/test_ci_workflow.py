@@ -141,9 +141,11 @@ class CiWorkflowTest(unittest.TestCase):
         blocks = [block for block in self.runs if "Link preview tags" in block or "og:url" in block]
         self.assertEqual(len(blocks), 1)
         block = blocks[0]
-        # the build at the root and the one under a base path, each with its data
+        # the build at the root, the one under a base path and the Russian one,
+        # each with its data
         self.assertIn(
-            '"$RUNNER_TEMP/dist" / examples/data "$RUNNER_TEMP/site/invite" /invite examples/data',
+            '"$RUNNER_TEMP/dist" / examples/data "$RUNNER_TEMP/site/invite" /invite examples/data '
+            '"$RUNNER_TEMP/dist-ru" / examples/data-ru',
             block,
         )
         for text in (r're.escape(prefix) + r"/assets/[A-Za-z0-9_-]+/[0-9a-f]{16}\.jpg"',
@@ -170,6 +172,7 @@ class CiWorkflowTest(unittest.TestCase):
         block = checks[0]
         for text in ('check_out examples/data "$RUNNER_TEMP/dist"',
                      'check_out examples/data-venue-pending "$RUNNER_TEMP/dist-pending"',
+                     'check_out examples/data-ru "$RUNNER_TEMP/dist-ru"',
                      'check_out examples/data "$RUNNER_TEMP/site/invite"',
                      "for name in index.html 404.html _headers robots.txt; do",
                      '-not -path "$out/assets/*"', "-iname 'styleguide*'", "-iname 'preview.*'",
@@ -183,7 +186,7 @@ class CiWorkflowTest(unittest.TestCase):
         blocks = [block for block in self.runs if "google-chrome --version" in block]
         self.assertEqual(len(blocks), 1)
         self.assertIn("exit 1", blocks[0])
-        self.assertEqual(self.raw.count("SITE_NAME: Example"), 3)
+        self.assertEqual(self.raw.count("SITE_NAME: Example"), 4)
         self.assertNotIn("LINK_PREVIEW_IMAGE", self.raw)
 
     def test_chrome_starts_before_the_unit_tests(self):
@@ -201,11 +204,13 @@ class CiWorkflowTest(unittest.TestCase):
         """The examples link to a directory of their fictional site: the builds of
         the main set allow it, the set without places is built without it."""
         builds = re.findall(r"(?m)^\s*python build\.py build\b.*$", "\n".join(self.runs))
-        self.assertEqual(len(builds), 4)
+        self.assertEqual(len(builds), 5)
         main = [line.strip() for line in builds if "examples/data-venue-pending" not in line]
         self.assertEqual(
             main,
             ['python build.py build --allow-path /photos --out "$RUNNER_TEMP/dist"',
+             'python build.py build --data examples/data-ru --allow-path /photos --out '
+             '"$RUNNER_TEMP/dist-ru"',
              'python build.py build --base-path /invite --allow-path /photos --out '
              '"$RUNNER_TEMP/site/invite"',
              'python build.py build --allow-path /photos --out "$RUNNER_TEMP/dist2"'],
@@ -214,6 +219,16 @@ class CiWorkflowTest(unittest.TestCase):
         self.assertEqual(len(pending), 1)
         self.assertNotIn("--allow-path", pending[0])
         self.assertNotRegex(self.raw, r"build\.py validate[^\n]*--allow-path")
+
+    def test_the_russian_set_is_validated_and_built(self):
+        blocks = [block for block in self.runs if "examples/data-ru" in block and "validate" in block]
+        self.assertEqual(len(blocks), 1)
+        self.assertIn("python build.py validate --data examples/data-ru\n", blocks[0])
+        self.assertIn("- name: Validate and build the Russian example set\n", self.raw)
+        # the media are generated once, before the builds
+        self.assertEqual(self.raw.count("python tools/gen_example_media.py"), 1)
+        self.assertLess(self.raw.index("python tools/gen_example_media.py"),
+                        self.raw.index("--data examples/data-ru"))
 
     def test_build_output_goes_to_runner_temp(self):
         outs = re.findall(r"--out\s+(\S+)", "\n".join(self.runs))

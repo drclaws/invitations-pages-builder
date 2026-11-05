@@ -3,7 +3,8 @@
 For every invitation of the fixture the serialised tree is searched for the
 titles, times and ids of the events hidden from it, the ids and texts of the
 sections and widgets hidden from it, and the greetings and notes of the
-other invitations.
+other invitations.  The main set is checked in English and, with the forms
+of address, in Russian.
 """
 
 from __future__ import annotations
@@ -11,8 +12,17 @@ from __future__ import annotations
 import json
 import unittest
 
+from tests import fixtures_ru as R
 from tests import fixtures_v2 as F
 from tools import _page
+
+#: The main set in both languages: (name, site, invitations).
+MAIN_SETS = (("en", F.site, F.invitations), ("ru", R.ru_site, R.ru_invitations))
+
+
+def variants(text) -> list[str]:
+    """Every variant of a text: one string, or each form of address."""
+    return [text] if isinstance(text, str) else list(text.values())
 
 
 def guest_strings(invitation: dict) -> list[str]:
@@ -90,7 +100,9 @@ class TreePrivacyTests(unittest.TestCase):
         return checks
 
     def test_main_set(self):
-        self.assertGreater(self.check_set(F.site(), F.invitations(), F.MEDIA_INFO), 100)
+        for name, site, invitations in MAIN_SETS:
+            with self.subTest(set=name):
+                self.assertGreater(self.check_set(site(), invitations(), F.MEDIA_INFO), 100)
 
     def test_set_without_places(self):
         self.assertGreater(self.check_set(F.pending_site(), F.pending_invitations(), {}), 10)
@@ -99,7 +111,7 @@ class TreePrivacyTests(unittest.TestCase):
         site, invitations = F.site(), F.invitations()
         # one more link, visible to everybody and without the token
         site["events"]["dinner"]["links"]["seating"] = {
-            "text": "Рассадка", "href": "/seating/", "visible": True
+            "text": "Seating chart", "href": "/seating/", "visible": True
         }
         pages, _usage = _page.build_pages(site, invitations, F.settings())
         switched_on = 0
@@ -123,40 +135,53 @@ class TreePrivacyTests(unittest.TestCase):
         self.assertEqual(switched_on, 2)
 
     def test_a_text_in_place_of_a_link_holds_no_token(self):
-        site, invitations = F.site(), F.invitations()
-        site["events"]["dinner"]["links"]["photos"]["pending"] = {
-            "ty": "{greeting} Фотографии появятся здесь позже — мы тебе напишем",
-            "vy": "{greeting} Фотографии появятся здесь позже — мы вам напишем",
+        pending = {
+            # one text for everybody
+            "en": "{greeting} Photos will appear here later — we will let you know",
+            # in the form of address of the guest
+            "ru": {
+                "ty": "{greeting} Photos will appear here later — we will let you know",
+                "vy": "{greeting} Photos will appear here later — we shall let you know",
+            },
         }
-        pages, _usage = _page.build_pages(site, invitations, F.settings())
-        guests_with_text = 0
-        for number, (invitation, page) in enumerate(zip(invitations, pages), start=1):
-            token = invitation["token"]
-            text = json.dumps(page, ensure_ascii=False)
-            links = link_nodes(page)
-            with self.subTest(invitation=number):
-                self.assertNotIn("{token}", text)
-                for link in links:
-                    if link["pending"]:
-                        # no address at all: neither the token nor a path
-                        self.assertEqual((link["href"], link["text"]), ("", ""))
-                        self.assertTrue(link["pending"].startswith(invitation["greeting"]))
-                    else:
-                        self.assertEqual(link["href"], f"/photos/{token}/")
-                # the token only in the `href` of the links shown to the guest
-                self.assertEqual(text.count(token), sum(token in link["href"] for link in links))
-            guests_with_text += any(link["pending"] for link in links)
-        # everybody but the second and the eighth invitation
-        self.assertEqual(guests_with_text, 6)
+        for name, make_site, make_invitations in MAIN_SETS:
+            site, invitations = make_site(), make_invitations()
+            site["events"]["dinner"]["links"]["photos"]["pending"] = pending[name]
+            pages, _usage = _page.build_pages(site, invitations, F.settings())
+            guests_with_text = 0
+            for number, (invitation, page) in enumerate(zip(invitations, pages), start=1):
+                token = invitation["token"]
+                text = json.dumps(page, ensure_ascii=False)
+                links = link_nodes(page)
+                with self.subTest(set=name, invitation=number):
+                    self.assertNotIn("{token}", text)
+                    for link in links:
+                        if link["pending"]:
+                            # no address at all: neither the token nor a path
+                            self.assertEqual((link["href"], link["text"]), ("", ""))
+                            self.assertTrue(link["pending"].startswith(invitation["greeting"]))
+                        else:
+                            self.assertEqual(link["href"], f"/photos/{token}/")
+                    # the token only in the `href` of the links shown to the guest
+                    self.assertEqual(text.count(token), sum(token in link["href"] for link in links))
+                guests_with_text += any(link["pending"] for link in links)
+            # everybody but the second and the eighth invitation
+            self.assertEqual(guests_with_text, 6, name)
 
     def test_widget_switched_on_for_one_invitation(self):
-        booked = F.SITE["sections"][5]["widgets"][2]["text"]
-        pages, _usage = _page.build_pages(F.site(), F.invitations(), F.settings())
-        for number, page in enumerate(pages, start=1):
-            text = json.dumps(page, ensure_ascii=False)
-            with self.subTest(invitation=number):
-                self.assertEqual(booked["vy"] in text, number == 6)
-                self.assertNotIn(booked["ty"], text)
+        for name, make_site, make_invitations in MAIN_SETS:
+            site = make_site()
+            booked = site["sections"][5]["widgets"][2]["text"]
+            shown = variants(booked if isinstance(booked, str) else booked["vy"])
+            hidden = [] if isinstance(booked, str) else [booked["ty"]]
+            pages, _usage = _page.build_pages(site, make_invitations(), F.settings())
+            for number, page in enumerate(pages, start=1):
+                text = json.dumps(page, ensure_ascii=False)
+                with self.subTest(set=name, invitation=number):
+                    # the sixth guest only, in their form of address
+                    self.assertEqual(all(value in text for value in shown), number == 6)
+                    for value in hidden:
+                        self.assertNotIn(value, text)
 
     def test_places_and_media_of_hidden_events(self):
         pages, _usage = _page.build_pages(F.site(), F.invitations(), F.settings())
@@ -165,7 +190,7 @@ class TreePrivacyTests(unittest.TestCase):
             self.assertNotIn(value, text)
         text = json.dumps(pages[1], ensure_ascii=False)  # the second day is hidden
         self.assertNotIn("terrace", text)
-        self.assertNotIn("16 июня", text)  # no tab with the date of another day
+        self.assertNotIn("16 June", text)  # no tab with the date of another day
 
     def test_ends_of_neighbours_do_not_reveal_a_hidden_event(self):
         site, invitations = F.site(), F.invitations()

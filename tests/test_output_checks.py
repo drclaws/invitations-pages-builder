@@ -25,6 +25,8 @@ from tests.support import (
 )
 
 MAP_LINK = "https://www.google.com/maps/search/?api=1&amp;query=1,2"
+#: Follows the message of a link that leads nowhere in the output.
+HINT = "a page of the site that the build does not write? see --allow-path"
 
 
 def exists_in(*names: str):
@@ -448,7 +450,7 @@ class LocalPathTests(FailingBuildTestCase):
             '<link rel="icon" href="data:,">\n'
             '<svg><use href="#icon"></use></svg>\n'
             '<meta property="og:image" content="/assets/app.css">\n'
-            '<meta name="description" content="Приглашение">'
+            '<meta name="description" content="Invitation">'
         )
         self.assertBuildPasses()
 
@@ -686,12 +688,38 @@ class AllowPathTests(FailingBuildTestCase):
 class AllowPathUnitTests(TempDirTestCase):
     """`check_html` and `check_output` called with `allow_paths` directly."""
 
+    def test_the_hint_follows_links_only(self):
+        self.assertEqual(build.LINK_TARGET_HINT, HINT)
+        for base_path, problem in (("/", "does not exist in the output"),
+                                   ("/invite", "points outside the output")):  # fmt: skip
+            with self.subTest(base_path=base_path):
+                # a link: `<a href>` and `<area href>`
+                self.assertEqual(
+                    html_problems('<a href="/nope/">x</a>', base_path=base_path),
+                    [f"<a href>: '/…' {problem}; {HINT}"],
+                )
+                self.assertEqual(
+                    html_problems('<map name="m"><area href="/nope/" alt="x"></map>',
+                                  base_path=base_path),
+                    [f"<area href>: '/…' {problem}; {HINT}"],
+                )  # fmt: skip
+                # a resource has to be in the output: no hint
+                self.assertEqual(
+                    html_problems('<img src="/nope.png" alt="">', base_path=base_path),
+                    [f"<img src>: '/….png' {problem}"],
+                )
+        # other problems of a link have no hint either
+        self.assertEqual(
+            html_problems('<a href="/a/../b/">x</a>'),
+            ["<a href>: '/…' is not a plain absolute path"],
+        )
+
     def test_check_html(self):
         document = '<a href="/photos/SecretWord/">x</a>'
         exists = exists_in("assets/app.css")
         for base_path, without in (
-            ("/", "<a href>: '/…' does not exist in the output"),
-            ("/invite", "<a href>: '/…' points outside the output"),
+            ("/", f"<a href>: '/…' does not exist in the output; {HINT}"),
+            ("/invite", f"<a href>: '/…' points outside the output; {HINT}"),
         ):
             with self.subTest(base_path=base_path):
                 self.assertEqual(html_problems(document, base_path=base_path), [without])
@@ -798,7 +826,7 @@ class AllowPathUnitTests(TempDirTestCase):
             build.check_output(out, [support.TOKEN_A])
         self.assertEqual(
             caught.exception.errors,
-            ["…/index.html line 2: <a href>: '/…' does not exist in the output"],
+            [f"…/index.html line 2: <a href>: '/…' does not exist in the output; {HINT}"],
         )
         self.assertEqual(build.check_output(out, [support.TOKEN_A], allow_paths=("/photos",)).files, 2)
         self.assertEqual(
@@ -1434,7 +1462,7 @@ class HtmlCheckUnitTests(unittest.TestCase):
                     problems,
                 )
         self.assertEqual(
-            html_problems("<title>Приглашение</title><p>1 < 2, a &lt;b&gt; &amp; <3</p>"), []
+            html_problems("<title>Invitation</title><p>1 < 2, a &lt;b&gt; &amp; <3</p>"), []
         )
 
     def test_unknown_schemes_are_not_echoed(self):
@@ -1573,10 +1601,10 @@ class CommentStrippingTests(unittest.TestCase):
         )
         self.assertEqual(build.strip_html_comments(document), document[: -len("<!-- removed -->")])
 
-    def test_cyrillic_offsets(self):
+    def test_non_ascii_offsets(self):
         self.assertEqual(
-            build.strip_html_comments("<p>Привет</p>\n<!-- заметка -->\n<p>мир</p><!-- ещё -->"),
-            "<p>Привет</p>\n\n<p>мир</p>",
+            build.strip_html_comments("<p>Grüße</p>\n<!-- Notiz für mich -->\n<p>Welt</p><!-- noch -->"),
+            "<p>Grüße</p>\n\n<p>Welt</p>",
         )
 
     def test_nothing_to_do(self):

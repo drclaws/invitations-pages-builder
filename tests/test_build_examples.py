@@ -19,7 +19,7 @@ from tests.support import ROOT, TempDirTestCase
 FFMPEG = shutil.which("ffmpeg")
 #: What the script needs of the repository.
 PARTS = ("build.py", "template.html", "preview.html", "tools", "fragments", "assets",
-         "examples/data", "examples/data-venue-pending")  # fmt: skip
+         "examples/data", "examples/data-ru", "examples/data-venue-pending")  # fmt: skip
 
 
 def tokens(name: str) -> list[tuple[str, str]]:
@@ -120,7 +120,12 @@ class BuildExamplesTests(TempDirTestCase):
                 self.assertEqual(result.returncode, 2)
                 self.assertFalse((self.work / "dist").exists())
 
-    def test_without_ffmpeg_the_main_set_is_not_built(self):
+    def test_the_sets_and_their_order(self):
+        result = self.run_script("--help")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("{data,data-ru,data-venue-pending,all}", result.stdout)
+
+    def test_without_ffmpeg_the_main_sets_are_not_built(self):
         empty = self.tmp / "empty-path"
         empty.mkdir()
         self.before = self.listing()
@@ -129,10 +134,11 @@ class BuildExamplesTests(TempDirTestCase):
         errors = [line for line in result.stderr.splitlines() if line.startswith("error:")]
         self.assertEqual(
             errors,
-            ["error: the set 'data' shows videos and needs ffmpeg to generate them; "
-             "install ffmpeg and run again"],
+            [f"error: the set '{name}' shows videos and needs ffmpeg to generate them; "
+             "install ffmpeg and run again" for name in ("data", "data-ru")],
         )  # fmt: skip
         self.assertEqual(self.pages("data"), [])
+        self.assertEqual(self.pages("data-ru"), [])
         # the other set is built all the same
         self.assertEqual(len(self.pages("data-venue-pending")), 3)
         self.assertOnlyOutputAndMedia()
@@ -166,6 +172,27 @@ class BuildExamplesTests(TempDirTestCase):
         self.assertEqual(len(with_text), 6)
         self.assertFalse(set(with_text) & set(linked))
         self.assertOnlyOutputAndMedia()
+
+    @unittest.skipUnless(FFMPEG, "ffmpeg is not installed")
+    def test_all_sets_by_default(self):
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for name, count in (("data", 8), ("data-ru", 8), ("data-venue-pending", 3)):
+            with self.subTest(set=name):
+                self.assertEqual(len(sorted((self.work / "dist" / name).glob("*/index.html"))), count)
+                self.assertIn(f"python3 -m http.server -d {Path('dist') / name} 8000", result.stdout)
+        self.assertEqual(
+            [line for line in result.stdout.splitlines() if line.startswith("== ")],
+            ["== data", "== data-ru", "== data-venue-pending"],
+        )
+        # the Russian set: its own language, the same media as the main set
+        page = (self.work / "dist" / "data-ru" / tokens("data-ru")[0][0] / "index.html")
+        self.assertIn('<html lang="ru"', page.read_text(encoding="utf-8"))
+        media = sorted(path.name for path in (self.work / "dist" / "data" / "assets").rglob("*.png"))
+        self.assertEqual(
+            sorted(path.name for path in (self.work / "dist" / "data-ru" / "assets").rglob("*.png")),
+            media,
+        )
 
     def test_the_sets_are_built_with_the_allowed_path(self):
         # the output of the script does not change: the option is passed on silently

@@ -1,14 +1,16 @@
 """Fictional data in the format 2, as Python objects, and helpers around it.
 
-`SITE` / `INVITATIONS` are the main set: eight invitations that cover every
-combination of the form of address, a guest from another city and a
-companion, a different primary event, hidden and switched-on events, notes
-for sections and events, a link of an event switched on for two invitations
-(the others see a text in its place), a place that is not announced yet,
-events on two days, photos with a portrait and a landscape video and a photo
-behind the cover.  `PENDING_SITE` /
-`PENDING_INVITATIONS` are the set without places and media (and a cover
-without a photo).
+`SITE` / `INVITATIONS` are the main set (`examples/data`): eight invitations
+that cover every combination of a guest from another city and a companion, a
+different primary event, hidden and switched-on events, notes for sections
+and events, a link of an event switched on for two invitations (the others
+see a text in its place), a place that is not announced yet, events on two
+days, an event description, photos with a portrait and a landscape video, a
+single video and a ribbon of photos, and a photo behind the cover.
+`PENDING_SITE` / `PENDING_INVITATIONS` (`examples/data-venue-pending`) are the
+set without places and media (and a cover without a photo).  Both are in
+English, the default language, and need no forms of address; the Russian
+set with the forms is `tests/fixtures_ru.py`.
 
 There are no media files: `MEDIA_INFO` stands for what the build would read
 from them.  Use `site()` / `invitations()` for copies that a test may change.
@@ -26,24 +28,23 @@ MEDIA_DIR = "kR1sKvBGXluXnZd73eOXRw"
 
 SITE = {
     "schemaVersion": 2,
-    "lang": "ru",
-    "coupleNames": "Алиса и Боб",
-    "rsvpDeadline": "1 мая 2030",
+    "coupleNames": "Alice & Bob",
+    "rsvpDeadline": "1 May 2030",
     "mediaDir": MEDIA_DIR,
     "mainEvent": "dinner",
     "texts": {
-        "announce": "Мы, {coupleNames}, женимся!",
-        "invite": {
-            "ty": "Ждём тебя {eventDate} в {eventTime}.\n"
-            "Нам очень хочется разделить этот день с тобой.",
-            "vy": "Ждём вас {eventDate} в {eventTime}.\n"
-            "Нам очень хочется разделить этот день с вами.",
-            "all": "Ждём вас {eventDate} в {eventTime}.",
-        },
+        "announce": "{coupleNames} are getting married!",
+        "invite": "We look forward to seeing you on {eventDate} at {eventTime}.",
     },
     "linkPreview": {"description": "{text:announce} {text:invite}"},
     "sections": [
-        {"id": "cover", "type": "cover", "background": "cover", "backgroundFocus": "center"},
+        {
+            "id": "cover",
+            "type": "cover",
+            "eyebrow": "You are invited",
+            "background": "cover",
+            "backgroundFocus": "center",
+        },
         {
             "id": "invite",
             "title": "{greeting}",
@@ -59,73 +60,65 @@ SITE = {
                     "type": "text",
                     "variant": "lead",
                     "visible": False,
-                    "text": {
-                        "ty": "Ты можешь прийти со спутником или спутницей.\n"
-                        "Пожалуйста, сообщи нам заранее имя своего гостя.",
-                        "vy": "Вы можете прийти со спутником или спутницей.\n"
-                        "Пожалуйста, сообщите нам заранее имя вашего гостя.",
-                    },
+                    "text": "You are welcome to bring a partner or a friend.\n"
+                    "Please let us know their name in advance.",
                 },
                 {
                     "type": "text",
                     "variant": "lead",
-                    "text": "{text:invite}",
+                    "text": "{text:invite}\nWe would love to share this day with you.",
                 },
             ],
         },
-        {"id": "personal", "title": "Несколько слов лично", "widgets": []},
+        {"id": "personal", "title": "A few personal words", "widgets": []},
         {
             "id": "when",
-            "title": "Дата и время",
+            "title": "Date and time",
             "align": "center",
             "widgets": [{"type": "date"}],
         },
         {
             "id": "where",
-            "title": "Где и когда",
+            "title": "Where and when",
             "width": "wide",
             "widgets": [{"type": "events"}],
         },
         {
             "id": "travel",
-            "title": "Гостям из других городов",
+            "title": "For guests from out of town",
             "visible": False,
             "widgets": [
                 {
                     "type": "text",
-                    "text": "В день праздника от вокзала Энска до усадьбы и обратно будет "
-                    "ходить трансфер.\n\nОтправление от вокзала — в 14:45,\nобратно — в 23:15.",
+                    "text": "On the day, a shuttle runs between Exampleton station and the "
+                    "manor.\n\nIt leaves the station at 14:45\nand goes back at 23:15.",
                 },
                 {"type": "location", "location": "hotel", "variant": "compact"},
                 {
                     "id": "hotel-booked",
                     "type": "text",
                     "visible": False,
-                    "text": {
-                        "ty": "Для тебя забронирован номер в этой гостинице.",
-                        "vy": "Для вас забронирован номер в этой гостинице.",
-                    },
+                    "text": "We have booked a room for you at this hotel.",
                 },
             ],
         },
         {
             "id": "story",
-            "title": "Наша история",
-            "widgets": [{"type": "media", "items": ["story-1", "proposal", "story-2"]}],
+            "title": "Our story",
+            "widgets": [
+                {"type": "media", "layout": "single", "items": ["proposal"]},
+                {"type": "media", "layout": "ribbon", "items": ["story-1", "story-2"]},
+            ],
         },
         {
             "id": "rsvp",
-            "title": "Подтверждение",
+            "title": "Reply",
             "align": "center",
             "widgets": [
                 {
                     "type": "text",
-                    "text": {
-                        "ty": "Пожалуйста, ответь нам до {rsvpDeadline} — там же, где тебе "
-                        "пришла эта ссылка.\n\nБудем очень рады встрече!",
-                        "vy": "Пожалуйста, ответьте нам до {rsvpDeadline} — там же, где вы "
-                        "получили эту ссылку.\n\nБудем очень рады встрече!",
-                    },
+                    "text": "Please reply by {rsvpDeadline}, wherever this link reached you."
+                    "\n\nWe can't wait to celebrate with you!",
                 },
                 {"type": "text", "variant": "signature", "text": "{coupleNames}"},
             ],
@@ -133,33 +126,33 @@ SITE = {
     ],
     "events": {
         "ceremony": {
-            "title": "Регистрация",
+            "title": "Civil ceremony",
             "location": "registry",
             "start": "2030-06-15T11:00:00+03:00",
             "end": "2030-06-15T12:00:00+03:00",
         },
         "dinner": {
-            "title": "Праздничный ужин",
+            "title": "Wedding dinner",
             "location": "manor",
             "start": "2030-06-15T16:00:00+03:00",
             "end": "2030-06-15T23:30:00+03:00",
             "showEnd": True,
+            "description": "Dress code: light summer colours. Part of the evening is on the "
+            "lawn, so comfortable shoes are a good idea.",
             "schedule": "dinner",
             # hidden by default: switched on for two invitations, the others
             # see the text in its place
             "links": {
                 "photos": {
-                    "text": "Фотографии с ужина",
+                    "text": "Photos from the dinner",
                     "href": "/photos/{token}/",
-                    "pending": {
-                        "ty": "Фотографии с ужина появятся здесь после праздника — мы тебе напишем",
-                        "vy": "Фотографии с ужина появятся здесь после праздника — мы вам напишем",
-                    },
+                    "pending": "Photos from the dinner will appear here after the celebration "
+                    "— we will let you know",
                 }
             },
         },
         "brunch": {
-            "title": "Второй день",
+            "title": "The day after",
             "location": "terrace",
             "start": "2030-06-16T12:00:00+03:00",
             "end": "2030-06-16T15:00:00+03:00",
@@ -168,22 +161,22 @@ SITE = {
     },
     "locations": {
         "registry": {
-            "name": "Дворец бракосочетания Энска",
-            "address": "г. Энск, Центральная площадь, д. 2",
+            "name": "Exampleton Register Office",
+            "address": "2 Central Square, Exampleton",
             "geo": {"lat": 12.340001, "lng": 23.450002},
             "maps": {
-                "googleQuery": "Гостевой вход, Дворец бракосочетания, Энск",
+                "googleQuery": "Guest entrance, Register Office, Exampleton",
                 "yandexGeoId": "1234567890",
-                "appleQuery": "Гостевой вход, Дворец бракосочетания, Энск",
+                "appleQuery": "Guest entrance, Register Office, Exampleton",
             },
             "photos": ["registry-1"],
         },
         "manor": {
-            "name": "Усадьба «Образец»",
-            "address": "г. Энск, ул. Примерная, д. 1",
-            "description": "Старинная усадьба на берегу пруда в пригороде Энска. Церемония "
-            "пройдёт в саду, ужин — в главном зале.\n\nНа территории есть бесплатная "
-            "парковка.",
+            "name": "Example Manor",
+            "address": "1 Example Street, Exampleton",
+            "description": "An old manor house by a pond on the edge of Exampleton. The "
+            "ceremony takes place in the garden and dinner in the great hall.\n\nThere is "
+            "free parking on site.",
             "geo": {"lat": 12.345678, "lng": 23.456789},
             "maps": {
                 "googlePlaceId": "EXAMPLE-not-a-real-place-id",
@@ -192,12 +185,12 @@ SITE = {
             },
             "photos": ["venue-1", "venue-2", "walk", "venue-3", "venue-4"],
             "directions": "directions",
-            "directionsCredit": "© Картографическая служба Энска",
+            "directionsCredit": "© Exampleton Mapping Service",
         },
         "terrace": {"ready": False},
         "hotel": {
-            "name": "Гостиница «Пример»",
-            "address": "г. Энск, Вокзальная ул., д. 5",
+            "name": "The Example Hotel",
+            "address": "5 Station Road, Exampleton",
             "geo": {"lat": 12.35, "lng": 23.46},
         },
     },
@@ -205,37 +198,42 @@ SITE = {
         "dinner": [
             {
                 "time": "15:30",
-                "title": "Сбор гостей",
-                "text": "Приветственные напитки и лёгкие закуски в саду.",
+                "title": "Guests arrive",
+                "text": "Welcome drinks and light snacks in the garden.",
             },
-            {"time": "16:00", "title": "Церемония", "text": "Выездная регистрация на берегу пруда."},
-            {"time": "17:00", "title": "Фотосессия"},
+            {"time": "16:00", "title": "Ceremony", "text": "An outdoor ceremony by the pond."},
+            {"time": "17:00", "title": "Photographs"},
             {
                 "time": "18:00",
-                "title": "Праздничный ужин",
-                "text": "Главный зал усадьбы.\nРассадка — по карточкам.",
+                "title": "Wedding dinner",
+                "text": "The great hall of the manor.\nSeating by place cards.",
             },
-            {"time": "23:00", "title": "Завершение вечера"},
+            {"time": "23:00", "title": "End of the evening"},
         ]
     },
     "media": {
         # the background of the cover: decoration, no description
         "cover": {"type": "image", "file": "cover.png"},
-        "registry-1": {"type": "image", "file": "registry-1.png", "alt": "Дворец бракосочетания"},
-        "venue-1": {"type": "image", "file": "venue-1.png", "alt": "Усадьба со стороны пруда"},
-        "venue-2": {"type": "image", "file": "venue-2.png", "alt": "Сад усадьбы"},
-        "venue-3": {"type": "image", "file": "venue-3.png", "alt": "Главный зал"},
-        "venue-4": {"type": "image", "file": "venue-4.png", "alt": "Веранда"},
-        "directions": {"type": "image", "file": "directions.png", "alt": "Схема проезда"},
-        "story-1": {"type": "image", "file": "story-1.png", "alt": "Первая встреча"},
-        "story-2": {"type": "image", "file": "story-2.png", "alt": "Помолвка"},
+        "registry-1": {"type": "image", "file": "registry-1.png", "alt": "The register office"},
+        "venue-1": {"type": "image", "file": "venue-1.png", "alt": "The manor seen from the pond"},
+        "venue-2": {"type": "image", "file": "venue-2.png", "alt": "The manor garden"},
+        "venue-3": {"type": "image", "file": "venue-3.png", "alt": "The great hall"},
+        "venue-4": {"type": "image", "file": "venue-4.png", "alt": "The veranda"},
+        # describes the map: the caption under it already says what it is
+        "directions": {
+            "type": "image",
+            "file": "directions.png",
+            "alt": "Map from the station to the manor",
+        },
+        "story-1": {"type": "image", "file": "story-1.png", "alt": "Our first meeting"},
+        "story-2": {"type": "image", "file": "story-2.png", "alt": "The engagement"},
         "proposal": {
             "type": "video",
             "file": "proposal.mp4",
             "poster": "proposal-poster.png",
             "width": 720,
             "height": 1280,
-            "alt": "Видео предложения",
+            "alt": "Video of the proposal",
         },
         "walk": {
             "type": "video",
@@ -243,7 +241,7 @@ SITE = {
             "poster": "walk-poster.png",
             "width": 1280,
             "height": 720,
-            "alt": "Прогулка по усадьбе",
+            "alt": "A walk around the manor",
         },
     },
 }
@@ -251,96 +249,92 @@ SITE = {
 INVITATIONS = [
     {
         "token": "0R-pnCqGFgrPOR5e-NluZw",
-        "greeting": "Дорогая Кэрол!",
-        "form": "ty",
+        "greeting": "Dear Carol,",
         "events": {"brunch": {"visible": True}},
         "sections": {
-            "personal": {"note": "Спасибо, что столько лет рядом. Очень ждём! <3"},
+            "personal": {
+                "note": "Thank you for being there all these years. We can't wait to see you! <3"
+            },
             "invite": {"widgets": {"plus-one": {"visible": True}}},
         },
     },
     {
         "token": "oWaEF01q51e11fwVhCZQqQ",
-        "greeting": "Дорогой Дэйв!",
-        "form": "ty",
+        "greeting": "Dear Dave,",
         "events": {
             "dinner": {
-                "note": "Напиши нам, пожалуйста, про аллергию — учтём это при выборе блюд.",
+                "note": "Please tell us about your allergy, and we will keep it in mind when "
+                "choosing the dishes.",
                 "links": {"photos": {"visible": True}},
             }
         },
     },
     {
         "token": "48lh3whME-jqDOw3yzzWpQ",
-        "greeting": "Дорогая Ева!",
-        "form": "ty",
+        "greeting": "Dear Eve,",
         "primaryEvent": "ceremony",
         "events": {"brunch": {"visible": True}},
         "sections": {
             "personal": {
-                "note": "Помнишь, как мы познакомились в поезде?\nТеперь ты знаешь, чем всё "
-                "закончилось.\n\nОбнимаем и ждём!"
+                "note": "Remember how we met on the train?\nNow you know how it all "
+                "ended.\n\nHugs, and see you soon!"
             },
             "travel": {
                 "visible": True,
-                "note": "Встретим тебя на вокзале — просто скажи, каким поездом приедешь.",
+                "note": "We will meet you at the station — just tell us which train you are on.",
             },
         },
     },
     {
         "token": "lXG6kSgXRvYCN6GGk5IcBA",
-        "greeting": "Дорогой Трент!",
-        "form": "ty",
+        "greeting": "Dear Trent,",
         "sections": {"invite": {"widgets": {"plus-one": {"visible": True}}}, "travel": {"visible": True}},
     },
     {
         "token": "uGeJJ1NFz9Q2YYhekmwPtw",
-        "greeting": "Дорогие Пегги и Виктор!",
-        "form": "vy",
+        "greeting": "Dear Peggy and Victor,",
         "primaryEvent": "ceremony",
         "sections": {
             "personal": {
-                "note": "Вы — пример для нас во всём.\n\nОчень надеемся, что вы разделите с "
-                "нами этот день."
+                "note": "You have always been an example to us.\n\nWe very much hope you will "
+                "share this day with us."
             }
         },
     },
     {
         "token": "IBAhKaLEOj1DHuOUdUMzQA",
-        "greeting": "Дорогие Грейс и Фрэнк!",
-        "form": "vy",
+        "greeting": "Dear Grace and Frank,",
         "sections": {
             "travel": {
                 "visible": True,
-                "note": "Заезд в гостиницу — накануне, после 14:00.",
+                "note": "Hotel check-in is the day before, from 14:00.",
                 "widgets": {"hotel-booked": {"visible": True}},
             }
         },
     },
     {
         "token": "hoC853fn9btumFjSJTlzpQ",
-        "greeting": "Уважаемый Оскар Петрович!",
-        "form": "vy",
+        "greeting": "Dear Mr Brown,",
         "events": {"ceremony": {"visible": False}},
         "sections": {
-            "personal": {"note": "Для нас большая честь пригласить вас на наш праздник."},
+            "personal": {"note": "It is a great honour for us to invite you to our celebration."},
             "invite": {"widgets": {"plus-one": {"visible": True}}},
         },
     },
     {
         "token": "04e2efb6-33cd-423f-acff-3c14562a3113",
-        "greeting": "Уважаемая Хайди Андреевна!",
-        "form": "vy",
+        "greeting": "Dear Mrs Green,",
         "events": {"dinner": {"links": {"photos": {"visible": True}}}},
         "sections": {
             "invite": {"widgets": {"plus-one": {"visible": True}}},
             "travel": {
                 "visible": True,
-                "note": "Трансфер от вокзала будет ждать вас у главного входа.",
+                "note": "The shuttle from the station will be waiting for you at the main "
+                "entrance.",
             },
             "where": {
-                "note": "Если понадобится помощь с дорогой до усадьбы — напишите нам, пришлём "
-                "машину."
+                "note": "If you need help getting to the manor, just write to us and we will "
+                "send a car."
             },
         },
     },
@@ -348,9 +342,8 @@ INVITATIONS = [
 
 PENDING_SITE = {
     "schemaVersion": 2,
-    "lang": "ru",
-    "coupleNames": "Алиса и Боб",
-    "rsvpDeadline": "1 июля 2030",
+    "coupleNames": "Alice & Bob",
+    "rsvpDeadline": "1 July 2030",
     "mediaDir": "MR7IwBP4RVsVlBUFCeyEqQ",
     "mainEvent": "celebration",
     "sections": [
@@ -363,58 +356,45 @@ PENDING_SITE = {
                 {
                     "type": "text",
                     "variant": "lead",
-                    "text": {
-                        "ty": "Мы, {coupleNames}, приглашаем тебя на наш праздник.",
-                        "vy": "Мы, {coupleNames}, приглашаем вас на наш праздник.",
-                    },
+                    "text": "{coupleNames} invite you to their celebration.",
                 },
                 {
                     "id": "plus-one",
                     "type": "text",
                     "variant": "lead",
                     "visible": False,
-                    "text": {
-                        "ty": "Ты можешь прийти со спутником или спутницей.",
-                        "vy": "Вы можете прийти со спутником или спутницей.",
-                    },
+                    "text": "You are welcome to bring a partner or a friend.",
                 },
                 {
                     "type": "text",
                     "variant": "lead",
-                    "text": {
-                        "ty": "Ждём тебя {eventDate} в {eventTime}.",
-                        "vy": "Ждём вас {eventDate} в {eventTime}.",
-                    },
+                    "text": "We look forward to seeing you on {eventDate} at {eventTime}.",
                 },
             ],
         },
-        {"id": "personal", "title": "Несколько слов лично", "widgets": []},
-        {"id": "when", "title": "Дата и время", "align": "center", "widgets": [{"type": "date"}]},
-        {"id": "where", "title": "Где и когда", "width": "wide", "widgets": [{"type": "events"}]},
+        {"id": "personal", "title": "A few personal words", "widgets": []},
+        {"id": "when", "title": "Date and time", "align": "center", "widgets": [{"type": "date"}]},
+        {"id": "where", "title": "Where and when", "width": "wide", "widgets": [{"type": "events"}]},
         {
             "id": "travel",
-            "title": "Гостям из других городов",
+            "title": "For guests from out of town",
             "visible": False,
             "widgets": [
                 {
                     "type": "text",
-                    "text": "Подробности о дороге и размещении сообщим вместе с адресом.",
+                    "text": "We will send the details of travel and accommodation together "
+                    "with the address.",
                 }
             ],
         },
         {
             "id": "rsvp",
-            "title": "Подтверждение",
+            "title": "Reply",
             "align": "center",
             "widgets": [
                 {
                     "type": "text",
-                    "text": {
-                        "ty": "Пожалуйста, ответь нам до {rsvpDeadline} — там же, где тебе "
-                        "пришла эта ссылка.",
-                        "vy": "Пожалуйста, ответьте нам до {rsvpDeadline} — там же, где вы "
-                        "получили эту ссылку.",
-                    },
+                    "text": "Please reply by {rsvpDeadline}, wherever this link reached you.",
                 },
                 {"type": "text", "variant": "signature", "text": "{coupleNames}"},
             ],
@@ -422,7 +402,7 @@ PENDING_SITE = {
     ],
     "events": {
         "celebration": {
-            "title": "Праздник",
+            "title": "Celebration",
             "location": "venue",
             "start": "2030-08-10T15:00:00+05:00",
             "end": "2030-08-10T22:00:00+05:00",
@@ -432,8 +412,8 @@ PENDING_SITE = {
     "locations": {"venue": {"ready": False}},
     "schedules": {
         "day": [
-            {"time": "15:00", "title": "Церемония"},
-            {"time": "16:30", "title": "Праздничный ужин", "text": "Место уточняется."},
+            {"time": "15:00", "title": "Ceremony"},
+            {"time": "16:30", "title": "Wedding dinner", "text": "The venue is still to be confirmed."},
         ]
     },
 }
@@ -442,26 +422,23 @@ PENDING_INVITATIONS = [
     {
         # a readable token with a random tail (`build.py token --prefix heron`)
         "token": "heron-4tx9",
-        "greeting": "Дорогая Сибил!",
-        "form": "ty",
+        "greeting": "Dear Sybil,",
         "sections": {
             "travel": {
                 "visible": True,
-                "note": "Как только станет известно место, пришлём подробности о дороге.",
+                "note": "As soon as we know the venue, we will send you the travel details.",
             }
         },
     },
     {
         # a short readable token: counted in the summary of validate and build
         "token": "quokka",
-        "greeting": "Дорогие Уолтер и Венди!",
-        "form": "vy",
-        "sections": {"personal": {"note": "Очень ждём вас!"}},
+        "greeting": "Dear Walter and Wendy,",
+        "sections": {"personal": {"note": "We can't wait to see you!"}},
     },
     {
         "token": "JhlkiN2-7agdX9Fl6D_Z6Q",
-        "greeting": "Уважаемая Джуди Сергеевна!",
-        "form": "vy",
+        "greeting": "Dear Mrs Grey,",
         "sections": {"invite": {"widgets": {"plus-one": {"visible": True}}}},
     },
 ]

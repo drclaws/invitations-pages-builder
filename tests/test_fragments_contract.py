@@ -50,8 +50,8 @@ UI_FIELDS = (
     "mapGoogle", "mapYandex", "mapApple", "past", "eventPast", "now", "countdownLabel",
     "countdownDays", "countdownHours", "countdownMinutes", "countdownSeconds", "photo", "video",
 )
-#: The fixture site is in Russian (`"lang": "ru"`, the built-in pack).
-LANG = "ru"
+#: The fixture site is in English (the default language, the built-in pack).
+LANG = "en"
 STRINGS = _locale.site_strings({"lang": LANG})
 SECTION_FIELDS = {
     "cover": ("id", "type", "domId", "titleId", "eyebrow", "event", "background",
@@ -137,8 +137,8 @@ def node(fields: tuple[str, ...], **values) -> Strict:
 
 # --- fictional site data -----------------------------------------------------
 
-COUPLE_NAMES = "Алиса и Боб"
-RSVP_DEADLINE = "1 мая 2030"
+COUPLE_NAMES = "Alice and Bob"
+RSVP_DEADLINE = "1 May 2030"
 MEDIA_DIR = "Zq7Lw2Xn9Rb4Tc1Vy8Hs5A"
 MEDIA_PATH = f"/assets/{MEDIA_DIR}"
 MAIN_EVENT = "dinner"
@@ -153,152 +153,152 @@ def hashed_url(file: str) -> str:
 MEDIA = {
     # the photo behind the cover: no description of its own (the tree has the
     # neutral label, the page an empty alt)
-    "cover": {"type": "image", "file": "cover.png", "size": (2400, 1600), "alt": "Фотография"},
+    "cover": {"type": "image", "file": "cover.png", "size": (2400, 1600), "alt": "Photo"},
     "registry-1": {"type": "image", "file": "registry-1.png", "size": (1200, 900),
-                   "alt": "Дворец бракосочетания"},
+                   "alt": "The register office"},
     "venue-1": {"type": "image", "file": "venue-1.png", "size": (1200, 800),
-                "alt": "Усадьба со стороны пруда"},
+                "alt": "The manor seen from the pond"},
     "venue-2": {"type": "image", "file": "venue-2.png", "size": (1200, 800),
-                "alt": "Сад усадьбы"},
+                "alt": "The manor garden"},
     "venue-3": {"type": "image", "file": "venue-3.png", "size": (1200, 800),
-                "alt": "Главный зал"},
+                "alt": "The great hall"},
     "walk": {"type": "video", "file": "walk.mp4", "poster": "walk-poster.png",
-             "size": (1280, 720), "duration": "0:05", "alt": "Прогулка по саду"},
+             "size": (1280, 720), "duration": "0:05", "alt": "A walk in the garden"},
     "directions": {"type": "image", "file": "directions.png", "size": (1600, 900),
-                   "alt": "Схема проезда от станции"},
+                   "alt": "Map from the station"},
     "story-1": {"type": "image", "file": "story-1.png", "size": (1200, 900),
-                "alt": "Первая встреча"},
+                "alt": "Our first meeting"},
     "proposal": {"type": "video", "file": "proposal.mp4", "poster": "proposal-poster.png",
-                 "size": (720, 1280), "duration": "0:20", "alt": "предложение"},
+                 "size": (720, 1280), "duration": "0:20", "alt": "the proposal"},
     # the size of this one is unknown: the tile goes without width and height
-    "story-2": {"type": "image", "file": "story-2.png", "size": None, "alt": "Помолвка"},
+    "story-2": {"type": "image", "file": "story-2.png", "size": None, "alt": "The engagement"},
 }
 
 LOCATIONS = {
-    "registry": {"name": "Дворец бракосочетания Энска",
-                 "address": "г. Энск, Центральная площадь, д. 2",
+    "registry": {"name": "Exampleton Register Office",
+                 "address": "2 Central Square, Exampleton",
                  "geo": {"lat": 12.340001, "lng": 23.450002}, "photos": ["registry-1"]},
-    "manor": {"name": "Усадьба «Образец»", "address": "г. Энск, ул. Примерная, д. 1",
-              "description": "Старинная усадьба на берегу пруда.\n\n"
-                             "На территории есть бесплатная парковка.",
+    "manor": {"name": "Example Manor", "address": "1 Example Street, Exampleton",
+              "description": "An old manor house by a pond.\n\n"
+                             "There is free parking on site.",
               "geo": {"lat": 12.345678, "lng": 23.456789},
               "maps": {"googlePlaceId": "EXAMPLE-not-a-real-place-id"},
               "photos": ["venue-1", "venue-2", "walk", "venue-3"],
-              "directions": "directions", "directionsCredit": "© Картографическая служба Энска"},
+              "directions": "directions", "directionsCredit": "© Exampleton Mapping Service"},
     "terrace": {"ready": False},
-    "hotel": {"name": "Гостиница «Пример»", "address": "г. Энск, Вокзальная ул., д. 5",
+    "hotel": {"name": "The Example Hotel", "address": "5 Station Road, Exampleton",
               "geo": {"lat": 12.35, "lng": 23.46}},
 }
 
 SCHEDULES = {
     "dinner": [
-        {"time": "15:30", "title": "Сбор гостей", "text": "Напитки и закуски в саду."},
-        {"time": "16:00", "title": "Церемония", "text": "Выездная регистрация у пруда."},
-        {"time": "17:00", "title": "Фотосессия"},
-        {"time": "18:00", "title": "Праздничный ужин",
-         "text": "Главный зал усадьбы.\nРассадка — по карточкам."},
-        {"time": "", "title": "Завершение вечера"},
+        {"time": "15:30", "title": "Guests arrive", "text": "Drinks and snacks in the garden."},
+        {"time": "16:00", "title": "Ceremony", "text": "An outdoor ceremony by the pond."},
+        {"time": "17:00", "title": "Photographs"},
+        {"time": "18:00", "title": "Wedding dinner",
+         "text": "The great hall of the manor.\nSeating by place cards."},
+        {"time": "", "title": "End of the evening"},
     ],
     "transfer": [
-        {"time": "14:45", "title": "От вокзала до усадьбы", "text": "Автобус у главного входа."},
-        {"time": "23:15", "title": "Обратно к вокзалу"},
+        {"time": "14:45", "title": "From the station to the manor", "text": "A bus at the main entrance."},
+        {"time": "23:15", "title": "Back to the station"},
     ],
 }
 
 #: Events with the strings the data layer generates (dates in the offset of the venue).
 EVENTS = {
-    "ceremony": {"title": "Регистрация", "location": "registry",
+    "ceremony": {"title": "Civil ceremony", "location": "registry",
                  "start": "2030-06-15T11:00:00+03:00", "end": "2030-06-15T12:00:00+03:00",
-                 "dateText": "15 июня 2030", "timeText": "11:00", "dayMonth": "15 июня",
-                 "whenText": "Суббота, 15 июня 2030, 11:00–12:00"},
-    "dinner": {"title": "Праздничный ужин", "location": "manor", "schedule": "dinner",
-               "description": "Дресс-код — светлые тона.",
-               "links": {"photos": {"text": "Фотографии с ужина", "href": "/photos/{token}/",
-                                    "pending": {"ty": "Фотографии с ужина появятся позже — напишем тебе",
-                                                "vy": "Фотографии с ужина появятся позже — напишем вам"}}},
+                 "dateText": "15 June 2030", "timeText": "11:00", "dayMonth": "15 June",
+                 "whenText": "Saturday, 15 June 2030, 11:00–12:00"},
+    "dinner": {"title": "Wedding dinner", "location": "manor", "schedule": "dinner",
+               "description": "Dress code: light colours.",
+               "links": {"photos": {"text": "Photos from the dinner", "href": "/photos/{token}/",
+                                    "pending": {"ty": "Photos from the dinner will come later — we will tell you",
+                                                "vy": "Photos from the dinner will come later — we shall let you know"}}},
                "start": "2030-06-15T16:00:00+03:00", "end": "2030-06-15T23:30:00+03:00",
-               "dateText": "15 июня 2030", "timeText": "16:00", "dayMonth": "15 июня",
-               "whenText": "Суббота, 15 июня 2030, 16:00–23:30"},
+               "dateText": "15 June 2030", "timeText": "16:00", "dayMonth": "15 June",
+               "whenText": "Saturday, 15 June 2030, 16:00–23:30"},
     # hidden by default; no end: the effective end is six hours after the start
-    "brunch": {"title": "Второй день", "location": "terrace", "visible": False,
+    "brunch": {"title": "The day after", "location": "terrace", "visible": False,
                "start": "2030-06-16T12:00:00+03:00", "end": "2030-06-16T18:00:00+03:00",
-               "dateText": "16 июня 2030", "timeText": "12:00", "dayMonth": "16 июня",
-               "whenText": "Воскресенье, 16 июня 2030, 12:00"},
+               "dateText": "16 June 2030", "timeText": "12:00", "dayMonth": "16 June",
+               "whenText": "Sunday, 16 June 2030, 12:00"},
 }
 
 SECTIONS = [
-    {"id": "cover", "type": "cover", "eyebrow": "Приглашение", "background": "cover",
+    {"id": "cover", "type": "cover", "eyebrow": "Invitation", "background": "cover",
      "backgroundFocus": "top"},
     {"id": "invite", "title": "{greeting}", "align": "center", "widgets": [
         {"type": "text", "variant": "lead", "text": {
-            "ty": "Мы, {coupleNames}, приглашаем тебя на наш праздник.\n\n"
-                  "Ждём тебя {eventDate} в {eventTime}.",
-            "vy": "Мы, {coupleNames}, приглашаем вас на наш праздник.\n\n"
-                  "Ждём вас {eventDate} в {eventTime}."}},
+            "ty": "{coupleNames} invite you to their celebration.\n\n"
+                  "See you on {eventDate} at {eventTime}.",
+            "vy": "{coupleNames} request the pleasure of your company.\n\n"
+                  "We look forward to seeing you on {eventDate} at {eventTime}."}},
     ]},
-    {"id": "personal", "title": "Несколько слов лично", "widgets": []},
-    {"id": "plus-one", "title": "Плюс один", "visible": False, "widgets": [
+    {"id": "personal", "title": "A few personal words", "widgets": []},
+    {"id": "plus-one", "title": "Plus one", "visible": False, "widgets": [
         {"type": "text", "text": {
-            "ty": "Ты можешь прийти со спутником или спутницей.",
-            "vy": "Вы можете прийти со спутником или спутницей."}},
+            "ty": "Bring a partner or a friend if you like.",
+            "vy": "You are welcome to bring a partner or a friend."}},
     ]},
-    {"id": "when", "title": "Дата и время", "align": "center", "widgets": [{"type": "date"}]},
-    {"id": "where", "title": "Где и когда", "width": "wide", "widgets": [{"type": "events"}]},
-    {"id": "travel", "title": "Гостям из других городов", "visible": False, "widgets": [
-        {"type": "text", "text": "От вокзала до усадьбы и обратно ходит трансфер."},
+    {"id": "when", "title": "Date and time", "align": "center", "widgets": [{"type": "date"}]},
+    {"id": "where", "title": "Where and when", "width": "wide", "widgets": [{"type": "events"}]},
+    {"id": "travel", "title": "For guests from out of town", "visible": False, "widgets": [
+        {"type": "text", "text": "A shuttle runs between the station and the manor."},
         {"type": "location", "location": "hotel", "variant": "compact"},
         {"type": "schedule", "schedule": "transfer"},
         {"id": "hotel-booked", "type": "text", "visible": False, "text": {
-            "ty": "Для тебя забронирован номер в этой гостинице.",
-            "vy": "Для вас забронирован номер в этой гостинице."}},
+            "ty": "We booked you a room at this hotel.",
+            "vy": "We have booked a room for you at this hotel."}},
     ]},
-    {"id": "story", "title": "Наша история", "width": "wide", "widgets": [
-        {"type": "text", "text": "Несколько кадров из нашей истории."},
+    {"id": "story", "title": "Our story", "width": "wide", "widgets": [
+        {"type": "text", "text": "A few moments from our story."},
         {"type": "media", "items": ["story-1", "proposal", "story-2"]},
     ]},
-    {"id": "venue", "title": "Место", "titleHidden": True, "width": "wide", "widgets": [
+    {"id": "venue", "title": "Venue", "titleHidden": True, "width": "wide", "widgets": [
         {"type": "location", "location": "manor"},
         {"type": "media", "layout": "single", "items": ["walk"]},
     ]},
-    {"id": "rsvp", "title": "Подтверждение", "align": "center", "widgets": [
+    {"id": "rsvp", "title": "Reply", "align": "center", "widgets": [
         {"type": "text", "text": {
-            "ty": "Пожалуйста, ответь нам до {rsvpDeadline}.\n\nБудем очень рады встрече!",
-            "vy": "Пожалуйста, ответьте нам до {rsvpDeadline}.\n\nБудем очень рады встрече!"}},
+            "ty": "Please reply by {rsvpDeadline}.\n\nCan't wait to see you!",
+            "vy": "Kindly reply by {rsvpDeadline}.\n\nWe look forward to seeing you!"}},
         {"type": "text", "variant": "signature", "text": "{coupleNames}"},
     ]},
 ]
 
 #: Eight guests: ty/vy × local/out of town × "+1" and the rest of the example matrix.
 GUESTS = [
-    {"token": "0R-pnCqGFgrPOR5e-NluZw", "greeting": "Дорогая Кэрол!", "form": "ty",
+    {"token": "0R-pnCqGFgrPOR5e-NluZw", "greeting": "Dear Carol,", "form": "ty",
      "events": {"brunch": {"visible": True}},
-     "sections": {"personal": {"note": "Спасибо, что столько лет рядом. Очень ждём! <3"},
+     "sections": {"personal": {"note": "Thank you for being there all these years. <3"},
                   "plus-one": {"visible": True}}},
-    {"token": "oWaEF01q51e11fwVhCZQqQ", "greeting": "Дорогой Дэйв!", "form": "ty",
-     "events": {"dinner": {"note": "Напиши нам, пожалуйста, про аллергию.",
+    {"token": "oWaEF01q51e11fwVhCZQqQ", "greeting": "Dear Dave,", "form": "ty",
+     "events": {"dinner": {"note": "Please tell us about your allergy.",
                            "links": {"photos": {"visible": True}}}}},
-    {"token": "48lh3whME-jqDOw3yzzWpQ", "greeting": "Дорогая Ева!", "form": "ty",
+    {"token": "48lh3whME-jqDOw3yzzWpQ", "greeting": "Dear Eve,", "form": "ty",
      "primaryEvent": "ceremony", "events": {"brunch": {"visible": True}},
-     "sections": {"personal": {"note": "Помнишь, как мы познакомились в поезде?\n\nЖдём!"},
+     "sections": {"personal": {"note": "Remember how we met on the train?\n\nSee you soon!"},
                   "travel": {"visible": True,
-                             "note": "Встретим тебя на вокзале — скажи, каким поездом."}}},
-    {"token": "lXG6kSgXRvYCN6GGk5IcBA", "greeting": "Дорогой Трент!", "form": "ty",
+                             "note": "We will meet you at the station: tell us which train."}}},
+    {"token": "lXG6kSgXRvYCN6GGk5IcBA", "greeting": "Dear Trent,", "form": "ty",
      "sections": {"plus-one": {"visible": True}, "travel": {"visible": True}}},
-    {"token": "uGeJJ1NFz9Q2YYhekmwPtw", "greeting": "Дорогие Пегги и Виктор!", "form": "vy",
+    {"token": "uGeJJ1NFz9Q2YYhekmwPtw", "greeting": "Dear Peggy and Victor,", "form": "vy",
      "primaryEvent": "ceremony",
-     "sections": {"personal": {"note": "Очень надеемся, что вы разделите с нами этот день."}}},
-    {"token": "IBAhKaLEOj1DHuOUdUMzQA", "greeting": "Дорогие Грейс и Фрэнк!", "form": "vy",
-     "sections": {"travel": {"visible": True, "note": "Заезд в гостиницу — накануне.",
+     "sections": {"personal": {"note": "We very much hope you will share this day with us."}}},
+    {"token": "IBAhKaLEOj1DHuOUdUMzQA", "greeting": "Dear Grace and Frank,", "form": "vy",
+     "sections": {"travel": {"visible": True, "note": "Hotel check-in is the day before.",
                              "widgets": {"hotel-booked": {"visible": True}}}}},
-    {"token": "hoC853fn9btumFjSJTlzpQ", "greeting": "Уважаемый Оскар Петрович!", "form": "vy",
+    {"token": "hoC853fn9btumFjSJTlzpQ", "greeting": "Dear Mr Brown,", "form": "vy",
      "events": {"ceremony": {"visible": False}},
-     "sections": {"personal": {"note": "Для нас большая честь пригласить вас."},
+     "sections": {"personal": {"note": "It is a great honour for us to invite you."},
                   "plus-one": {"visible": True}}},
-    {"token": "04e2efb6-33cd-423f-acff-3c14562a3113", "greeting": "Уважаемая Хайди Андреевна!",
+    {"token": "04e2efb6-33cd-423f-acff-3c14562a3113", "greeting": "Dear Mrs Green,",
      "form": "vy", "events": {"dinner": {"links": {"photos": {"visible": True}}}},
      "sections": {"plus-one": {"visible": True},
-                  "travel": {"visible": True, "note": "Трансфер будет ждать у главного входа."},
-                  "where": {"note": "Если понадобится помощь с дорогой — напишите нам."}}},
+                  "travel": {"visible": True, "note": "The shuttle will wait at the main entrance."},
+                  "where": {"note": "If you need help getting here, just write to us."}}},
 ]
 
 
@@ -320,7 +320,7 @@ def media_node(media_id: str, url: Callable[[str], str] = hashed_url) -> Strict:
         MEDIA_FIELDS, id=media_id, type=item["type"], isVideo=video, src=src,
         posterSrc=poster, thumbSrc=poster or src, width=width, height=height,
         ratio=f"{width} / {height}" if width else "", durationText=duration,
-        label=f"Видео: {item['alt']}" + (f", {duration}" if duration else "") if video else "",
+        label=f"Video: {item['alt']}" + (f", {duration}" if duration else "") if video else "",
         alt=item["alt"],
     )
 
@@ -616,18 +616,18 @@ def bare_media(kind: str = "image", sized: bool = True, duration: str = "0:20") 
         thumbSrc="/assets/m/p.png" if video else "/assets/m/a.png",
         width=640 if sized else "", height=480 if sized else "",
         ratio="640 / 480" if sized else "", durationText=duration if video else "",
-        label="Видео: кадр, 0:20" if video else "", alt="Кадр",
+        label="Video: a shot, 0:20" if video else "", alt="A shot",
     )
 
 
 def bare_location(full: bool, ready: bool = True, compact: bool = False,
-                  nested: bool = False, credit: str = "© Картограф") -> Strict:
+                  nested: bool = False, credit: str = "© Mapmaker") -> Strict:
     links = {"google": "https://www.google.com/maps/search/?api=1&query=1,2",
              "yandex": "https://yandex.ru/maps/?pt=2,1&z=16",
              "apple": "https://maps.apple.com/?ll=1,2"} if full else dict.fromkeys(MAP_LINK_FIELDS, "")
     return node(
-        LOCATION_FIELDS, id="l", domId="w--l-l", ready=ready, name="Место" if ready else "",
-        address="Энск" if full else "", description="Описание" if full else "",
+        LOCATION_FIELDS, id="l", domId="w--l-l", ready=ready, name="Venue" if ready else "",
+        address="Exampleton" if full else "", description="Description" if full else "",
         mapLinks=node(MAP_LINK_FIELDS, **links), hasMapLinks=full,
         photos=[bare_media("image"), bare_media("video", sized=False, duration="")] if full else [],
         directions=bare_media("image") if full else None,
@@ -635,28 +635,28 @@ def bare_location(full: bool, ready: bool = True, compact: bool = False,
     )
 
 
-def bare_link(link_id: str, text: str = "Ссылка") -> Strict:
+def bare_link(link_id: str, text: str = "Link") -> Strict:
     return node(LINK_FIELDS, id=link_id, href=f"/photos/{link_id}-t0k3n/", text=text, pending="")
 
 
-def bare_pending(link_id: str, pending: str = "Ссылка появится позже") -> Strict:
+def bare_pending(link_id: str, pending: str = "The link comes later") -> Strict:
     """A hidden link with the text in its place: no address, no label."""
     return node(LINK_FIELDS, id=link_id, href="", text="", pending=pending)
 
 
 def bare_event(event_id: str, full: bool, primary: bool = False, with_dom_id: bool = True) -> Strict:
     values = dict(
-        id=event_id, title="Событие", description="Описание" if full else "",
-        note="Приписка" if full else "", isMain=primary, isPrimary=primary,
+        id=event_id, title="Event", description="Description" if full else "",
+        note="Note" if full else "", isMain=primary, isPrimary=primary,
         kind="primary" if primary else "regular", startISO="2030-06-15T16:00:00+03:00",
-        endISO="2030-06-15T22:00:00+03:00", dateText="15 июня 2030", timeText="16:00",
-        whenText="Суббота, 15 июня 2030, 16:00", tabText="16:00",
+        endISO="2030-06-15T22:00:00+03:00", dateText="15 June 2030", timeText="16:00",
+        whenText="Saturday, 15 June 2030, 16:00", tabText="16:00",
         icsPath=f"/assets/m/{event_id}.ics",
         location=bare_location(full, ready=full, nested=True),
         program=node(PROGRAM_FIELDS, domId=f"w--e-{event_id}--program", nested=True, items=[
-            node(SCHEDULE_ITEM_FIELDS, time="16:00", title="Пункт", text="Текст"),
-            node(SCHEDULE_ITEM_FIELDS, time="", title="Пункт", text="")]) if full else None,
-        links=[bare_link("photos"), bare_link("map", "Схема"), bare_pending("seating")]
+            node(SCHEDULE_ITEM_FIELDS, time="16:00", title="Item", text="Text"),
+            node(SCHEDULE_ITEM_FIELDS, time="", title="Item", text="")]) if full else None,
+        links=[bare_link("photos"), bare_link("map", "Map"), bare_pending("seating")]
         if full else [],
     )
     values["dateTimeText"] = f"{values['dateText']}, {values['timeText']}"
@@ -671,7 +671,7 @@ def bare_widget(kind: str, **values) -> Strict:
 
 def widget_variants() -> list[Strict]:
     """Every widget type with every enumeration value, all flags on and all off."""
-    widgets = [bare_widget("text", text="Абзац\n\nещё абзац", variant=variant)
+    widgets = [bare_widget("text", text="A paragraph\n\nanother paragraph", variant=variant)
                for variant in ENUM_FIELDS["variant"]]
     for flag in (True, False):
         widgets.append(bare_widget("date", event=bare_event("e", flag, True), countdown=flag,
@@ -687,8 +687,8 @@ def widget_variants() -> list[Strict]:
                 widgets.append(bare_widget("location", location=bare_location(
                     full, ready=ready, compact=compact, nested=False)))
         widgets.append(bare_widget("schedule", nested=False, items=[
-            node(SCHEDULE_ITEM_FIELDS, time="10:00" if full else "", title="Пункт",
-                 text="Текст" if full else "")]))
+            node(SCHEDULE_ITEM_FIELDS, time="10:00" if full else "", title="Item",
+                 text="Text" if full else "")]))
     widgets.append(bare_widget("schedule", items=[], nested=False))
     for layout in ENUM_FIELDS["layout"]:
         items = [bare_media("video")] if layout == "single" else [
@@ -703,23 +703,23 @@ def section_variants() -> list[Strict]:
         node(SECTION_FIELDS["cover"], id="cover", type="cover", domId="s-cover",
              titleId="s-cover--title", eyebrow=eyebrow, event=bare_event("e", True, True),
              background=None, backgroundFocus="center")
-        for eyebrow in ("Приглашение", "")
+        for eyebrow in ("Invitation", "")
     ]
     sections += [
         node(SECTION_FIELDS["cover"], id="cover", type="cover", domId="s-cover",
-             titleId="s-cover--title", eyebrow="Приглашение", event=bare_event("e", True, True),
+             titleId="s-cover--title", eyebrow="Invitation", event=bare_event("e", True, True),
              background=bare_media("image", sized=sized), backgroundFocus=focus)
         for focus in ENUM_FIELDS["backgroundFocus"]
         for sized in (True, False)
     ]
-    widget = bare_widget("text", text="Текст", variant="body")
+    widget = bare_widget("text", text="Text", variant="body")
     for align in ENUM_FIELDS["align"]:
         for width in ENUM_FIELDS["width"]:
-            for hidden, note, widgets in ((False, "Приписка", [widget]), (True, "", [widget]),
-                                          (False, "Только приписка", [])):
+            for hidden, note, widgets in ((False, "Note", [widget]), (True, "", [widget]),
+                                          (False, "Only a note", [])):
                 sections.append(node(
                     SECTION_FIELDS["custom"], id="s", type="custom", domId="s",
-                    titleId="s--title", title="Заголовок", titleHidden=hidden, align=align,
+                    titleId="s--title", title="Heading", titleHidden=hidden, align=align,
                     width=width, note=note, widgets=widgets))
     return sections
 
@@ -738,8 +738,8 @@ def harness_root(items: list) -> Strict:
 
 
 STUB_PAGE = (
-    '<!doctype html>\n<html lang="ru">\n<head>\n<meta charset="utf-8">\n'
-    "<title>Фрагмент</title>\n</head>\n<body>\n<main>\n{body}\n</main>\n</body>\n</html>\n"
+    '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+    "<title>Fragment</title>\n</head>\n<body>\n<main>\n{body}\n</main>\n</body>\n</html>\n"
 )
 STUB_FRAMES = {
     "sections": "<!-- each:harness --><!-- include:sections/{{.type}} --><!-- endeach -->",
@@ -840,7 +840,7 @@ class FragmentContractTests(unittest.TestCase):
                     self.assertNotIn("data-media-ratio", document)
 
     def test_a_field_outside_the_contract_fails(self):
-        widget = bare_widget("text", text="Текст", variant="body")
+        widget = bare_widget("text", text="Text", variant="body")
         del widget["variant"]
         with self.assertRaises(AssertionError):
             self.render("widgets", [widget])
@@ -893,7 +893,7 @@ class FragmentContractTests(unittest.TestCase):
             "events", items=[bare_event("a", True, primary=True)], count=1, multiple=False,
             primaryDomId="w--e-a")])
         order = ["<h3", "events__when", "text/calendar", 'href="/photos/photos-t0k3n/"',
-                 'href="/photos/map-t0k3n/"', "Ссылка появится позже", "</header>",
+                 'href="/photos/map-t0k3n/"', "The link comes later", "</header>",
                  "events__description", "events__note", "venue__name", "events__program"]
         positions = [document.index(marker) for marker in order]
         self.assertEqual(positions, sorted(positions))
@@ -911,17 +911,17 @@ class FragmentContractTests(unittest.TestCase):
             return re.search(r'<header class="events__head">.*?</header>', document, re.S).group(0)
 
         calendar = ('<p class="events__actions"><a class="btn btn--secondary" '
-                    'href="/assets/m/a.ics" type="text/calendar">Добавить в календарь</a></p>')
+                    'href="/assets/m/a.ics" type="text/calendar">Add to calendar</a></p>')
         # without links: the header as it always was, byte for byte
         self.assertTrue(card([]).endswith(f"{calendar}\n    </header>"))
         # every link is a paragraph of its own right after the calendar, in their order
-        self.assertTrue(card([bare_link("photos", "Фотографии с ужина"), bare_link("map", "Схема")]).endswith(
+        self.assertTrue(card([bare_link("photos", "Photos from the dinner"), bare_link("map", "Map")]).endswith(
             f'{calendar}<p class="events__actions"><a class="btn btn--secondary" '
-            'href="/photos/photos-t0k3n/">Фотографии с ужина</a></p><p class="events__actions"><a '
-            'class="btn btn--secondary" href="/photos/map-t0k3n/">Схема</a></p>\n    </header>'))
+            'href="/photos/photos-t0k3n/">Photos from the dinner</a></p><p class="events__actions"><a '
+            'class="btn btn--secondary" href="/photos/map-t0k3n/">Map</a></p>\n    </header>'))
         # the text is text: markup in it is escaped
-        self.assertIn('href="/photos/photos-t0k3n/">&lt;b&gt;Фото&lt;/b&gt;</a>',
-                      card([bare_link("photos", "<b>Фото</b>")]))
+        self.assertIn('href="/photos/photos-t0k3n/">&lt;b&gt;Photos&lt;/b&gt;</a>',
+                      card([bare_link("photos", "<b>Photos</b>")]))
 
     def test_the_text_in_place_of_a_link(self):
         def card(links: list) -> str:
@@ -933,25 +933,25 @@ class FragmentContractTests(unittest.TestCase):
             return re.search(r'<header class="events__head">.*?</header>', document, re.S).group(0)
 
         calendar = ('<p class="events__actions"><a class="btn btn--secondary" '
-                    'href="/assets/m/a.ics" type="text/calendar">Добавить в календарь</a></p>')
-        text = '<p class="events__actions card__text">Фотографии появятся позже</p>'
+                    'href="/assets/m/a.ics" type="text/calendar">Add to calendar</a></p>')
+        text = '<p class="events__actions card__text">Photos will come later</p>'
         # a paragraph in place of the button: the same place and spacing, muted,
         # no link at all
-        self.assertTrue(card([bare_pending("photos", "Фотографии появятся позже")]).endswith(
+        self.assertTrue(card([bare_pending("photos", "Photos will come later")]).endswith(
             f"{calendar}{text}\n    </header>"))
         # a button and a text, in the order of the links
-        self.assertTrue(card([bare_pending("photos", "Фотографии появятся позже"),
-                              bare_link("map", "Схема")]).endswith(
+        self.assertTrue(card([bare_pending("photos", "Photos will come later"),
+                              bare_link("map", "Map")]).endswith(
             f'{calendar}{text}<p class="events__actions"><a class="btn btn--secondary" '
-            'href="/photos/map-t0k3n/">Схема</a></p>\n    </header>'))
-        self.assertTrue(card([bare_link("map", "Схема"),
-                              bare_pending("photos", "Фотографии появятся позже")]).endswith(
+            'href="/photos/map-t0k3n/">Map</a></p>\n    </header>'))
+        self.assertTrue(card([bare_link("map", "Map"),
+                              bare_pending("photos", "Photos will come later")]).endswith(
             f'{calendar}<p class="events__actions"><a class="btn btn--secondary" '
-            f'href="/photos/map-t0k3n/">Схема</a></p>{text}\n    </header>'))
+            f'href="/photos/map-t0k3n/">Map</a></p>{text}\n    </header>'))
         # markup in the text is escaped
-        self.assertTrue(card([bare_pending("photos", "<b>Фото</b> & позже")]).endswith(
-            f'{calendar}<p class="events__actions card__text">&lt;b&gt;Фото&lt;/b&gt; &amp; '
-            'позже</p>\n    </header>'))
+        self.assertTrue(card([bare_pending("photos", "<b>Photos</b> & later")]).endswith(
+            f'{calendar}<p class="events__actions card__text">&lt;b&gt;Photos&lt;/b&gt; &amp; '
+            'later</p>\n    </header>'))
 
     def test_the_markup_of_the_text_in_place_of_a_link(self):
         source = (FRAGMENTS_DIR / "widgets" / "events.html").read_text(encoding="utf-8")
@@ -976,12 +976,12 @@ class FragmentContractTests(unittest.TestCase):
             backgroundFocus="center")])
         for document in (date, cover):
             self.assertNotIn("/photos/", document)
-            self.assertNotIn("Ссылка появится позже", document)
+            self.assertNotIn("The link comes later", document)
 
     def test_one_program_markup_at_two_depths(self):
-        items = [node(SCHEDULE_ITEM_FIELDS, time="10:00", title="Пункт", text="")]
+        items = [node(SCHEDULE_ITEM_FIELDS, time="10:00", title="Item", text="")]
         widget = self.render("widgets", [bare_widget("schedule", items=items, nested=False)])
-        self.assertIn('<h3 class="schedule__name">Пункт</h3>', widget)
+        self.assertIn('<h3 class="schedule__name">Item</h3>', widget)
         self.assertNotIn("<h5", widget)
         card = self.render("widgets", [bare_widget(
             "events", items=[bare_event("a", True, primary=True)], count=1, multiple=False,
@@ -1013,7 +1013,7 @@ class FragmentContractTests(unittest.TestCase):
             self.assertNotIn(part, compact)
         self.assertIn('<h4 class="venue__name">', card(nested=True))
         pending = card(ready=False)
-        self.assertIn("Подробности появятся на этой странице позже.", pending)
+        self.assertIn("Details will appear on this page later.", pending)
         self.assertNotIn("venue__name", pending)
         self.assertNotIn("venue__maps", pending)
 
@@ -1029,23 +1029,23 @@ class FragmentContractTests(unittest.TestCase):
             return re.search(r"<figcaption[^>]*>.*?</figcaption>", scheme(credit), re.DOTALL).group(0)
 
         # without a credit: the bare caption
-        self.assertEqual(caption(""), '<figcaption class="gallery__caption">Схема проезда</figcaption>')
+        self.assertEqual(caption(""), '<figcaption class="gallery__caption">Directions</figcaption>')
         # with one: right after the directions label and a plain space, in an
         # element of its own, with no separator between them
         self.assertEqual(
-            caption("© Картограф"),
-            '<figcaption class="gallery__caption">Схема проезда '
-            '<span class="venue__scheme-credit">© Картограф</span></figcaption>',
+            caption("© Mapmaker"),
+            '<figcaption class="gallery__caption">Directions '
+            '<span class="venue__scheme-credit">© Mapmaker</span></figcaption>',
         )
         # the credit is text: markup in it is escaped
         self.assertEqual(
-            caption('<b>"Карты" & Ко</b>'),
-            '<figcaption class="gallery__caption">Схема проезда '
-            '<span class="venue__scheme-credit">&lt;b&gt;&quot;Карты&quot; &amp; '
-            "Ко&lt;/b&gt;</span></figcaption>",
+            caption('<b>"Maps" & Co</b>'),
+            '<figcaption class="gallery__caption">Directions '
+            '<span class="venue__scheme-credit">&lt;b&gt;&quot;Maps&quot; &amp; '
+            "Co&lt;/b&gt;</span></figcaption>",
         )
         # the picture keeps its link for the lightbox, the caption follows it
-        for credit in ("", "© Картограф"):
+        for credit in ("", "© Mapmaker"):
             with self.subTest(credit=credit):
                 self.assertRegex(scheme(credit), r'^<figure class="venue__scheme">\s*'
                                                  r'<a class="media media--scheme" href="/assets/m/a\.png" '
@@ -1058,12 +1058,12 @@ class FragmentContractTests(unittest.TestCase):
         self.assertIn('data-countdown="2030-06-15T16:00:00+03:00"', on)
         self.assertRegex(on, r'<div class="countdown date__countdown"[^>]* hidden>')
         self.assertIn('href="/assets/m/e.ics"', on)
-        self.assertIn("15 июня 2030, 16:00", on)
+        self.assertIn("15 June 2030, 16:00", on)
         self.assertIn("date__event", on)
         off = self.render("widgets", [bare_widget(
             "date", event=bare_event("e", True, True), countdown=False, calendar=False,
             showEventTitle=False)])
-        self.assertIn("15 июня 2030, 16:00", off)
+        self.assertIn("15 June 2030, 16:00", off)
         for part in ("data-countdown", "text/calendar", "date__event"):
             self.assertNotIn(part, off)
 
@@ -1089,7 +1089,7 @@ class FragmentContractTests(unittest.TestCase):
         self.assertIn('src="/assets/m/a.png"', photo)
         # decoration: an empty alt, not the label of the media item
         self.assertIn('alt=""', photo)
-        self.assertNotIn("Кадр", photo)
+        self.assertNotIn("A shot", photo)
         # the first screen: loaded first, never lazily; the cover gives the size
         self.assertIn('fetchpriority="high"', photo)
         for attribute in ("loading=", "width=", "height=", "style="):
@@ -1126,18 +1126,18 @@ class FragmentContractTests(unittest.TestCase):
                     bar.group("inner"),
                     f'<span class="cover-bar__title">{COUPLE_NAMES}</span>'
                     '<span class="cover-bar__sep">·</span>'
-                    '<span class="cover-bar__date">15 июня 2030</span>')
+                    '<span class="cover-bar__date">15 June 2030</span>')
                 self.assertEqual(Outline(document).headings, [1])
                 # the bar follows the cover, the eyebrow stays on the cover
                 self.assertLess(document.index("</section>"), bar.start())
-                self.assertNotIn("Приглашение", bar.group(0))
+                self.assertNotIn("Invitation", bar.group(0))
 
     def test_the_video_tile(self):
         document = self.render("media", [bare_media("video")])
         tile = re.search(r"<a [^>]*>", document).group(0)
         for part in ('href="/assets/m/a.mp4"', 'type="video/mp4"', "data-lightbox",
                      'data-media="video"', 'data-media-poster="/assets/m/p.png"',
-                     'data-media-ratio="640 / 480"', 'aria-label="Видео: кадр, 0:20"'):
+                     'data-media-ratio="640 / 480"', 'aria-label="Video: a shot, 0:20"'):
             self.assertIn(part, tile)
         self.assertIn('<svg class="media-tile__icon"', document)
         self.assertIn('media-tile__duration" aria-hidden="true">0:20<', document)
@@ -1168,7 +1168,7 @@ class FullPageTests(unittest.TestCase):
             other = "vy" if guest["form"] == "ty" else "ty"
             with self.subTest(token=guest["token"][:4]):
                 self.assertEqual(
-                    page.count(f'href="/photos/{guest["token"]}/">Фотографии с ужина</a></p>'), int(shown))
+                    page.count(f'href="/photos/{guest["token"]}/">Photos from the dinner</a></p>'), int(shown))
                 self.assertEqual(
                     page.count(f'<p class="events__actions card__text">{pending[guest["form"]]}</p>'),
                     int(not shown))
@@ -1265,12 +1265,12 @@ class FullPageTests(unittest.TestCase):
                 self.assertIn(' aria-hidden="true" data-cover-bar', bar.group("attributes"))
 
     def test_values_are_escaped(self):
-        guest = dict(GUESTS[1], greeting="Ева <b>& Боб</b> {{coupleNames}}")
+        guest = dict(GUESTS[1], greeting="Eve <b>& Bob</b> {{coupleNames}}")
         guest["sections"] = {"personal": {"note": "<script>alert(1)</script> & {{x}}"}}
         page = render_page(page_tree(guest))
         self.assertNotIn("<b>", page)
         self.assertNotIn("<script>alert", page)
-        self.assertIn("Ева &lt;b&gt;&amp; Боб&lt;/b&gt; &#123;&#123;coupleNames&#125;&#125;", page)
+        self.assertIn("Eve &lt;b&gt;&amp; Bob&lt;/b&gt; &#123;&#123;coupleNames&#125;&#125;", page)
         # the data layer turns `{{x}}` in a note into the literal `{x}`
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt; &amp; &#123;x&#125;", page)
         build.check_rendered(page)

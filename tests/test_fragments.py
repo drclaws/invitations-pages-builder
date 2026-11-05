@@ -42,9 +42,9 @@ def error_of(call, *args, **kwargs) -> str:
 class IncludeTests(unittest.TestCase):
     def test_include_sees_the_fields_of_the_page(self):
         self.assertEqual(
-            render("<p><!-- include:parts/hello --></p>", {"name": "Ева"},
-                   fragments={"parts/hello": "Привет, {{name}}!"}),
-            "<p>Привет, Ева!</p>",
+            render("<p><!-- include:parts/hello --></p>", {"name": "Eve"},
+                   fragments={"parts/hello": "Hello, {{name}}!"}),
+            "<p>Hello, Eve!</p>",
         )
 
     def test_include_inside_each_sees_the_item(self):
@@ -316,7 +316,7 @@ class MessageTests(unittest.TestCase):
         template = "<main>\n" * 32 + (
             "<!-- each:sections --><!-- include:sections/{{.type}} --><!-- endeach --></main>"
         )
-        widget = {"type": "text", "text": "Ева"}
+        widget = {"type": "text", "text": "Eve"}
         context = {"sections": [{"type": "custom", "widgets": [widget]}]}
         message = error_of(parse(template, fragments).render, context)
         self.assertEqual(
@@ -332,15 +332,15 @@ class MessageTests(unittest.TestCase):
         }
         template = "<!-- each:s -->\n<!-- include:sections/{{.type}} --><!-- endeach -->"
         message = error_of(parse(template, fragments).render,
-                           {"s": [{"type": "custom", "title": "Ева", "extra": ["Боб"]}]})
+                           {"s": [{"type": "custom", "title": "Eve", "extra": ["Bob"]}]})
         self.assertEqual(
             message,
             "fragments/partials/head.html line 2: <!-- with:.extra -->: field '.extra' is "
             "an array, expected an object (included from fragments/sections/custom.html "
             "line 2 <- template.html line 2)",
         )
-        self.assertNotIn("Ева", message)
-        self.assertNotIn("Боб", message)
+        self.assertNotIn("Eve", message)
+        self.assertNotIn("Bob", message)
 
     def test_parse_errors_in_fragments_name_the_file_and_the_line(self):
         for source, expected in (
@@ -410,12 +410,12 @@ class WithTests(unittest.TestCase):
     def test_with_over_a_missing_field_or_not_an_object_is_an_error(self):
         message = error_of(render, "\n<!-- with:v -->x<!-- endwith -->", {})
         self.assertEqual(message, "template line 2: <!-- with:v -->: field 'v' not found")
-        for value, kind in (("", "a string"), ("Ева", "a string"), (0, "a number"),
+        for value, kind in (("", "a string"), ("Eve", "a string"), (0, "a number"),
                             (True, "a boolean"), ([], "an array"), ([{"a": 1}], "an array")):
             with self.subTest(value=value):
                 message = error_of(render, "<!-- with:v -->x<!-- endwith -->", {"v": value})
                 self.assertIn(f"field 'v' is {kind}, expected an object", message)
-                self.assertNotIn("Ева", message)
+                self.assertNotIn("Eve", message)
 
     def test_with_inside_each_and_nested_item_paths(self):
         context = {"events": [{"title": "E", "location": {"name": "L", "geo": {"lat": 1}}},

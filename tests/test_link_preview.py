@@ -12,9 +12,12 @@ from tests.support import CliTestCase, build
 from tools import _page, _schema
 
 REAL_TEMPLATE = (support.ROOT / build.TEMPLATE_FILE).read_text(encoding="utf-8")
-TITLE = f"Приглашение · {support.COUPLE_NAMES}"
-DESCRIPTION = f"Мы, {support.COUPLE_NAMES}, женимся! Ждём вас 1 июня 2030 в 16:00."
-SITE_NAME = "Приглашения"
+TITLE = f"Invitation · {support.COUPLE_NAMES}"
+DESCRIPTION = (
+    f"{support.COUPLE_NAMES} are getting married! We look forward to seeing you on 1 June 2030 "
+    "at 16:00."
+)
+SITE_NAME = "Invitations"
 
 
 class _Head(HTMLParser):
@@ -49,11 +52,11 @@ def head(document: str) -> _Head:
 def site_with_preview(**changes) -> dict:
     site = support.site_data(
         texts={
-            "announce": "Мы, {coupleNames}, женимся!",
+            "announce": "{coupleNames} are getting married!",
             "invite": {
-                "ty": "Ждём тебя {eventDate} в {eventTime}.",
-                "vy": "Ждём вас {eventDate} в {eventTime}.",
-                "all": "Ждём вас {eventDate} в {eventTime}.",
+                "ty": "See you on {eventDate} at {eventTime}.",
+                "vy": "We look forward to seeing you on {eventDate} at {eventTime}.",
+                "all": "We look forward to seeing you on {eventDate} at {eventTime}.",
             },
         },
         linkPreview={"description": "{text:announce}\n\n{text:invite}"},
@@ -92,7 +95,7 @@ class LinkPreviewBuildTests(CliTestCase):
             self.assertEqual(meta["description"], DESCRIPTION)
             self.assertEqual(meta["og:description"], DESCRIPTION)
             self.assertEqual(meta["og:type"], "website")
-            self.assertEqual(meta["og:locale"], "ru_RU")
+            self.assertEqual(meta["og:locale"], "en_GB")
             self.assertEqual(meta["twitter:card"], "summary_large_image")
             self.assertTrue(meta["og:image"].startswith("/assets/"))
             self.assertNotIn("og:site_name", meta)
@@ -136,27 +139,28 @@ class LinkPreviewBuildTests(CliTestCase):
         self.build(env={"SITE_NAME": SITE_NAME})
         self.assertEqual(dict(self.heads()[0].meta)["og:site_name"], SITE_NAME)
         # the option wins, an empty variable is no name
-        self.build("--site-name", "Другое", env={"SITE_NAME": SITE_NAME})
-        self.assertEqual(dict(self.heads()[0].meta)["og:site_name"], "Другое")
+        self.build("--site-name", "Another", env={"SITE_NAME": SITE_NAME})
+        self.assertEqual(dict(self.heads()[0].meta)["og:site_name"], "Another")
         self.build(env={"SITE_NAME": "  "})
         self.assertNotIn("og:site_name", dict(self.heads()[0].meta))
 
     def test_a_bad_site_name(self):
         for value, problem in (
-            ("Секрет\nвторая", "one line without control characters"),
-            ("Секрет" + "я" * 80, "at most 80 characters"),
-            ("Секрет //host", "must not contain '//'"),
+            ("Secret\nsecond", "one line without control characters"),
+            # characters, not bytes: two bytes each in UTF-8
+            ("Secret" + "é" * 80, "at most 80 characters"),
+            ("Secret //host", "must not contain '//'"),
         ):
             with self.subTest(problem=problem):
                 result = self.build_in_process("--site-name", value)
                 self.assertEqual(result.returncode, 2)
                 self.assertIn(problem, result.stderr)
-                self.assertNotIn("Секрет", result.stdout + result.stderr)
+                self.assertNotIn("Secret", result.stdout + result.stderr)
                 result = self.build_in_process(env={"SITE_NAME": value})
                 self.assertEqual(result.returncode, 1)
                 self.assertIn(f"SITE_NAME: must", result.stderr)
                 self.assertIn(problem, result.stderr)
-                self.assertNotIn("Секрет", result.stdout + result.stderr)
+                self.assertNotIn("Secret", result.stdout + result.stderr)
                 self.assertFalse(self.out.exists())
 
     def test_without_a_description(self):
@@ -182,7 +186,7 @@ class LinkPreviewBuildTests(CliTestCase):
 
     def test_an_address_in_the_description_fails_the_output_check(self):
         support.write_data(
-            self.data, site=site_with_preview(linkPreview={"description": "Смотри https://x"})
+            self.data, site=site_with_preview(linkPreview={"description": "See https://x"})
         )
         result = self.build_in_process()
         self.assertEqual(result.returncode, 1)
@@ -204,12 +208,13 @@ class LinkPreviewBuildTests(CliTestCase):
         self.assertNotRegex(REAL_TEMPLATE, f"[{chr(0x400)}-{chr(0x4FF)}]")
 
     def test_the_tags_follow_the_language(self):
+        # English is the default; another language: `tests/test_link_preview_ru.py`
+        self.assertNotIn("lang", site_with_preview())
         support.write_data(self.data, site=site_with_preview(lang="en"))
         self.build()
         for page in self.heads():
             meta = dict(page.meta)
-            title = f"Invitation · {support.COUPLE_NAMES}"
-            self.assertEqual((page.title, meta["og:title"], meta["og:image:alt"]), (title,) * 3)
+            self.assertEqual((page.title, meta["og:title"], meta["og:image:alt"]), (TITLE,) * 3)
             self.assertEqual(meta["og:locale"], "en_GB")
             # the description takes the date in the English pattern
             self.assertIn(" 1 June 2030 ", meta["og:description"])
@@ -224,10 +229,13 @@ class LinkDescriptionTreeTests(support.unittest.TestCase):
         pages, _usage = _page.build_pages(site, invitations, F.settings(), report)
         return pages, report
 
-    def test_the_main_event_and_the_common_form(self):
+    def test_the_main_event(self):
         pages, report = self.build()
-        expected = "Мы, Алиса и Боб, женимся! Ждём вас 15 июня 2030 в 16:00."
-        # invitation #3 and #5 have the registration as their primary event
+        expected = (
+            "Alice & Bob are getting married! We look forward to seeing you on 15 June 2030 at 16:00."
+        )
+        # invitation #3 and #5 have the ceremony as their primary event; the
+        # common form of a text with forms: `tests/test_link_preview_ru.py`
         self.assertEqual({page["linkDescription"] for page in pages}, {expected})
         self.assertEqual(pages[2]["primaryEvent"]["id"], "ceremony")
         self.assertEqual(report.messages, [])
@@ -237,19 +245,20 @@ class LinkDescriptionTreeTests(support.unittest.TestCase):
         site["linkPreview"]["description"] = " {text:announce}\n\n  {text:invite} "
         pages, _report = self.build(site)
         self.assertEqual(
-            pages[0]["linkDescription"], "Мы, Алиса и Боб, женимся! Ждём вас 15 июня 2030 в 16:00."
+            pages[0]["linkDescription"],
+            "Alice & Bob are getting married! We look forward to seeing you on 15 June 2030 at 16:00.",
         )
 
     def test_a_long_description_is_a_warning(self):
         site = F.site()
-        site["texts"]["long"] = "Очень длинный текст. " * 10
+        site["texts"]["long"] = "A rather long text. " * 10
         site["linkPreview"]["description"] = "{text:announce} {text:long}"
         pages, report = self.build(site)
-        self.assertEqual(len(pages[0]["linkDescription"]), 235)
+        self.assertEqual(len(pages[0]["linkDescription"]), 232)
         self.assertEqual(
             report.warnings,
             [
-                "site.json: field 'linkPreview.description' is 235 characters long once filled "
+                "site.json: field 'linkPreview.description' is 232 characters long once filled "
                 "in (more than 200); link previews show one or two sentences - put the main "
                 "thing into the first 80 characters"
             ],
@@ -257,7 +266,7 @@ class LinkDescriptionTreeTests(support.unittest.TestCase):
 
     def test_a_text_used_only_in_the_description_is_used(self):
         site = F.site()
-        site["texts"]["tail"] = "Приходите!"
+        site["texts"]["tail"] = "Do come!"
         site["linkPreview"]["description"] = "{text:announce} {text:tail}"
         site["sections"][1]["widgets"][2]["text"] = "{text:invite}"
         _pages, report = self.build(site)

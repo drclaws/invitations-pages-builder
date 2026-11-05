@@ -1,8 +1,7 @@
 [
   {
     "token": "0R-pnCqGFgrPOR5e-NluZw",
-    "greeting": "Дорогая Кэрол!",
-    "form": "ty",
+    "greeting": "Dear Carol,",
     "events": {
       "brunch": {
         "visible": true
@@ -10,7 +9,7 @@
     },
     "sections": {
       "personal": {
-        "note": "Спасибо, что столько лет рядом. Очень ждём! <3"
+        "note": "Thank you for being there all these years. We can't wait to see you! <3"
       },
       "invite": {
         "widgets": {
@@ -23,11 +22,10 @@
   },
   {
     "token": "oWaEF01q51e11fwVhCZQqQ",
-    "greeting": "Дорогой Дэйв!",
-    "form": "ty",
+    "greeting": "Dear Dave,",
     "events": {
       "dinner": {
-        "note": "Напиши нам, пожалуйста, про аллергию — учтём это при выборе блюд.",
+        "note": "Please tell us about your allergy, and we will keep it in mind when choosing the dishes.",
         "links": {
           "photos": {
             "visible": true
@@ -38,8 +36,7 @@
   },
   {
     "token": "48lh3whME-jqDOw3yzzWpQ",
-    "greeting": "Дорогая Ева!",
-    "form": "ty",
+    "greeting": "Dear Eve,",
     "primaryEvent": "ceremony",
     "events": {
       "brunch": {
@@ -48,18 +45,17 @@
     },
     "sections": {
       "personal": {
-        "note": "Помнишь, как мы познакомились в поезде?\nТеперь ты знаешь, чем всё закончилось.\n\nОбнимаем и ждём!"
+        "note": "Remember how we met on the train?\nNow you know how it all ended.\n\nHugs, and see you soon!"
       },
       "travel": {
         "visible": true,
-        "note": "Встретим тебя на вокзале — просто скажи, каким поездом приедешь."
+        "note": "We will meet you at the station — just tell us which train you are on."
       }
     }
   },
   {
     "token": "lXG6kSgXRvYCN6GGk5IcBA",
-    "greeting": "Дорогой Трент!",
-    "form": "ty",
+    "greeting": "Dear Trent,",
     "sections": {
       "invite": {
         "widgets": {
@@ -75,23 +71,21 @@
   },
   {
     "token": "uGeJJ1NFz9Q2YYhekmwPtw",
-    "greeting": "Дорогие Пегги и Виктор!",
-    "form": "vy",
+    "greeting": "Dear Peggy and Victor,",
     "primaryEvent": "ceremony",
     "sections": {
       "personal": {
-        "note": "Вы — пример для нас во всём.\n\nОчень надеемся, что вы разделите с нами этот день."
+        "note": "You have always been an example to us.\n\nWe very much hope you will share this day with us."
       }
     }
   },
   {
     "token": "IBAhKaLEOj1DHuOUdUMzQA",
-    "greeting": "Дорогие Грейс и Фрэнк!",
-    "form": "vy",
+    "greeting": "Dear Grace and Frank,",
     "sections": {
       "travel": {
         "visible": true,
-        "note": "Заезд в гостиницу — накануне, после 14:00.",
+        "note": "Hotel check-in is the day before, from 14:00.",
         "widgets": {
           "hotel-booked": {
             "visible": true
@@ -102,8 +96,7 @@
   },
   {
     "token": "hoC853fn9btumFjSJTlzpQ",
-    "greeting": "Уважаемый Оскар Петрович!",
-    "form": "vy",
+    "greeting": "Dear Mr Brown,",
     "events": {
       "ceremony": {
         "visible": false
@@ -111,7 +104,7 @@
     },
     "sections": {
       "personal": {
-        "note": "Для нас большая честь пригласить вас на наш праздник."
+        "note": "It is a great honour for us to invite you to our celebration."
       },
       "invite": {
         "widgets": {
@@ -124,8 +117,7 @@
   },
   {
     "token": "04e2efb6-33cd-423f-acff-3c14562a3113",
-    "greeting": "Уважаемая Хайди Андреевна!",
-    "form": "vy",
+    "greeting": "Dear Mrs Green,",
     "events": {
       "dinner": {
         "links": {
@@ -145,10 +137,10 @@
       },
       "travel": {
         "visible": true,
-        "note": "Трансфер от вокзала будет ждать вас у главного входа."
+        "note": "The shuttle from the station will be waiting for you at the main entrance."
       },
       "where": {
-        "note": "Если понадобится помощь с дорогой до усадьбы — напишите нам, пришлём машину."
+        "note": "If you need help getting to the manor, just write to us and we will send a car."
       }
     }
   }

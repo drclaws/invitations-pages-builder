@@ -1,0 +1,155 @@
+[
+  {
+    "token": "0R-pnCqGFgrPOR5e-NluZw",
+    "greeting": "Дорогая Кэрол!",
+    "form": "ty",
+    "events": {
+      "brunch": {
+        "visible": true
+      }
+    },
+    "sections": {
+      "personal": {
+        "note": "Спасибо, что столько лет рядом. Очень ждём! <3"
+      },
+      "invite": {
+        "widgets": {
+          "plus-one": {
+            "visible": true
+          }
+        }
+      }
+    }
+  },
+  {
+    "token": "oWaEF01q51e11fwVhCZQqQ",
+    "greeting": "Дорогой Дэйв!",
+    "form": "ty",
+    "events": {
+      "dinner": {
+        "note": "Напиши нам, пожалуйста, про аллергию — учтём это при выборе блюд.",
+        "links": {
+          "photos": {
+            "visible": true
+          }
+        }
+      }
+    }
+  },
+  {
+    "token": "48lh3whME-jqDOw3yzzWpQ",
+    "greeting": "Дорогая Ева!",
+    "form": "ty",
+    "primaryEvent": "ceremony",
+    "events": {
+      "brunch": {
+        "visible": true
+      }
+    },
+    "sections": {
+      "personal": {
+        "note": "Помнишь, как мы познакомились в поезде?\nТеперь ты знаешь, чем всё закончилось.\n\nОбнимаем и ждём!"
+      },
+      "travel": {
+        "visible": true,
+        "note": "Встретим тебя на вокзале — просто скажи, каким поездом приедешь."
+      }
+    }
+  },
+  {
+    "token": "lXG6kSgXRvYCN6GGk5IcBA",
+    "greeting": "Дорогой Трент!",
+    "form": "ty",
+    "sections": {
+      "invite": {
+        "widgets": {
+          "plus-one": {
+            "visible": true
+          }
+        }
+      },
+      "travel": {
+        "visible": true
+      }
+    }
+  },
+  {
+    "token": "uGeJJ1NFz9Q2YYhekmwPtw",
+    "greeting": "Дорогие Пегги и Виктор!",
+    "form": "vy",
+    "primaryEvent": "ceremony",
+    "sections": {
+      "personal": {
+        "note": "Вы — пример для нас во всём.\n\nОчень надеемся, что вы разделите с нами этот день."
+      }
+    }
+  },
+  {
+    "token": "IBAhKaLEOj1DHuOUdUMzQA",
+    "greeting": "Дорогие Грейс и Фрэнк!",
+    "form": "vy",
+    "sections": {
+      "travel": {
+        "visible": true,
+        "note": "Заезд в гостиницу — накануне, после 14:00.",
+        "widgets": {
+          "hotel-booked": {
+            "visible": true
+          }
+        }
+      }
+    }
+  },
+  {
+    "token": "hoC853fn9btumFjSJTlzpQ",
+    "greeting": "Уважаемый Оскар Петрович!",
+    "form": "vy",
+    "events": {
+      "ceremony": {
+        "visible": false
+      }
+    },
+    "sections": {
+      "personal": {
+        "note": "Для нас большая честь пригласить вас на наш праздник."
+      },
+      "invite": {
+        "widgets": {
+          "plus-one": {
+            "visible": true
+          }
+        }
+      }
+    }
+  },
+  {
+    "token": "04e2efb6-33cd-423f-acff-3c14562a3113",
+    "greeting": "Уважаемая Хайди Андреевна!",
+    "form": "vy",
+    "events": {
+      "dinner": {
+        "links": {
+          "photos": {
+            "visible": true
+          }
+        }
+      }
+    },
+    "sections": {
+      "invite": {
+        "widgets": {
+          "plus-one": {
+            "visible": true
+          }
+        }
+      },
+      "travel": {
+        "visible": true,
+        "note": "Трансфер от вокзала будет ждать вас у главного входа."
+      },
+      "where": {
+        "note": "Если понадобится помощь с дорогой до усадьбы — напишите нам, пришлём машину."
+      }
+    }
+  }
+]

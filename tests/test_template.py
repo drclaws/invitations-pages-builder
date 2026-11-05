@@ -12,14 +12,14 @@ TemplateError = build.TemplateError
 
 class ValueTests(unittest.TestCase):
     def test_simple_substitution(self):
-        self.assertEqual(render("<p>{{greeting}}</p>", {"greeting": "Привет"}), "<p>Привет</p>")
+        self.assertEqual(render("<p>{{greeting}}</p>", {"greeting": "Hello"}), "<p>Hello</p>")
 
     def test_spaces_inside_placeholder(self):
         self.assertEqual(render("{{  greeting  }}", {"greeting": "x"}), "x")
 
     def test_nested_field(self):
-        context = {"venue": {"name": "Место", "geo": {"lat": 1.5}}}
-        self.assertEqual(render("{{venue.name}}/{{venue.geo.lat}}", context), "Место/1.5")
+        context = {"venue": {"name": "Venue", "geo": {"lat": 1.5}}}
+        self.assertEqual(render("{{venue.name}}/{{venue.geo.lat}}", context), "Venue/1.5")
 
     def test_html_is_escaped(self):
         rendered = render("{{note}}", {"note": "<b>&\"x\"'y'</b>"})
