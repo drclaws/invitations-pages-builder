@@ -132,6 +132,15 @@ jobs:
           python build.py validate --data examples/data-venue-pending --media examples/media-none
           python build.py build --data examples/data-venue-pending --media examples/media-none --out "$RUNNER_TEMP/dist-pending"
 
+      - name: Validate and build the Russian example set
+        env:
+          SITE_NAME: Example
+        run: |
+          set -euo pipefail
+          # the main set in Russian: the same media registry, so the media generated above serve it
+          python build.py validate --data examples/data-ru
+          python build.py build --data examples/data-ru --allow-path /photos --out "$RUNNER_TEMP/dist-ru"
+
       - name: Build the main example set under a base path
         env:
           SITE_NAME: Example
@@ -143,7 +152,7 @@ jobs:
       - name: Link preview tags
         run: |
           set -euo pipefail
-          python - "$RUNNER_TEMP/dist" / examples/data "$RUNNER_TEMP/site/invite" /invite examples/data <<'PY'
+          python - "$RUNNER_TEMP/dist" / examples/data "$RUNNER_TEMP/site/invite" /invite examples/data "$RUNNER_TEMP/dist-ru" / examples/data-ru <<'PY'
           import html, json, re, sys
           from pathlib import Path
           meta = re.compile(r'<meta (?:property|name)="([^"]+)" content="([^"]*)"')
@@ -208,6 +217,7 @@ jobs:
           }
           check_out examples/data "$RUNNER_TEMP/dist"
           check_out examples/data-venue-pending "$RUNNER_TEMP/dist-pending"
+          check_out examples/data-ru "$RUNNER_TEMP/dist-ru"
           check_out examples/data "$RUNNER_TEMP/site/invite"
 
       - name: Reproducible build

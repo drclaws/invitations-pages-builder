@@ -1,23 +1,26 @@
 """Build the example data sets of the repository with one command.
 
-    python3 tools/build_examples.py [--set data|data-venue-pending|all]
+    python3 tools/build_examples.py [--set data|data-ru|data-venue-pending|all]
                                     [--out DIR] [--port N] [--chrome PATH]
                                     [--no-link-preview-image]
 
-For every set it generates the placeholder media (the main set only, with
-``tools/gen_example_media.py`` into ``examples/media/``, which git ignores),
-builds the invitations into ``<out>/<set>/`` with ``build.py build
---base-path / --allow-path /photos`` (the examples link to a page of their
-fictional site that is not built) and prints where they are, how to look at
-them and the address of every page with its greeting (the data of the
-examples is fictional).  The directory of a set is the root to serve: the
-pages are ``/<token>/``.  In CI (``CI`` or ``GITHUB_ACTIONS`` set) the pages
-and greetings are not printed, as with ``build.py links``.
+The sets: ``data`` (the main set, in English), ``data-ru`` (the same guests
+in Russian, with the forms of address) and ``data-venue-pending`` (a place
+not announced yet, no media).  For every set it generates the placeholder
+media (the two main sets, with ``tools/gen_example_media.py`` into
+``examples/media/``, which git ignores and both of them share), builds the
+invitations into ``<out>/<set>/`` with ``build.py build --base-path /
+--allow-path /photos`` (the examples link to a page of their fictional site
+that is not built) and prints where they are, how to look at them and the
+address of every page with its greeting (the data of the examples is
+fictional).  The directory of a set is the root to serve: the pages are
+``/<token>/``.  In CI (``CI`` or ``GITHUB_ACTIONS`` set) the pages and
+greetings are not printed, as with ``build.py links``.
 
 Only the sets in ``examples/`` are accepted: for real data use ``build.py
-build`` and ``build.py links``.  The main set shows videos, so it needs
-``ffmpeg``; without it the set is not built (one line says why), the other
-set is built all the same and the exit code is 1.  The exit codes of the
+build`` and ``build.py links``.  The main sets show videos, so they need
+``ffmpeg``; without it they are not built (one line each says why), the
+other set is built all the same and the exit code is 1.  The exit codes of the
 tools are passed on; 2 means a bad command line.  Nothing is written outside
 ``--out`` and ``examples/media/``.  The link preview image is rendered by
 ``build.py`` with Chrome or Chromium; ``--chrome`` and
@@ -41,14 +44,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 BUILD = REPO_ROOT / "build.py"
 GENERATOR = REPO_ROOT / "tools" / "gen_example_media.py"
 EXAMPLES = REPO_ROOT / "examples"
-#: Set name -> the media directory it is built with (the second one has no
-#: media: the directory does not exist and does not have to).
+#: Set name -> the media directory it is built with.  The two main sets have
+#: the same media registry and share their media; the last one has no media:
+#: the directory does not exist and does not have to.
 SETS = {
     "data": EXAMPLES / "media",
+    "data-ru": EXAMPLES / "media",
     "data-venue-pending": EXAMPLES / "media-none",
 }
 #: The sets that show videos: their media are generated with ffmpeg.
-NEEDS_FFMPEG = ("data",)
+NEEDS_FFMPEG = ("data", "data-ru")
 #: A set is built for the root of a local server: `<out>/<set>/` is served
 #: as it is.
 BASE_PATH = "/"
