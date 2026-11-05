@@ -346,7 +346,11 @@ class GenerateTest(unittest.TestCase):
         before = [path.read_bytes() for path, _size in default]
         frame = (1, 2, 3)
         palette = gen.load_tokens(gen.DEFAULT_CSS)._replace(text_muted=frame, line=frame)
-        gen.generate(site, self.out, ffmpeg=None, report=lambda *_: None, palette=palette)
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            gen.generate(site, self.out, ffmpeg=None, report=lambda *_: None, palette=palette)
+        # without ffmpeg the clip is skipped with a warning, as in `generate`
+        self.assertIn("ffmpeg", stderr.getvalue())
         for (path, _size), old in zip(default, before):
             self.assertNotEqual(path.read_bytes(), old)
             rows = read_png(path.read_bytes())[3]
