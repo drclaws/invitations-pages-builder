@@ -611,10 +611,37 @@ class ExampleDataTests(CliTestCase):
                     "--media", str(media), "--out", str(self.out), *extra, cwd=self.work,
                 )  # fmt: skip
                 self.assertEqual(result.returncode, 1, result.stdout)
-                self.assertIn(f"2 files: {message}; first: …/index.html line ", result.stderr)
+                # the message suggests the option the build needs
+                self.assertIn(
+                    f"2 files: {message}; a page of the site that the build does not write? "
+                    "see --allow-path; first: …/index.html line ",
+                    result.stderr,
+                )
                 self.assertFalse(self.out.exists())
                 for invitation in invitations:
                     self.assertNotIn(invitation["token"], result.stdout + result.stderr)
+
+    def test_the_default_build_without_the_allowed_path_gives_the_hint(self):
+        # `python3 build.py build --out …`: the main example is the default data
+        site, _invitations = self.load("data")
+        shutil.copytree(support.ROOT / "examples" / "data", self.code / "examples" / "data")
+        names = sorted(
+            {item[key] for item in site["media"].values() for key in ("file", "poster", "thumb")
+             if key in item}
+        )  # fmt: skip
+        support.write_media(self.code / "examples" / "media", names)
+        result = support.run_cli(self.code, "build", "--out", str(self.out), cwd=self.work)
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn(
+            "<a href>: '/…' does not exist in the output; a page of the site that the build "
+            "does not write? see --allow-path",
+            result.stderr,
+        )
+        self.assertFalse(self.out.exists())
+        result = support.run_cli(
+            self.code, "build", "--out", str(self.out), "--allow-path", "/photos", cwd=self.work
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_example_with_pending_venue(self):
         site, invitations = self.load("data-venue-pending")
