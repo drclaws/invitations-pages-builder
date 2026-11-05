@@ -1,4 +1,4 @@
-<!-- Events widget; expects in `.` the widget: domId, labelledBy, items[] (the guest's events by start time; an event has links[] — id, href, text, pending: buttons after the add-to-calendar one; an item with a non-empty pending is a text in place of the button, with no address), multiple, primaryDomId. Without the script the tab list is hidden and all the cards follow one another; the primary one has a border (events__panel--primary). The script sets the "past" and "happening now" marks. The cards have no countdown. -->
+<!-- Events widget; expects in `.` the widget: domId, labelledBy, items[] (the guest's events by start time; an event has links[] — id, href, text, pending: buttons after the add-to-calendar one; an item with a non-empty pending is a text in place of the button, with no address), multiple, primaryDomId; from the root the labels ui.past and ui.now (the marks of a tab), ui.eventPast and ui.now (those of a card), ui.addToCalendar, ui.programme. Without the script the tab list is hidden and all the cards follow one another; the primary one has a border (events__panel--primary). The script sets the "past" and "happening now" marks. The cards have no countdown. -->
 <div class="widget events-widget events" id="{{.domId}}" data-events data-events-primary="{{.primaryDomId}}">
   <!-- if:.multiple -->
   <div class="events__tabs" role="tablist" aria-labelledby="{{.labelledBy}}" data-events-tablist hidden>
@@ -6,8 +6,8 @@
     <button class="events__tab" type="button" role="tab" id="{{.domId}}--tab" aria-controls="{{.domId}}" aria-selected="false" tabindex="-1" data-events-tab>
       <span class="events__tab-title">{{.title}}</span>
       <span class="events__tab-time"><time datetime="{{.startISO}}">{{.tabText}}</time></span>
-      <span class="time-label" data-events-when="past" hidden>прошло</span>
-      <span class="time-label time-label--strong" data-events-when="now" hidden>идёт сейчас</span>
+      <span class="time-label" data-events-when="past" hidden>{{ui.past}}</span>
+      <span class="time-label time-label--strong" data-events-when="now" hidden>{{ui.now}}</span>
     </button>
     <!-- endeach -->
   </div>
@@ -17,9 +17,9 @@
     <header class="events__head">
       <h3 class="card__title events__title" id="{{.domId}}--title">{{.title}}</h3>
       <p class="events__when"><time datetime="{{.startISO}}">{{.whenText}}</time>
-        <span class="time-label" data-events-when="past" hidden>событие прошло</span>
-        <span class="time-label time-label--strong" data-events-when="now" hidden>идёт сейчас</span></p>
-      <p class="events__actions"><a class="btn btn--secondary" href="{{.icsPath}}" type="text/calendar">Добавить в календарь</a></p><!-- each:.links --><!-- if:!.pending --><p class="events__actions"><a class="btn btn--secondary" href="{{.href}}">{{.text}}</a></p><!-- endif --><!-- if:.pending --><p class="events__actions card__text">{{.pending}}</p><!-- endif --><!-- endeach -->
+        <span class="time-label" data-events-when="past" hidden>{{ui.eventPast}}</span>
+        <span class="time-label time-label--strong" data-events-when="now" hidden>{{ui.now}}</span></p>
+      <p class="events__actions"><a class="btn btn--secondary" href="{{.icsPath}}" type="text/calendar">{{ui.addToCalendar}}</a></p><!-- each:.links --><!-- if:!.pending --><p class="events__actions"><a class="btn btn--secondary" href="{{.href}}">{{.text}}</a></p><!-- endif --><!-- if:.pending --><p class="events__actions card__text">{{.pending}}</p><!-- endif --><!-- endeach -->
     </header>
     <!-- if:.description -->
     <div class="prose events__description">
@@ -36,7 +36,7 @@
     <!-- with:.location --><!-- include:partials/location-card --><!-- endwith -->
     <!-- with:.program -->
     <section class="events__program" aria-labelledby="{{.domId}}">
-      <h4 class="events__program-title" id="{{.domId}}">Программа</h4>
+      <h4 class="events__program-title" id="{{.domId}}">{{ui.programme}}</h4>
       <!-- include:partials/schedule -->
     </section>
     <!-- endwith -->

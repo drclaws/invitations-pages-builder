@@ -1,4 +1,4 @@
-<!-- Venue card; expects in `.` a venue: ready, name, address, description, mapLinks, hasMapLinks, photos[], directions (a media item or null), directionsCredit, compact, nested.
+<!-- Venue card; expects in `.` a venue: ready, name, address, description, mapLinks, hasMapLinks, photos[], directions (a media item or null), directionsCredit, compact, nested; from the root: ui.directions (the map caption), ui.placePending (the text of a place not announced yet).
      compact — only the name, the address and the map buttons; nested — a venue inside an event card: the name is an h4 instead of an h3, with no border of its own.
      The map caption: the directions label, then after a space, with no separator, the credit (directionsCredit) in its own element. -->
 <!-- if:.ready -->
@@ -39,7 +39,7 @@
       <!-- with:.directions --><a class="media media--scheme" href="{{.src}}" data-lightbox>
         <img src="{{.thumbSrc}}" alt="{{.alt}}" loading="lazy" decoding="async">
       </a><!-- endwith -->
-      <figcaption class="gallery__caption">Схема проезда<!-- if:.directionsCredit --> <span class="venue__scheme-credit">{{.directionsCredit}}</span><!-- endif --></figcaption>
+      <figcaption class="gallery__caption">{{ui.directions}}<!-- if:.directionsCredit --> <span class="venue__scheme-credit">{{.directionsCredit}}</span><!-- endif --></figcaption>
     </figure>
     <!-- endif -->
   </div>
@@ -54,12 +54,12 @@
 <!-- if:!.ready -->
 <!-- if:!.nested -->
 <div class="card location-card location-card--pending venue__pending">
-  <p>Подробности появятся на этой странице позже.</p>
+  <p>{{ui.placePending}}</p>
 </div>
 <!-- endif -->
 <!-- if:.nested -->
 <div class="location-card location-card--pending venue__pending">
-  <p>Подробности появятся на этой странице позже.</p>
+  <p>{{ui.placePending}}</p>
 </div>
 <!-- endif -->
 <!-- endif -->

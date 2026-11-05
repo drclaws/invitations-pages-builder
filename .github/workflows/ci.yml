@@ -143,22 +143,29 @@ jobs:
       - name: Link preview tags
         run: |
           set -euo pipefail
-          python - "$RUNNER_TEMP/dist" / "$RUNNER_TEMP/site/invite" /invite <<'PY'
-          import re, sys
+          python - "$RUNNER_TEMP/dist" / examples/data "$RUNNER_TEMP/site/invite" /invite examples/data <<'PY'
+          import html, json, re, sys
           from pathlib import Path
           meta = re.compile(r'<meta (?:property|name)="([^"]+)" content="([^"]*)"')
-          for out, base in zip(map(Path, sys.argv[1::2]), sys.argv[2::2]):
+          title_tag = re.compile(r"<title>([^<]*)</title>")
+          for out, base, data in zip(map(Path, sys.argv[1::3]), sys.argv[2::3], map(Path, sys.argv[3::3])):
               prefix = base.rstrip("/")
+              # the title in any language: "<a word of the language> · <coupleNames>"
+              names = " · " + json.loads((data / "site.json").read_text(encoding="utf-8"))["coupleNames"]
               pages = sorted(page for page in out.glob("*/index.html") if page.parent.name != "assets")
               assert pages, "no invitation page was built"
               images = set()
               for page in pages:
-                  tags = dict(meta.findall(page.read_text(encoding="utf-8")))
+                  text = page.read_text(encoding="utf-8")
+                  tags = {key: html.unescape(value) for key, value in meta.findall(text)}
+                  found = title_tag.search(text)
+                  title = html.unescape(found.group(1)) if found else ""
                   assert re.fullmatch(re.escape(prefix) + r"/assets/[A-Za-z0-9_-]+/[0-9a-f]{16}\.jpg", tags.get("og:image", "")), "og:image is not the rendered cover in the media directory"
                   images.add(tags["og:image"])
                   assert "og:url" not in tags, "og:url must not be written"
                   assert tags.get("og:site_name") == "Example", "og:site_name is not the SITE_NAME of the build"
-                  assert tags.get("og:title", "").startswith("Приглашение · "), "og:title has no names"
+                  assert tags.get("og:title") == title == tags.get("og:image:alt"), "og:title, og:image:alt and <title> differ"
+                  assert title.endswith(names) and title[: -len(names)].strip(), "the title is not a word and the names"
                   assert tags.get("og:description"), "no og:description"
                   for key, value in tags.items():
                       assert "://" not in value, f"an absolute URL in <meta {key}>"

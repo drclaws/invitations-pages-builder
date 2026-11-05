@@ -1,15 +1,15 @@
-<!-- Date widget; expects in `.` the widget: event (startISO, dateText, timeText, title, icsPath), showEventTitle, countdown, calendar. The date as text is always visible; the script shows the countdown. -->
+<!-- Date widget; expects in `.` the widget: event (startISO, dateTimeText, title, icsPath), showEventTitle, countdown, calendar; from the root: ui.addToCalendar. The date as text (the date and the time in the pattern of the language) is always visible; the script shows the countdown. -->
 <div class="widget date-widget">
   <!-- if:.showEventTitle -->
   <p class="section__subtitle date__event">{{.event.title}}</p>
   <!-- endif -->
-  <p class="date__text"><time datetime="{{.event.startISO}}">{{.event.dateText}}, {{.event.timeText}}</time></p>
+  <p class="date__text"><time datetime="{{.event.startISO}}">{{.event.dateTimeText}}</time></p>
   <!-- if:.countdown -->
   <!-- include:partials/countdown -->
   <!-- endif -->
   <!-- if:.calendar -->
   <p class="date__actions">
-    <a class="btn btn--secondary" href="{{.event.icsPath}}" type="text/calendar">Добавить в календарь</a>
+    <a class="btn btn--secondary" href="{{.event.icsPath}}" type="text/calendar">{{ui.addToCalendar}}</a>
   </p>
   <!-- endif -->
 </div>

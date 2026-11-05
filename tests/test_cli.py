@@ -107,6 +107,8 @@ class ValidateCommandTests(CliTestCase):
     def test_valid_data(self):
         result = self.run_validate()
         self.assertEqual(result.returncode, 0, result.stderr)
+        # the language, then the summary
+        self.assertTrue(result.stdout.startswith("validate: language: ru\nvalidate: OK - "))
         self.assertIn(
             f"validate: OK - 3 invitation(s), 2 event(s), 8 section(s), "
             f"{len(support.MEDIA_FILES)} media file(s)",
@@ -128,10 +130,28 @@ class ValidateCommandTests(CliTestCase):
         result = self.run_validate()
         self.assertEqual(result.returncode, 1)
         self.assertIn("duplicate token", result.stderr)
-        self.assertIn("invitation #3: field 'form' must be one of: ty, vy", result.stderr)
+        self.assertIn(
+            "invitation #3: field 'form' must be one of: informal, formal (or the aliases ty, vy)",
+            result.stderr,
+        )
         self.assertIn("failed with 2 error(s)", result.stderr)
         self.assertNotIn("'tu'", result.stderr)
         self.assertNoPrivateData(result.stdout, result.stderr)
+
+    def test_a_missing_form_is_reported_where_a_page_needs_it(self):
+        invitations = invitations_data()
+        invitations[1].pop("form")
+        write_data(self.data, invitations=invitations)
+        expected = (
+            "error: invitation #2: field 'form' is required: this page shows a text with forms "
+            "of address (first: site.json field 'sections[1].widgets[0].text'); set "
+            '"informal" or "formal"'
+        )
+        for result in (self.run_validate(), self.run_build()):
+            self.assertEqual(result.returncode, 1)
+            self.assertIn(expected, result.stderr.splitlines())
+            self.assertNoPrivateData(result.stdout, result.stderr)
+        self.assertFalse(self.out.exists())
 
     def test_missing_media_file(self):
         os.remove(self.media / "venue-1.png")
@@ -421,7 +441,7 @@ class BuildCommandTests(CliTestCase):
         # Only the second fixture invitation is addressed formally, so only its
         # page reaches the failing placeholder (an array inside {{…}}).
         (self.code / "template.html").write_text(
-            "<!-- if:vy -->{{sections}}<!-- endif -->\n", encoding="utf-8"
+            "<!-- if:formal -->{{sections}}<!-- endif -->\n", encoding="utf-8"
         )
         result = self.run_build()
         self.assertEqual(result.returncode, 1)

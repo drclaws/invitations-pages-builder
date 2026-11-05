@@ -1,19 +1,19 @@
-<!-- Countdown timer; expects in `.` the date widget: event.startISO. Hidden without the script: the date as text stands next to it. -->
-<div class="countdown date__countdown" data-countdown="{{.event.startISO}}" role="timer" aria-label="Осталось до начала" hidden>
+<!-- Countdown timer; expects in `.` the date widget: event.startISO; from the root: ui.countdownLabel and the unit labels ui.countdownDays, ui.countdownHours, ui.countdownMinutes, ui.countdownSeconds (shown before the script picks the plural form). Hidden without the script: the date as text stands next to it. -->
+<div class="countdown date__countdown" data-countdown="{{.event.startISO}}" role="timer" aria-label="{{ui.countdownLabel}}" hidden>
   <div class="countdown__cell" data-countdown-unit="days">
     <span class="countdown__value" data-countdown-value>0</span>
-    <span class="countdown__label" data-countdown-label>дней</span>
+    <span class="countdown__label" data-countdown-label>{{ui.countdownDays}}</span>
   </div>
   <div class="countdown__cell" data-countdown-unit="hours">
     <span class="countdown__value" data-countdown-value>0</span>
-    <span class="countdown__label" data-countdown-label>часов</span>
+    <span class="countdown__label" data-countdown-label>{{ui.countdownHours}}</span>
   </div>
   <div class="countdown__cell" data-countdown-unit="minutes">
     <span class="countdown__value" data-countdown-value>0</span>
-    <span class="countdown__label" data-countdown-label>минут</span>
+    <span class="countdown__label" data-countdown-label>{{ui.countdownMinutes}}</span>
   </div>
   <div class="countdown__cell" data-countdown-unit="seconds">
     <span class="countdown__value" data-countdown-value>0</span>
-    <span class="countdown__label" data-countdown-label>секунд</span>
+    <span class="countdown__label" data-countdown-label>{{ui.countdownSeconds}}</span>
   </div>
 </div>

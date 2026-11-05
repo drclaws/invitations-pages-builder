@@ -26,7 +26,7 @@ from typing import Callable
 
 from tests import fixtures_v2 as F
 from tests.support import ROOT, build
-from tools import _maps, _page, _schema
+from tools import _data, _locale, _maps, _page, _schema
 
 FRAGMENTS_DIR = ROOT / build.FRAGMENTS_DIRNAME
 
@@ -39,10 +39,20 @@ MEDIA_TYPES = _schema.MEDIA_TYPES
 # --- the contract: the fields of every node of the page tree ----------------
 
 ROOT_FIELDS = (
-    "greeting", "form", "ty", "vy", "coupleNames", "rsvpDeadline", "assetsPath", "mediaPath",
+    "lang", "ogLocale", "ui",
+    "greeting", "form", "informal", "formal", "coupleNames", "rsvpDeadline", "assetsPath", "mediaPath",
     "faviconPath", "faviconType", "ogImage", "ogImageType", "ogImageWidth",
     "ogImageHeight", "themeColor", "siteName", "linkDescription", "primaryEvent", "sections",
 )
+#: The labels of the pages in the language of the site (`ui` of the root).
+UI_FIELDS = (
+    "invitationTitle", "addToCalendar", "programme", "directions", "placePending", "openOnMap",
+    "mapGoogle", "mapYandex", "mapApple", "past", "eventPast", "now", "countdownLabel",
+    "countdownDays", "countdownHours", "countdownMinutes", "countdownSeconds", "photo", "video",
+)
+#: The fixture site is in Russian (`"lang": "ru"`, the built-in pack).
+LANG = "ru"
+STRINGS = _locale.site_strings({"lang": LANG})
 SECTION_FIELDS = {
     "cover": ("id", "type", "domId", "titleId", "eyebrow", "event", "background",
               "backgroundFocus"),
@@ -60,8 +70,8 @@ WIDGET_FIELDS = {
 }
 EVENT_FIELDS = (
     "id", "domId", "title", "description", "note", "isMain", "isPrimary", "kind",
-    "startISO", "endISO", "dateText", "timeText", "whenText", "tabText", "icsPath",
-    "location", "program", "links",
+    "startISO", "endISO", "dateText", "timeText", "dateTimeText", "whenText", "tabText",
+    "icsPath", "location", "program", "links",
 )
 #: `primaryEvent` in the root has the fields of every event; its DOM id is ""
 #: (and so are those of its place and its program): it is not on the page.
@@ -109,6 +119,11 @@ class Strict(dict):
         if not dict.__contains__(self, key):
             raise AssertionError(f"a fragment reads the field {key!r}, which the node lacks")
         return True
+
+
+def ui_node() -> Strict:
+    """The labels of the root, from the strings of the fixture language."""
+    return node(UI_FIELDS, **{key: STRINGS[key] for key in UI_FIELDS})
 
 
 def node(fields: tuple[str, ...], **values) -> Strict:
@@ -392,6 +407,7 @@ class PageTree:
             kind="primary" if event_id == self.primary else "regular",
             startISO=item["start"], endISO=item["end"], dateText=item["dateText"],
             timeText=item["timeText"], whenText=item["whenText"],
+            dateTimeText=f"{item['dateText']}, {item['timeText']}",
             tabText=item["timeText"] if self.same_day
             else f"{item['dayMonth']}, {item['timeText']}",
             icsPath=hashed_url(f"{event_id}.ics"),
@@ -465,9 +481,12 @@ class PageTree:
         return result
 
     def root(self) -> Strict:
+        # the tree names the form canonically, whatever name the data gives
+        form = {"ty": "informal", "vy": "formal"}[self.guest["form"]]
         return node(
-            ROOT_FIELDS, greeting=self.guest["greeting"], form=self.guest["form"],
-            ty=self.guest["form"] == "ty", vy=self.guest["form"] == "vy",
+            ROOT_FIELDS, lang=LANG, ogLocale=STRINGS["ogLocale"], ui=ui_node(),
+            greeting=self.guest["greeting"], form=form,
+            informal=form == "informal", formal=form == "formal",
             coupleNames=COUPLE_NAMES, rsvpDeadline=RSVP_DEADLINE, assetsPath="/assets",
             mediaPath=MEDIA_PATH, faviconPath="/assets/favicon.svg", faviconType="image/svg+xml",
             ogImage="/assets/og.png", ogImageType="image/png", ogImageWidth=1200,
@@ -640,6 +659,7 @@ def bare_event(event_id: str, full: bool, primary: bool = False, with_dom_id: bo
         links=[bare_link("photos"), bare_link("map", "Схема"), bare_pending("seating")]
         if full else [],
     )
+    values["dateTimeText"] = f"{values['dateText']}, {values['timeText']}"
     values["domId"] = f"w--e-{event_id}" if with_dom_id else ""
     return node(EVENT_FIELDS if with_dom_id else PRIMARY_EVENT_FIELDS, **values)
 
@@ -707,7 +727,8 @@ def section_variants() -> list[Strict]:
 def harness_root(items: list) -> Strict:
     """The root of the page plus `harness`: the list the stub frame goes over."""
     return node(
-        ROOT_FIELDS + ("harness",), greeting="Дорогая Ева!", form="ty", ty=True, vy=False,
+        ROOT_FIELDS + ("harness",), lang=LANG, ogLocale=STRINGS["ogLocale"], ui=ui_node(),
+        greeting=GUESTS[2]["greeting"], form="informal", informal=True, formal=False,
         coupleNames=COUPLE_NAMES, rsvpDeadline=RSVP_DEADLINE, assetsPath="/assets",
         mediaPath=MEDIA_PATH, faviconPath="/assets/favicon.svg", faviconType="image/svg+xml",
         ogImage="/assets/og.png", ogImageType="image/png", ogImageWidth=1200,
@@ -936,7 +957,7 @@ class FragmentContractTests(unittest.TestCase):
         source = (FRAGMENTS_DIR / "widgets" / "events.html").read_text(encoding="utf-8")
         self.assertIn(
             '<p class="events__actions"><a class="btn btn--secondary" href="{{.icsPath}}" '
-            'type="text/calendar">Добавить в календарь</a></p><!-- each:.links --><!-- '
+            'type="text/calendar">{{ui.addToCalendar}}</a></p><!-- each:.links --><!-- '
             'if:!.pending --><p class="events__actions"><a class="btn btn--secondary" '
             'href="{{.href}}">{{.text}}</a></p><!-- endif --><!-- if:.pending --><p '
             'class="events__actions card__text">{{.pending}}</p><!-- endif --><!-- endeach -->\n',
@@ -1278,6 +1299,7 @@ def without_sizes(site: dict) -> dict:
 #: The fields of every node, by the place in the tree where the node is found.
 NODE_FIELDS = {
     "root": set(ROOT_FIELDS),
+    "ui": set(UI_FIELDS),
     "section": set(SECTION_FIELDS["cover"]) | set(SECTION_FIELDS["custom"]),
     "event": set(EVENT_FIELDS),
     "location": set(LOCATION_FIELDS),
@@ -1309,6 +1331,7 @@ def nodes_of(tree: dict):
             yield "media", item
 
     yield "root", tree
+    yield "ui", tree["ui"]
     yield from event(tree["primaryEvent"])
     for section in tree["sections"]:
         yield "section", section
@@ -1372,7 +1395,8 @@ class DataLayerPageTests(unittest.TestCase):
         main = [(tree, page) for label, tree, page in self.pages if label.startswith("main")]
         texts = []
         for (tree, page), invitation in zip(main, F.INVITATIONS):
-            paragraph = f'<p class="events__actions card__text">{pending[tree["form"]]}</p>'
+            text = _data.text_variant(pending, tree["form"])
+            paragraph = f'<p class="events__actions card__text">{text}</p>'
             # once on the page: in the card of the dinner, not in the cover or the date
             texts.append(page.count(paragraph))
             self.assertEqual(page.count('href="/photos/'), 1 - texts[-1])

@@ -11,8 +11,8 @@ into, scaled to `IMAGE_SIZE` device pixels; the quality goes down from
 
 Everything temporary (the page, the browser profile) lives under `tempfile`
 (`TMPDIR`) and is removed; the browser is closed whatever happens.  Messages
-never name the data files or the browser path.  On one machine with one browser and one set of fonts two renders
-give the same bytes.
+never name the data files or the browser path.  On one machine with one
+browser and one set of fonts two renders give the same bytes.
 
 Standard library only.
 """

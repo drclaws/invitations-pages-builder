@@ -121,6 +121,53 @@ class AppJsSourceTest(unittest.TestCase):
         self.assertIn("report('countdown', error);", init)
 
 
+class ScriptStringsSourceTest(unittest.TestCase):
+    """The words of the script: one line of strings, plural forms from the
+    browser's rules, no words of a language in the code."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.raw = APP_JS.read_text(encoding="utf-8")
+        cls.code = strip_comments(cls.raw)
+
+    def test_one_line_of_strings_inside_the_script_before_its_first_reader(self):
+        lines = [line for line in self.raw.splitlines() if "@strings" in line]
+        self.assertEqual(len(lines), 1)
+        self.assertRegex(lines[0], r"^  var STRINGS = \{.*\}; /\* @strings \*/$")
+        at = self.raw.index("var STRINGS = ")
+        self.assertLess(self.raw.index("(function () {"), at)
+        self.assertLess(at, self.raw.index("register('countdown'"))
+        self.assertLess(at, self.raw.index("var LIGHTBOX_TEXT"))
+        # the source holds the English strings; no other words of a language
+        self.assertNotRegex(self.raw, f"[{chr(0x400)}-{chr(0x4FF)}]")
+
+    def test_the_plural_form_comes_from_the_rules_of_the_browser(self):
+        self.assertNotRegex(self.code, r"\bpluralRu\b")
+        self.assertNotIn("forms:", self.code)
+        category = self.code[self.code.index("function pluralCategory("):self.code.index("function pluralForm(")]
+        # made once, for the language of the page; without it every number is 'other'
+        self.assertRegex(category, r"if \(pluralRules === undefined\) \{\s*try \{\s*"
+                                   r"pluralRules = new Intl\.PluralRules\(document\.documentElement\.lang\);"
+                                   r"\s*\} catch \(error\) \{\s*pluralRules = null;")
+        self.assertIn("return pluralRules ? pluralRules.select(count) : 'other';", category)
+        self.assertIn("return forms[pluralCategory(count)] || forms.other;", self.code)
+        self.assertIn("setText(cell.label, pluralForm(amount, STRINGS.countdown[cell.unit.name]));",
+                      self.code)
+        self.assertEqual(self.code.count("Intl."), 1)
+
+    def test_the_viewer_reads_its_texts_from_the_strings(self):
+        self.assertIn("var LIGHTBOX_TEXT = STRINGS.lightbox;", self.code)
+        self.assertRegex(self.code, r"setText\(ui\.live, fill\(LIGHTBOX_TEXT\.position, \{\s*"
+                                    r"item: item\.video \? LIGHTBOX_TEXT\.itemVideo : LIGHTBOX_TEXT\.itemImage,"
+                                    r"\s*n: index \+ 1,\s*total: items\.length\s*\}\)\);")
+        # the visual counter has no words
+        self.assertIn("setText(ui.count, (index + 1) + ' / ' + items.length);", self.code)
+        # a plain replace of known names, nothing evaluated
+        fill = self.code[self.code.index("function fill("):self.code.index("var pluralRules")]
+        self.assertIn("pattern.replace(/\\{([A-Za-z][A-Za-z0-9]*)\\}/g, function (match, name) {", fill)
+        self.assertIn("Object.prototype.hasOwnProperty.call(values, name)", fill)
+
+
 class EventsSourceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -164,8 +211,8 @@ class EventsSourceTest(unittest.TestCase):
         self.assertLess(code.index("register('events'"), code.index("register('reveal'"))
 
     def test_the_module_has_no_text_of_its_own(self):
-        # the labels «past» / «now» live in the markup; the module only toggles hidden
-        self.assertNotRegex(self.module, r"[А-Яа-яЁё]")
+        # the labels "past" / "now" live in the markup; the module only toggles hidden
+        self.assertNotIn("STRINGS", self.module)
         self.assertNotRegex(self.module, r"\.textContent\s*=|createElement|createTextNode|appendChild")
         self.assertIn("label.hidden = label.getAttribute('data-events-when') !== state;", self.module)
 
@@ -613,7 +660,7 @@ class CoverBarTest(unittest.TestCase):
                          "min-block-size: var(--viewport-height-dynamic);")
         self.assertIn("color-scheme: only light;", self.css)
         template = (ROOT / "template.html").read_text(encoding="utf-8")
-        self.assertIn('<html lang="ru" class="invitation">', template)
+        self.assertIn('<html lang="{{lang}}" class="invitation">', template)
         for other in ("styleguide.html",):
             with self.subTest(page=other):
                 self.assertNotIn("invitation", re.search(r"<html[^>]*>", (ROOT / other).read_text(
@@ -727,7 +774,7 @@ class CoverBarTest(unittest.TestCase):
         self.assertIn("var nodes = [cover, bar];", self.module)
         self.assertNotRegex(self.module, r"setAttribute\('style'|\.style\.cssText|\.style\s*=|"
                                          r"\.style\.[a-zA-Z]+\s*=|root\.style|documentElement\.style")
-        self.assertNotRegex(self.module, r"[А-Яа-яЁё]")  # no text of its own
+        self.assertNotIn("STRINGS", self.module)  # no text of its own
         # frames, not every scroll event
         self.assertIn("frame = window.requestAnimationFrame(update);", self.function("onChange"))
         self.assertIn("{ passive: true, capture: true }", self.module)

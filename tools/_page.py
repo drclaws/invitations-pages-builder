@@ -11,10 +11,16 @@ in.  The invitation token appears in its tree only in the `href` of the
 event links switched on for it; a link that is not shown may leave a text in
 its place (`pending`), which holds neither the token nor an address.
 
+The words, dates and labels are in the language of the site: the root has
+the language tag (`lang`), the locale of the link preview (`ogLocale`) and
+the labels of the pages (`ui`), resolved by `tools._locale` from the built-in
+pack and `site.json` `strings`.
+
 Everything outside the data comes in through `PageSettings`: the URLs of
 media files and of event calendar files, the media facts (sizes, durations),
 the default event duration, the URL path of the shared files and the fields
-of the site images and colours.  The module reads no files.
+of the site images and colours.  The module reads no files (the packs of
+strings are read by `tools._locale`).
 
 `Usage` records what the trees show; `warn_unused` reports the parts of
 `site.json` that no page shows (their media files are not published).
@@ -29,13 +35,16 @@ from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from typing import Any, Callable, Mapping, Sequence
 
-from tools import _dates, _maps
+from tools import _dates, _locale, _maps
 from tools._data import (
     COMMON_FORM,
+    FORMS,
     TextError,
+    canonical_form,
     expand_texts,
     format_path,
     invitation_label,
+    needs_form,
     pick_form,
     show_id,
     substitute,
@@ -98,10 +107,6 @@ def location_part(location_id: str) -> str:
 TITLE_PART = "title"
 PROGRAM_PART = "program"
 
-#: Labels of a media tile without a description.
-DEFAULT_ALT = {"image": "Фотография", "video": "Видео"}
-VIDEO_LABEL = "Видео"
-
 
 @dataclass(frozen=True)
 class PageSettings:
@@ -162,16 +167,21 @@ class _Page:
         warn: Callable[[str], None] | None,
         label: str,
         place_warnings: set[tuple[str, str]],
+        error: Callable[[str], None] | None = None,
     ) -> None:
         self.site = site
         self.invitation = invitation
         self.settings = settings
         self.usage = usage
         self.warn = warn
+        self.error = error
         self.label = label
         self.place_warnings = place_warnings
         # default: the form of address is the field `form` of the invitation
-        self.form = invitation["form"]
+        # (canonical name); "" without one
+        self.form = canonical_form(invitation.get("form")) or ""
+        self._form_reported = False
+        self.strings = _locale.site_strings(site)
         self.media_path = f"{settings.assets_path}/{site['mediaDir']}"
         self.events = site["events"]
         self.event_overrides = invitation.get("events", {})
@@ -202,19 +212,40 @@ class _Page:
         return [item.id for item in self.timeline]
 
     def _text_values(self) -> dict[str, str]:
-        values = text_values(self.site, self.primary_id)
+        values = text_values(self.site, self.primary_id, self.strings)
         values["greeting"] = self.invitation["greeting"]
         return values
 
-    def _expand(self, text: str) -> str:
-        """A text with its named texts expanded in the invitation's form."""
-        return expand_texts(text, self.form, self.site.get("texts", {}), used=self.usage.texts)
+    def _form_for(self, value: Any, where: str) -> str:
+        """The form of address to resolve `value` in.
+
+        Without a form on the invitation, a text that depends on one is an
+        error, reported once per page with the first such field (`where`);
+        a text that does not depend on one reads the same in every form.
+        """
+        if self.form:
+            return self.form
+        if not self._form_reported and needs_form(value, self.site.get("texts", {})):
+            self._form_reported = True
+            message = (
+                f"{self.label or 'invitation'}: field 'form' is required: this page shows a "
+                f"text with forms of address (first: {where}); set \"informal\" or \"formal\""
+            )
+            if self.error is None:
+                raise TextError(message)
+            self.error(message)
+        return FORMS[-1]
+
+    def _expand(self, text: str, form: str) -> str:
+        """A text with its named texts expanded in `form`."""
+        return expand_texts(text, form, self.site.get("texts", {}), used=self.usage.texts)
 
     def resolve(self, value: Any, parts: Sequence[Any]) -> str:
         """A `site.json` text in the invitation's form."""
         if value is None:
             return ""
-        source = self._expand(pick_form(value, self.form))
+        form = self._form_for(value, f"{SITE_FILE} field '{format_path(parts)}'")
+        source = self._expand(pick_form(value, form), form)
         self._check_place(source, parts)
         return substitute(source, self.values, PLACEHOLDERS)
 
@@ -224,11 +255,13 @@ class _Page:
         blank stays "" (the fragment then leaves the field out)."""
         return _text(self.resolve(value, parts))
 
-    def resolve_note(self, value: Any) -> str:
-        """A note of the invitation (placeholders and named texts, no forms)."""
+    def resolve_note(self, value: Any, parts: Sequence[Any]) -> str:
+        """A note of the invitation at `parts` (placeholders and named texts
+        in the invitation's form, no forms of its own)."""
         if not _text(value):
             return ""
-        return substitute(self._expand(value), self.values, PLACEHOLDERS)
+        form = self._form_for(value, f"field '{format_path(parts)}'")
+        return substitute(self._expand(value, form), self.values, PLACEHOLDERS)
 
     def _check_place(self, text: str, parts: Sequence[Any]) -> None:
         if self.warn is None or self.values["eventPlace"]:
@@ -261,22 +294,27 @@ class _Page:
             "description": self.registry_text(
                 raw.get("description"), ("events", event_id, "description")
             ),
-            "note": self.resolve_note(self.event_overrides.get(event_id, {}).get("note")),
+            "note": self.resolve_note(
+                self.event_overrides.get(event_id, {}).get("note"), ("events", event_id, "note")
+            ),
             "isMain": event_id == self.main_id,
             "isPrimary": is_primary,
             "kind": "primary" if is_primary else "regular",
             "startISO": start_text,
             "endISO": end_text,
-            # default: the build always writes the dates, an event has no
-            # spelling of its own
-            "dateText": _dates.format_date(entry.start),
-            "timeText": _dates.format_time(entry.start),
+            # default: the build always writes the dates, in the patterns of
+            # the language; an event has no spelling of its own
+            "dateText": _dates.format_date(self.strings, entry.start),
+            "timeText": _dates.format_time(self.strings, entry.start),
+            "dateTimeText": _dates.format_date_time(self.strings, entry.start),
             # default: the page shows the start only; the end stays in the
             # calendar and the past/now marks unless `showEnd` asks for it
             "whenText": _dates.format_when(
-                entry.start, entry.end if entry.explicit and raw.get("showEnd") is True else None
+                self.strings,
+                entry.start,
+                entry.end if entry.explicit and raw.get("showEnd") is True else None,
             ),
-            "tabText": _dates.format_tab(entry.start, same_day),
+            "tabText": _dates.format_tab(self.strings, entry.start, same_day),
             "icsPath": self._calendar_src(event_id),
             "location": self.location(
                 raw["location"], dom_id(own_id, location_part(raw["location"])), nested=True
@@ -418,9 +456,11 @@ class _Page:
         if is_video and infos.get(file) is not None:
             duration = format_duration(infos[file].duration_seconds)
         given_alt = _text(item.get("alt"))
-        alt = given_alt or DEFAULT_ALT[kind]
+        # a tile without a description is labelled by its kind
+        video_label = self.strings["video"]
+        alt = given_alt or (video_label if is_video else self.strings["photo"])
         if is_video:
-            label = f"{VIDEO_LABEL}: {given_alt}" if given_alt else VIDEO_LABEL
+            label = f"{video_label}: {given_alt}" if given_alt else video_label
             label += f", {duration}" if duration else ""
         else:
             label = alt
@@ -451,10 +491,13 @@ class _Page:
         self._warn_notes()
         images = {key: self.settings.site_images.get(key, "") for key in SITE_FIELDS}
         return {
+            "lang": _locale.site_lang(self.site),
+            "ogLocale": self.strings["ogLocale"],
+            "ui": _locale.ui_labels(self.strings),
             "greeting": self.invitation["greeting"],
             "form": self.form,
-            "ty": self.form == "ty",
-            "vy": self.form == "vy",
+            "informal": self.form == "informal",
+            "formal": self.form == "formal",
             "coupleNames": self.site["coupleNames"],
             "rsvpDeadline": _text(self.site.get("rsvpDeadline")),
             "assetsPath": self.settings.assets_path,
@@ -517,7 +560,7 @@ class _Page:
             )
             if resolved is not None:
                 widgets.append(resolved)
-        note = self.resolve_note(override.get("note"))
+        note = self.resolve_note(override.get("note"), ("sections", section_id, "note"))
         if not widgets and not note:
             if self.warn is not None and override.get("visible") is True:
                 self.warn(
@@ -644,16 +687,21 @@ def _place_name(site: dict, event_id: str) -> str:
     return _text(place.get("name")) if place.get("ready", True) is not False else ""
 
 
-def text_values(site: dict, event_id: str) -> dict[str, str]:
+def text_values(
+    site: dict, event_id: str, strings: Mapping[str, Any] | None = None
+) -> dict[str, str]:
     """The values of the placeholders that do not depend on a guest; the
-    `{event…}` ones are those of `event_id` (`{greeting}` is not among them)."""
+    `{event…}` ones are those of `event_id` (`{greeting}` is not among them),
+    the date and the time in the patterns of the site's language (`strings`,
+    resolved from `site` when not given)."""
+    strings = _locale.site_strings(site) if strings is None else strings
     event = site["events"][event_id]
     start = _dates.parse_date_iso(event["start"])
     values = {
         "coupleNames": site["coupleNames"],
         "eventTitle": event["title"],
-        "eventDate": _dates.format_date(start),
-        "eventTime": _dates.format_time(start),
+        "eventDate": _dates.format_date(strings, start),
+        "eventTime": _dates.format_time(strings, start),
         "eventPlace": _place_name(site, event_id),
     }
     if _text(site.get("rsvpDeadline")):
@@ -691,7 +739,7 @@ def site_cover(site: dict, settings: PageSettings) -> dict | None:
     if position is None:
         return None
     # nobody in particular: the main event, the formal form, no greeting
-    nobody = {"greeting": "", "form": "vy"}
+    nobody = {"greeting": "", "form": "formal"}
     # the cover links no calendar file
     settings = replace(settings, calendar_src=lambda _event_id: "")
     page = _Page(site, nobody, settings, Usage(), None, "", set())
@@ -700,6 +748,7 @@ def site_cover(site: dict, settings: PageSettings) -> dict | None:
     cover = page.section(section, position)
     cover["eyebrow"] = eyebrow or ""
     return {
+        "lang": _locale.site_lang(site),
         "coupleNames": site["coupleNames"],
         "assetsPath": settings.assets_path,
         "cover": cover,
@@ -798,11 +847,12 @@ def build_pages(
     """
     usage = Usage()
     warn = report_warning(report) if report is not None else None
+    error = report.error if report is not None else None
     place_warnings: set[tuple[str, str]] = set()
     pages = []
     for number, invitation in enumerate(invitations, start=1):
         label = invitation_label(number)
-        page = _Page(site, invitation, settings, usage, warn, label, place_warnings)
+        page = _Page(site, invitation, settings, usage, warn, label, place_warnings, error)
         tree = page.tree()
         repeated = repeated_ids(tree)
         if repeated and report is not None:

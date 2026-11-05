@@ -17,7 +17,8 @@ from tools import _page, _schema
 from tools._media import MediaInfo
 
 ROOT_FIELDS = {
-    "greeting", "form", "ty", "vy", "coupleNames", "rsvpDeadline", "assetsPath", "mediaPath",
+    "lang", "ogLocale", "ui",
+    "greeting", "form", "informal", "formal", "coupleNames", "rsvpDeadline", "assetsPath", "mediaPath",
     "faviconPath", "faviconType", "ogImage", "ogImageType", "ogImageWidth",
     "ogImageHeight", "themeColor", "siteName", "linkDescription", "primaryEvent", "sections",
 }  # fmt: skip
@@ -35,8 +36,13 @@ WIDGET_FIELDS = {
 }
 EVENT_FIELDS = {
     "id", "domId", "title", "description", "note", "isMain", "isPrimary", "kind",
-    "startISO", "endISO", "dateText", "timeText", "whenText", "tabText", "icsPath",
-    "location", "program", "links",
+    "startISO", "endISO", "dateText", "timeText", "dateTimeText", "whenText", "tabText",
+    "icsPath", "location", "program", "links",
+}  # fmt: skip
+UI_FIELDS = {
+    "invitationTitle", "addToCalendar", "programme", "directions", "placePending", "openOnMap",
+    "mapGoogle", "mapYandex", "mapApple", "past", "eventPast", "now", "countdownLabel",
+    "countdownDays", "countdownHours", "countdownMinutes", "countdownSeconds", "photo", "video",
 }  # fmt: skip
 LINK_FIELDS = {"id", "href", "text", "pending"}
 PROGRAM_FIELDS = {"domId", "items", "nested"}
@@ -128,6 +134,7 @@ class ContractTests(unittest.TestCase):
     def test_root_and_sections(self):
         for tree in self.trees():
             self.assertEqual(set(tree), ROOT_FIELDS)
+            self.assertEqual(set(tree["ui"]), UI_FIELDS)
             for item in tree["sections"]:
                 self.assertEqual(set(item), SECTION_FIELDS)
                 self.assertIn(item["type"], _schema.SECTION_TYPES)
@@ -162,7 +169,16 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(page["mediaPath"], f"/assets/{F.MEDIA_DIR}")
         for key, value in F.SITE_IMAGES.items():
             self.assertEqual(page[key], value)
-        self.assertEqual((page["form"], page["ty"], page["vy"]), ("ty", True, False))
+        # the canonical name of the form, whatever name the data gives
+        self.assertEqual(F.INVITATIONS[0]["form"], "ty")
+        self.assertEqual(
+            (page["form"], page["informal"], page["formal"]), ("informal", True, False)
+        )
+        other = build()[4]
+        self.assertEqual(F.INVITATIONS[4]["form"], "vy")
+        self.assertEqual(
+            (other["form"], other["informal"], other["formal"]), ("formal", False, True)
+        )
         self.assertEqual(page["coupleNames"], "Алиса и Боб")
         self.assertEqual(page["rsvpDeadline"], "1 мая 2030")
         self.assertEqual(page["primaryEvent"]["domId"], "")
@@ -173,7 +189,7 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(page["mediaPath"], f"/invite/assets/{F.MEDIA_DIR}")
         cover = _page.site_cover(F.site(), F.settings(assets_path="/invite/assets"))
         self.assertEqual(cover["assetsPath"], "/invite/assets")
-        self.assertEqual(set(cover), {"coupleNames", "assetsPath", "cover"})
+        self.assertEqual(set(cover), {"lang", "coupleNames", "assetsPath", "cover"})
         self.assertFalse(hasattr(F.settings(), "pages_path"))
 
     def test_rsvp_deadline_is_an_empty_string_when_not_set(self):
@@ -536,6 +552,94 @@ class TextTests(unittest.TestCase):
         self.assertEqual(rsvp[1]["text"], "Алиса и Боб")
         self.assertEqual(rsvp[1]["variant"], "signature")
         self.assertEqual(rsvp[0]["variant"], "body")
+
+
+def without_forms(value):
+    """The data with every text of forms replaced by its formal variant."""
+    if isinstance(value, dict):
+        if value and set(value) <= {"ty", "vy", "informal", "formal", "all"}:
+            return value.get("vy", value.get("formal"))
+        return {key: without_forms(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [without_forms(item) for item in value]
+    return value
+
+
+class FormOfAddressTests(unittest.TestCase):
+    """`form` is needed only by a page that shows a text with forms."""
+
+    def trees(self, site, invitations):
+        report = F.Collector()
+        index = _schema.check_data(site, invitations, report)
+        self.assertEqual(report.errors, [])
+        self.assertTrue(index.ok)
+        pages, _usage = _page.build_pages(site, invitations, F.settings(), report)
+        return pages, report
+
+    def test_a_page_without_texts_of_forms_needs_no_form(self):
+        site = without_forms(F.site())
+        invitations = F.invitations()
+        for invitation in invitations:
+            invitation.pop("form")
+        pages, report = self.trees(site, invitations)
+        self.assertEqual(report.errors, [])
+        for page in pages:
+            self.assertEqual((page["form"], page["informal"], page["formal"]), ("", False, False))
+        # the same texts as with a form
+        expected, _usage = _page.build_pages(site, F.invitations(), F.settings())
+        self.assertEqual(
+            [page["sections"] for page in pages], [page["sections"] for page in expected]
+        )
+
+    def test_a_page_with_a_text_of_forms_needs_one(self):
+        invitations = F.invitations()
+        invitations[1].pop("form")
+        _pages, report = self.trees(F.site(), invitations)
+        # once per page, with the first field that needs it
+        self.assertEqual(
+            report.errors,
+            [
+                "invitation #2: field 'form' is required: this page shows a text with forms of "
+                "address (first: site.json field 'sections[1].widgets[2].text'); set "
+                '"informal" or "formal"'
+            ],
+        )
+
+    def test_a_named_text_with_forms_counts(self):
+        site = without_forms(F.site())
+        site["texts"]["wait"] = {"informal": "Wait for us", "formal": "Please wait for us"}
+        invitations = F.invitations()
+        invitations[0].pop("form")
+        # a note has no forms, but the named texts in it take the form of the page
+        invitations[0]["sections"]["personal"]["note"] = "{text:wait}"
+        _pages, report = self.trees(site, invitations)
+        self.assertEqual(
+            report.errors,
+            [
+                "invitation #1: field 'form' is required: this page shows a text with forms of "
+                "address (first: field 'sections.personal.note'); set \"informal\" or \"formal\""
+            ],
+        )
+        # a section before the note
+        self.assertEqual(site["sections"][1]["id"], "invite")
+        site["sections"][1]["widgets"].insert(0, {"type": "text", "text": "{text:wait}"})
+        _pages, report = self.trees(site, invitations)
+        self.assertEqual(len(report.errors), 1)
+        self.assertIn("(first: site.json field 'sections[1].widgets[0].text')", report.errors[0])
+
+    def test_without_a_report_the_tree_is_refused(self):
+        invitation = F.invitations()[1]
+        invitation.pop("form")
+        with self.assertRaises(_page.TextError) as caught:
+            _page.build_page(F.site(), invitation, F.settings())
+        self.assertIn("field 'form' is required", str(caught.exception))
+
+    def test_the_aliases_and_the_canonical_names_give_the_same_page(self):
+        names = {"ty": "informal", "vy": "formal"}
+        renamed = F.invitations()
+        for invitation in renamed:
+            invitation["form"] = names[invitation["form"]]
+        self.assertEqual(build(invitations=renamed), build())
 
 
 class RegistryTextTests(unittest.TestCase):

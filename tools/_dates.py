@@ -1,20 +1,27 @@
-"""Russian dates and event end times.
+"""Dates in the language of the site, and event end times.
 
 Everything is written in the event's own UTC offset, that is in the local
 time of the place: never in UTC and never in the time zone of the machine
-that runs the build.  Month and weekday names come from the tables below,
-not from the operating system's locale.
+that runs the build.  The names of the months and weekdays and the patterns
+of dates and times come from the resolved strings of the site
+(`tools._locale.site_strings`), never from the operating system's locale.
 
-The functions take `datetime` values with a UTC offset (as `parse_date_iso`
-reads them from the data); a value without an offset raises `ValueError`.
-Pure functions, no input/output.  Standard library only.
+The formatting functions take those strings first, then `datetime` values
+with a UTC offset (as `parse_date_iso` reads them from the data); a value
+without an offset raises `ValueError`.  Pure functions, no input/output.
+Standard library only.
 """
 
 from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta, timezone
-from typing import Iterable, NamedTuple
+from typing import Any, Iterable, Mapping, NamedTuple
+
+from tools._locale import fill
+
+#: The resolved strings of a site (`tools._locale.site_strings`).
+Strings = Mapping[str, Any]
 
 _DATE_ISO_RE = re.compile(
     r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}(?::\d{2}(?:\.\d{3}|\.\d{6})?)?)"
@@ -52,33 +59,6 @@ def parse_date_iso(value: str) -> datetime:
     return parsed
 
 
-#: Month names in the genitive case, the form that follows a day number.
-MONTHS_GENITIVE = (
-    "января",
-    "февраля",
-    "марта",
-    "апреля",
-    "мая",
-    "июня",
-    "июля",
-    "августа",
-    "сентября",
-    "октября",
-    "ноября",
-    "декабря",
-)
-#: Days of the week, Monday first (the order of `datetime.weekday()`).
-WEEKDAYS = (
-    "понедельник",
-    "вторник",
-    "среда",
-    "четверг",
-    "пятница",
-    "суббота",
-    "воскресенье",
-)
-
-
 def _require_offset(moment: datetime) -> datetime:
     if not isinstance(moment, datetime) or moment.utcoffset() is None:
         raise ValueError("expected a date and time with a UTC offset")
@@ -90,46 +70,99 @@ def _in_offset_of(moment: datetime, reference: datetime) -> datetime:
     return moment.astimezone(timezone(reference.utcoffset()))
 
 
-def format_time(moment: datetime) -> str:
-    """`9:30`, `16:00`: the hour without a leading zero."""
+def _weekdays(strings: Strings, moment: datetime) -> dict[str, str]:
+    """`{weekday}` and `{Weekday}`: the name, and the name with its first
+    letter upper-cased."""
+    weekday = strings["weekdays"][moment.weekday()]
+    return {"weekday": weekday, "Weekday": weekday[:1].upper() + weekday[1:]}
+
+
+def _date_values(strings: Strings, moment: datetime) -> dict[str, str]:
+    """The placeholders of the `date` and `dayMonth` patterns."""
     _require_offset(moment)
-    return f"{moment.hour}:{moment.minute:02d}"
+    return {
+        "d": str(moment.day),
+        "dd": f"{moment.day:02d}",
+        "M": str(moment.month),
+        "MM": f"{moment.month:02d}",
+        "month": strings["months"][moment.month - 1],
+        "yyyy": f"{moment.year:04d}",
+        **_weekdays(strings, moment),
+    }
 
 
-def format_day_month(moment: datetime) -> str:
-    """`<day> <month name in the genitive>`, such as the 15th of June."""
+def format_time(strings: Strings, moment: datetime) -> str:
+    """The `time` pattern: `{H}`/`{HH}` the hour of 24 (without and with a
+    leading zero), `{h}`/`{hh}` the hour of 12, `{mm}` the minutes, `{ampm}`
+    the half of the day."""
     _require_offset(moment)
-    return f"{moment.day} {MONTHS_GENITIVE[moment.month - 1]}"
+    hour = moment.hour
+    twelve = hour % 12 or 12
+    return fill(
+        strings["time"],
+        {
+            "H": str(hour),
+            "HH": f"{hour:02d}",
+            "h": str(twelve),
+            "hh": f"{twelve:02d}",
+            "mm": f"{moment.minute:02d}",
+            "ampm": strings["ampm"][1 if hour >= 12 else 0],
+        },
+    )
 
 
-def format_date(moment: datetime) -> str:
-    """`<day> <month name in the genitive> <year>`, such as the 15th of June
-    2030."""
-    return f"{format_day_month(moment)} {moment.year}"
+def format_day_month(strings: Strings, moment: datetime) -> str:
+    """The `dayMonth` pattern: a date without the year (`15 June`)."""
+    return fill(strings["dayMonth"], _date_values(strings, moment))
 
 
-def format_when(start: datetime, end: datetime | None = None) -> str:
+def format_date(strings: Strings, moment: datetime) -> str:
+    """The `date` pattern: `{d}`/`{dd}` the day, `{M}`/`{MM}` the number of
+    the month, `{month}` its name, `{yyyy}` the year, `{weekday}` and
+    `{Weekday}` the day of the week (`15 June 2030`)."""
+    return fill(strings["date"], _date_values(strings, moment))
+
+
+def format_date_time(strings: Strings, moment: datetime) -> str:
+    """The `dateTime` pattern of the date widget: `{date}` and `{time}`."""
+    return fill(
+        strings["dateTime"],
+        {"date": format_date(strings, moment), "time": format_time(strings, moment)},
+    )
+
+
+def format_when(strings: Strings, start: datetime, end: datetime | None = None) -> str:
     """The time of an event for its card.
 
-    `<Weekday>, <date>, <time>` with the weekday capitalised (Saturday, the
-    15th of June 2030, 16:00); with an end on the same local day
-    `…, 16:00–23:30`; with an end on another day
-    `…, 22:00 — <day> <month>, 2:00` (with the year when that changes too).
+    The `when` pattern (`{date}`, `{time}`, `{dayMonth}`, `{weekday}`,
+    `{Weekday}`): `Saturday, 15 June 2030, 16:00`.  With an end on the same
+    local day the `rangeSameDay` pattern (`{when}` and `{endTime}`:
+    `…, 16:00–23:30`); with an end on another day `rangeOtherDay` (`{when}`,
+    `{endDay}`, `{endTime}`: `…, 22:00 – 16 June, 02:00`), where `{endDay}`
+    is the `dayMonth` of the end, or its `date` when the year changes too.
     The end is shown on the start's clock.
     """
     _require_offset(start)
-    weekday = WEEKDAYS[start.weekday()]
-    text = f"{weekday[0].upper()}{weekday[1:]}, {format_date(start)}, {format_time(start)}"
+    text = fill(
+        strings["when"],
+        {
+            "date": format_date(strings, start),
+            "time": format_time(strings, start),
+            "dayMonth": format_day_month(strings, start),
+            **_weekdays(strings, start),
+        },
+    )
     if end is None:
         return text
     _require_offset(end)
     if end <= start:
         raise ValueError("the end must be later than the start")
     end = _in_offset_of(end, start)
+    end_time = format_time(strings, end)
     if end.date() == start.date():
-        return f"{text}–{format_time(end)}"
-    day = format_day_month(end) if end.year == start.year else format_date(end)
-    return f"{text} — {day}, {format_time(end)}"
+        return fill(strings["rangeSameDay"], {"when": text, "endTime": end_time})
+    day = format_day_month(strings, end) if end.year == start.year else format_date(strings, end)
+    return fill(strings["rangeOtherDay"], {"when": text, "endDay": day, "endTime": end_time})
 
 
 def same_local_day(moments: Iterable[datetime]) -> bool:
@@ -137,12 +170,22 @@ def same_local_day(moments: Iterable[datetime]) -> bool:
     return len({_require_offset(moment).date() for moment in moments}) <= 1
 
 
-def format_tab(start: datetime, same_day: bool) -> str:
-    """An event tab label: `11:00` when every event of the set falls on one
-    day (see `same_local_day`), otherwise `<day> <month>, 11:00`."""
+def format_tab(strings: Strings, start: datetime, same_day: bool) -> str:
+    """An event tab label: the time alone when every event of the set falls
+    on one day (see `same_local_day`), otherwise the `tab` pattern (`{time}`,
+    `{dayMonth}`, `{date}`, `{weekday}`, `{Weekday}`: `15 June, 11:00`)."""
+    time = format_time(strings, start)
     if same_day:
-        return format_time(start)
-    return f"{format_day_month(start)}, {format_time(start)}"
+        return time
+    return fill(
+        strings["tab"],
+        {
+            "time": time,
+            "dayMonth": format_day_month(strings, start),
+            "date": format_date(strings, start),
+            **_weekdays(strings, start),
+        },
+    )
 
 
 #: How long an event without an end lasts.
