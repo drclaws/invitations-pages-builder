@@ -41,7 +41,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Repository hygiene (no tracked media, no tracked build output)
+      - name: Repository hygiene (no tracked media but the README images, no tracked build output)
         run: |
           set -euo pipefail
           # Names are read NUL-separated and unquoted, so non-ASCII names are matched as is.
@@ -55,11 +55,29 @@ jobs:
             echo "Tracked file names must not contain line breaks or carriage returns" >&2
             exit 1
           fi
-          # Every tracked file is checked: the repository carries no media at all.
+          # Every tracked file is checked. The only media are the README images: PNG, JPEG
+          # or GIF files directly in .github/assets/, which holds nothing else.
           media="$(tracked | grep -aEi '\.(png|jpe?g|webp|gif|avif|mp4|mov|webm|ico|svg)$' || true)"
-          if [ -n "$media" ]; then
-            echo "Media files must not be tracked:" >&2
-            echo "$media" >&2
+          assets="$(tracked .github/assets)"
+          stray="$(printf '%s\n%s\n' "$media" "$assets" | grep -a . | sort -u \
+            | grep -aEv '^\.github/assets/[^/]+\.([Pp][Nn][Gg]|[Jj][Pp][Ee]?[Gg]|[Gg][Ii][Ff])$' || true)"
+          if [ -n "$stray" ]; then
+            echo "Media files must not be tracked (only PNG, JPEG or GIF README images in .github/assets/):" >&2
+            echo "$stray" >&2
+            exit 1
+          fi
+          large=""
+          while IFS= read -r name; do
+            [ -n "$name" ] || continue
+            # on a line of its own, so a tracked file missing on disk stops the step
+            size="$(wc -c < "$name")"
+            if [ "$size" -gt $((8 * 1024 * 1024)) ]; then
+              large+="$name"$'\n'
+            fi
+          done <<< "$assets"
+          if [ -n "$large" ]; then
+            echo "README images must not be larger than 8 MiB:" >&2
+            printf '%s' "$large" >&2
             exit 1
           fi
           output="$(tracked dist examples/media)"
@@ -68,7 +86,7 @@ jobs:
             echo "$output" >&2
             exit 1
           fi
-          echo "OK: no tracked media or build output"
+          echo "OK: no tracked media but the README images, no tracked build output"
 
       - name: Ensure Chrome is available
         run: |

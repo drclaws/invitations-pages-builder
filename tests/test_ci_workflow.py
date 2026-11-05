@@ -1,6 +1,12 @@
-"""Static checks of the CI workflow text (no YAML parser required)."""
+"""Static checks of the CI workflow text (no YAML parser required), and the
+hygiene step run on scratch repositories."""
 
+import os
 import re
+import shutil
+import subprocess
+import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -130,10 +136,24 @@ class CiWorkflowTest(unittest.TestCase):
         # the whole tree: no path given to the listing, no directory filtered out
         self.assertIn("media=\"$(tracked | grep -aEi "
                       "'\\.(png|jpe?g|webp|gif|avif|mp4|mov|webm|ico|svg)$' || true)\"", block)
-        self.assertNotRegex(block, r"grep\s+-[A-Za-z]*v")
+        # the one exception: PNG, JPEG or GIF files directly in .github/assets/
+        self.assertIn('assets="$(tracked .github/assets)"', block)
+        # the directory in its exact case, only the extension in any case
+        self.assertEqual(re.findall(r"grep\s+-[A-Za-z]*v[A-Za-z]*\s+(\S+)", block),
+                         ["'^\\.github/assets/[^/]+\\.([Pp][Nn][Gg]|[Jj][Pp][Ee]?[Gg]|[Gg][Ii][Ff])$'"])
+        self.assertNotRegex(block, r"grep\s+-[A-Za-z]*i[A-Za-z]*v|grep\s+-[A-Za-z]*v[A-Za-z]*i")
+        self.assertIn("8 * 1024 * 1024", block)
+        # a statement of its own: `set -e` stops the step when the file is missing
+        self.assertRegex(block, r'(?m)^\s+size="\$\(wc -c < "\$name"\)"$')
         self.assertNotIn("assets/vendor", self.raw)
         self.assertIn('tracked dist examples/media', block)
-        self.assertEqual(block.count("exit 1"), 3)
+        self.assertEqual(block.count("exit 1"), 4)
+
+    def test_hygiene_comment_names_the_exception(self):
+        # the words of the comment, wrapped anywhere
+        words = ("Every tracked file is checked. The only media are the README images: "
+                 "PNG, JPEG or GIF files directly in .github/assets/, which holds nothing else.")
+        self.assertRegex(self.raw, r"#\s+" + r"\s+(?:#\s+)?".join(map(re.escape, words.split())))
 
     def test_link_preview_tags_are_checked_without_a_site_address(self):
         self.assertNotIn("--base-url", self.raw)
@@ -235,6 +255,91 @@ class CiWorkflowTest(unittest.TestCase):
         self.assertGreaterEqual(len(outs), 3)
         for out in outs:
             self.assertTrue(out.startswith('"$RUNNER_TEMP/'), out)
+
+
+def hygiene_script() -> str:
+    """The shell of the hygiene step, without the YAML indentation."""
+    blocks = [block for block in run_blocks(CI.read_text(encoding="utf-8")) if "ls-files" in block]
+    _first, _, body = blocks[0].partition("\n")
+    return textwrap.dedent(body)
+
+
+@unittest.skipUnless(shutil.which("git") and shutil.which("bash"), "needs git and bash")
+class HygieneStepTest(unittest.TestCase):
+    """The hygiene step run on a scratch repository with the given files."""
+
+    ALLOWED = {
+        "README.md": 10,
+        ".github/workflows/ci.yml": 10,
+        ".github/assets/demo.gif": 100,
+        ".github/assets/demo image.gif": 100,
+        ".github/assets/screen.png": 100,
+        ".github/assets/still.JPEG": 100,
+    }
+
+    def run_step(self, files: dict[str, int], missing: str | None = None) -> subprocess.CompletedProcess:
+        """Run the step on a repository that tracks `files` (name -> size);
+        `missing` is tracked but deleted from the disk."""
+        # the names go into the index exactly as written, as on the Linux
+        # runner, also on a file system that ignores case (where `git add`
+        # would take the case of a directory already on the disk)
+        env = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
+                   GIT_CONFIG_COUNT="1", GIT_CONFIG_KEY_0="core.ignorecase",
+                   GIT_CONFIG_VALUE_0="false")  # fmt: skip
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name, size in files.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                with path.open("wb") as handle:
+                    handle.truncate(size)
+            git = ["git", "-C", str(root)]
+            subprocess.run([*git, "init", "-q"], check=True, env=env)
+            hashes = subprocess.run([*git, "hash-object", "-w", "--", *files], check=True, env=env,
+                                    capture_output=True, text=True).stdout.split()  # fmt: skip
+            entries = "".join(f"100644 {sha}\t{name}\n" for sha, name in zip(hashes, files))
+            subprocess.run([*git, "update-index", "--add", "--index-info"], input=entries,
+                           check=True, env=env, text=True)  # fmt: skip
+            if missing:
+                (root / missing).unlink()
+            return subprocess.run(["bash", "-c", hygiene_script()], cwd=root, env=env,
+                                  capture_output=True, text=True, check=False)  # fmt: skip
+
+    def test_the_readme_images_pass(self):
+        result = self.run_step(self.ALLOWED)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OK: no tracked media but the README images", result.stdout)
+
+    def test_media_anywhere_else_fail(self):
+        for name in ("docs/screen.png", "docs/demo image.gif", "assets/icon.svg",
+                     "examples/photo.jpg", "demo.gif", ".github/screen.png",
+                     ".github/assets/more/screen.png", ".GITHUB/ASSETS/x.gif",
+                     ".github/Assets/x.png", ".github/assets/clip.mp4",
+                     ".github/assets/screen.webp", ".github/assets/icon.svg",
+                     ".github/assets/notes.txt"):  # fmt: skip
+            with self.subTest(name=name):
+                result = self.run_step({**self.ALLOWED, name: 100})
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("Media files must not be tracked", result.stderr)
+                self.assertEqual(result.stderr.splitlines()[1:], [name])
+
+    def test_a_large_readme_image_fails(self):
+        result = self.run_step({**self.ALLOWED, ".github/assets/demo.gif": 8 * 1024 * 1024 + 1})
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stderr.splitlines(),
+                         ["README images must not be larger than 8 MiB:", ".github/assets/demo.gif"])
+        result = self.run_step({**self.ALLOWED, ".github/assets/demo.gif": 8 * 1024 * 1024})
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_a_readme_image_missing_on_disk_fails(self):
+        result = self.run_step(self.ALLOWED, missing=".github/assets/demo image.gif")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("OK:", result.stdout)
+
+    def test_build_output_fails(self):
+        result = self.run_step({**self.ALLOWED, "dist/index.html": 10})
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Generated files must not be tracked", result.stderr)
 
 
 if __name__ == "__main__":

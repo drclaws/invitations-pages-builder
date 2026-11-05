@@ -28,7 +28,7 @@ Each step and how to repeat it locally:
 
 | CI step | Locally |
 |---|---|
-| repository hygiene: no tracked media (every file is checked, with no exceptions), no tracked build output, no line breaks in file names | `git -c core.quotePath=false ls-files \| grep -Ei '\.(png\|jpe?g\|webp\|gif\|avif\|mp4\|mov\|webm\|ico\|svg)$'` prints nothing |
+| repository hygiene: no tracked media (every file is checked) but the README images, which are PNG, JPEG or GIF files directly in `.github/assets/` of at most 8 MiB each, with nothing else in that directory; no tracked build output, no line breaks in file names | `git -c core.quotePath=false ls-files \| grep -Ei '\.(png\|jpe?g\|webp\|gif\|avif\|mp4\|mov\|webm\|ico\|svg)$' \| grep -Ev '^\.github/assets/[^/]+\.([Pp][Nn][Gg]\|[Jj][Pp][Ee]?[Gg]\|[Gg][Ii][Ff])$'` and `git -c core.quotePath=false ls-files .github/assets \| grep -Ev '^\.github/assets/[^/]+\.([Pp][Nn][Gg]\|[Jj][Pp][Ee]?[Gg]\|[Gg][Ii][Ff])$'` print nothing; `ls -l .github/assets` shows no file over 8388608 bytes |
 | Chrome is on the runner and starts headless as an ordinary user, with its sandbox, as the build starts it (it prints its version and loads a blank page; when it is missing or does not start, the step fails with its output): the build renders the link preview image with it, and the tests with a real browser run after this step instead of being skipped | `google-chrome --version && google-chrome --headless=new --disable-gpu --dump-dom about:blank` |
 | unit tests | `python3 -m unittest` |
 | placeholder media (with `ffmpeg` installed when needed) | `python3 tools/gen_example_media.py` |
@@ -69,12 +69,12 @@ It never reaches the output: every file named `styleguide.*` is skipped.
   (recomputed when the window width changes), the type scale, the layout, and
   the components in their states (hover, focus-visible, active, disabled).
   **Photo and video tiles** are shown as plain cards instead of pictures (the
-  repository has no media): the ▶ badge, focus, hover, the duration and a
-  single tile `.gallery--single`. The styleguide only describes a video in
-  the viewer: the script makes the viewer, and the panel of a video is the
-  browser's, with no styles or tokens of its own. Check the viewer with a
-  video and a single tile in the proportion of the frame on a built page
-  with a video (a page of the main example does).
+  repository has no media for the pages): the ▶ badge, focus, hover, the
+  duration and a single tile `.gallery--single`. The styleguide only
+  describes a video in the viewer: the script makes the viewer, and the panel
+  of a video is the browser's, with no styles or tokens of its own. Check the
+  viewer with a video and a single tile in the proportion of the frame on a
+  built page with a video (a page of the main example does).
 - **The text size switch** of the styleguide (100 / 125 / 150 / 200 / 330 %)
   is a quick check that the layout holds at a large system text size. The
   real check is to enlarge the text in the settings of the browser or the
